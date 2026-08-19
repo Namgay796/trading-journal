@@ -1,8 +1,30 @@
 const analyticsAccount =
     document.getElementById("analyticsAccount");
 
+const periodFilter =
+    document.getElementById("periodFilter");
+
+const customDateRange =
+    document.getElementById("customDateRange");
+
+const customStartDate =
+    document.getElementById("customStartDate");
+
+const customEndDate =
+    document.getElementById("customEndDate");
+
+const applyCustomRange =
+    document.getElementById("applyCustomRange");
+
+const periodDescription =
+    document.getElementById("periodDescription");
+
 
 let analyticsAccounts = [];
+
+let allTrades = [];
+
+let selectedAccount = null;
 
 let equityChart;
 let sessionChart;
@@ -10,6 +32,9 @@ let setupChart;
 let weekdayChart;
 
 
+/* =========================================
+   LOAD ACCOUNTS
+========================================= */
 
 async function loadAnalyticsAccounts() {
 
@@ -23,45 +48,74 @@ async function loadAnalyticsAccounts() {
     if (error) {
 
         console.error(error);
+
         return;
 
     }
 
 
-    analyticsAccounts = data;
+    analyticsAccounts =
+        data || [];
 
-    analyticsAccount.innerHTML = "";
+
+    analyticsAccount.innerHTML =
+        "";
 
 
-    data.forEach(account => {
+    analyticsAccounts.forEach(account => {
 
         const option =
             document.createElement("option");
 
+
         option.value =
             account.id;
+
 
         option.textContent =
             account.name;
 
-        analyticsAccount.appendChild(option);
+
+        analyticsAccount.appendChild(
+            option
+        );
 
     });
 
 
-    if (data.length > 0) {
+    if (
+        analyticsAccounts.length > 0
+    ) {
 
-        loadAnalytics(data[0]);
+        selectedAccount =
+            analyticsAccounts[0];
+
+
+        await loadAnalytics(
+            selectedAccount
+        );
 
     }
 
 }
 
 
+/* =========================================
+   LOAD ALL TRADES FOR ACCOUNT
+========================================= */
 
-async function loadAnalytics(account) {
+async function loadAnalytics(
+    account
+) {
 
-    const { data: trades, error } =
+    selectedAccount =
+        account;
+
+
+    const {
+        data: trades,
+        error
+    } =
         await db
             .from("trades")
             .select("*")
@@ -86,29 +140,481 @@ async function loadAnalytics(account) {
     if (error) {
 
         console.error(error);
+
         return;
 
     }
 
 
-    updateSummary(trades);
+    allTrades =
+        trades || [];
 
-    createEquityChart(
-        trades,
-        Number(account.starting_balance)
-    );
 
-    createSessionChart(trades);
-
-    createSetupChart(trades);
-
-    createWeekdayChart(trades);
+    applyPeriodFilter();
 
 }
 
 
+/* =========================================
+   DATE HELPERS
+========================================= */
 
-function updateSummary(trades) {
+function localDateString(
+    date
+) {
+
+    const year =
+        date.getFullYear();
+
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+function parseTradeDate(
+    value
+) {
+
+    return new Date(
+        value + "T00:00:00"
+    );
+
+}
+
+
+/* =========================================
+   START OF WEEK
+   Monday
+========================================= */
+
+function startOfWeek(
+    date
+) {
+
+    const result =
+        new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        );
+
+
+    const day =
+        result.getDay();
+
+
+    const difference =
+        day === 0
+            ?
+            -6
+            :
+            1 - day;
+
+
+    result.setDate(
+        result.getDate() +
+        difference
+    );
+
+
+    return result;
+
+}
+
+
+/* =========================================
+   END OF WEEK
+   Sunday
+========================================= */
+
+function endOfWeek(
+    date
+) {
+
+    const start =
+        startOfWeek(
+            date
+        );
+
+
+    const end =
+        new Date(
+            start
+        );
+
+
+    end.setDate(
+        end.getDate() +
+        6
+    );
+
+
+    return end;
+
+}
+
+
+/* =========================================
+   DISPLAY DATE
+========================================= */
+
+function formatDisplayDate(
+    date
+) {
+
+    return date.toLocaleDateString(
+        "en-AU",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
+        }
+    );
+
+}
+
+
+/* =========================================
+   GET SELECTED PERIOD
+========================================= */
+
+function getSelectedRange() {
+
+    const now =
+        new Date();
+
+
+    const mode =
+        periodFilter.value;
+
+
+    let startDate;
+    let endDate;
+    let description;
+
+
+    /* =====================================
+       DAILY
+    ===================================== */
+
+    if (
+        mode === "daily"
+    ) {
+
+        startDate =
+            new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate()
+            );
+
+
+        endDate =
+            new Date(
+                startDate
+            );
+
+
+        description =
+            "Today • " +
+            formatDisplayDate(
+                startDate
+            );
+
+    }
+
+
+    /* =====================================
+       WEEKLY
+    ===================================== */
+
+    else if (
+        mode === "weekly"
+    ) {
+
+        startDate =
+            startOfWeek(
+                now
+            );
+
+
+        endDate =
+            endOfWeek(
+                now
+            );
+
+
+        description =
+            "This week • " +
+            formatDisplayDate(
+                startDate
+            ) +
+            " – " +
+            formatDisplayDate(
+                endDate
+            );
+
+    }
+
+
+    /* =====================================
+       MONTHLY
+    ===================================== */
+
+    else if (
+        mode === "monthly"
+    ) {
+
+        startDate =
+            new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                1
+            );
+
+
+        endDate =
+            new Date(
+                now.getFullYear(),
+                now.getMonth() + 1,
+                0
+            );
+
+
+        description =
+            now.toLocaleDateString(
+                "en-AU",
+                {
+                    month:
+                        "long",
+
+                    year:
+                        "numeric"
+                }
+            );
+
+    }
+
+
+    /* =====================================
+       YEARLY
+    ===================================== */
+
+    else if (
+        mode === "yearly"
+    ) {
+
+        startDate =
+            new Date(
+                now.getFullYear(),
+                0,
+                1
+            );
+
+
+        endDate =
+            new Date(
+                now.getFullYear(),
+                11,
+                31
+            );
+
+
+        description =
+            String(
+                now.getFullYear()
+            );
+
+    }
+
+
+    /* =====================================
+       CUSTOM
+    ===================================== */
+
+    else {
+
+        if (
+            !customStartDate.value ||
+            !customEndDate.value
+        ) {
+
+            return null;
+
+        }
+
+
+        startDate =
+            parseTradeDate(
+                customStartDate.value
+            );
+
+
+        endDate =
+            parseTradeDate(
+                customEndDate.value
+            );
+
+
+        if (
+            startDate >
+            endDate
+        ) {
+
+            alert(
+                "Custom start date cannot be after the end date."
+            );
+
+            return null;
+
+        }
+
+
+        description =
+            "Custom • " +
+            formatDisplayDate(
+                startDate
+            ) +
+            " – " +
+            formatDisplayDate(
+                endDate
+            );
+
+    }
+
+
+    return {
+
+        startDate:
+            startDate,
+
+        endDate:
+            endDate,
+
+        description:
+            description
+
+    };
+
+}
+
+
+/* =========================================
+   APPLY PERIOD FILTER
+========================================= */
+
+function applyPeriodFilter() {
+
+    if (
+        !selectedAccount
+    ) {
+
+        return;
+
+    }
+
+
+    const range =
+        getSelectedRange();
+
+
+    if (
+        !range
+    ) {
+
+        return;
+
+    }
+
+
+    periodDescription.textContent =
+        range.description;
+
+
+    const filteredTrades =
+        allTrades.filter(
+            trade => {
+
+                const tradeDate =
+                    parseTradeDate(
+                        trade.trade_date
+                    );
+
+
+                return (
+                    tradeDate >=
+                    range.startDate
+                    &&
+                    tradeDate <=
+                    range.endDate
+                );
+
+            }
+        );
+
+
+    updateSummary(
+        filteredTrades
+    );
+
+
+    createEquityChart(
+        filteredTrades,
+        Number(
+            selectedAccount.starting_balance ||
+            0
+        )
+    );
+
+
+    createSessionChart(
+        filteredTrades
+    );
+
+
+    createSetupChart(
+        filteredTrades
+    );
+
+
+    createWeekdayChart(
+        filteredTrades
+    );
+
+}
+
+
+/* =========================================
+   SUMMARY
+========================================= */
+
+function updateSummary(
+    trades
+) {
 
     const totalTrades =
         trades.length;
@@ -117,34 +623,53 @@ function updateSummary(trades) {
     const wins =
         trades.filter(
             trade =>
-                trade.result === "Win"
+                Number(
+                    trade.profit_loss || 0
+                ) > 0
         );
 
 
     const totalPnL =
         trades.reduce(
-            (sum, trade) =>
+            (
+                sum,
+                trade
+            ) =>
                 sum +
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 ),
             0
         );
 
 
+    /*
+       NEW TRADES:
+       use actual_rr
+
+       OLD TRADES:
+       use r_multiple
+    */
+
     const totalR =
         trades.reduce(
-            (sum, trade) =>
+            (
+                sum,
+                trade
+            ) =>
                 sum +
                 Number(
-                    trade.r_multiple || 0
+                    trade.actual_rr ??
+                    trade.r_multiple ??
+                    0
                 ),
             0
         );
 
 
     const winRate =
-        totalTrades
+        totalTrades > 0
             ?
             (
                 wins.length /
@@ -155,7 +680,7 @@ function updateSummary(trades) {
 
 
     const averageR =
-        totalTrades
+        totalTrades > 0
             ?
             totalR /
             totalTrades
@@ -168,7 +693,9 @@ function updateSummary(trades) {
             "analyticsPnL"
         )
         .textContent =
-        signedMoney(totalPnL);
+        signedMoney(
+            totalPnL
+        );
 
 
     document
@@ -176,7 +703,9 @@ function updateSummary(trades) {
             "analyticsWinRate"
         )
         .textContent =
-        winRate.toFixed(1) + "%";
+        winRate
+            .toFixed(1) +
+        "%";
 
 
     document
@@ -184,7 +713,9 @@ function updateSummary(trades) {
             "analyticsAverageR"
         )
         .textContent =
-        averageR.toFixed(2) + "R";
+        averageR
+            .toFixed(2) +
+        "R";
 
 
     document
@@ -219,6 +750,9 @@ function updateSummary(trades) {
 }
 
 
+/* =========================================
+   BEST CATEGORY
+========================================= */
 
 function getBestCategory(
     trades,
@@ -235,26 +769,35 @@ function getBestCategory(
             "Unknown";
 
 
-        if (!totals[name]) {
+        if (
+            totals[name] ===
+            undefined
+        ) {
 
-            totals[name] = 0;
+            totals[name] =
+                0;
 
         }
 
 
         totals[name] +=
             Number(
-                trade.profit_loss || 0
+                trade.profit_loss ||
+                0
             );
 
     });
 
 
     const entries =
-        Object.entries(totals);
+        Object.entries(
+            totals
+        );
 
 
-    if (entries.length === 0) {
+    if (
+        entries.length === 0
+    ) {
 
         return "-";
 
@@ -262,8 +805,12 @@ function getBestCategory(
 
 
     entries.sort(
-        (a, b) =>
-            b[1] - a[1]
+        (
+            a,
+            b
+        ) =>
+            b[1] -
+            a[1]
     );
 
 
@@ -272,6 +819,9 @@ function getBestCategory(
 }
 
 
+/* =========================================
+   EQUITY CURVE
+========================================= */
 
 function createEquityChart(
     trades,
@@ -282,29 +832,81 @@ function createEquityChart(
         startingBalance;
 
 
-    const labels = [
-        "Start"
-    ];
+    /*
+       Calculate the balance before the
+       first trade in selected period.
+    */
+
+    if (
+        trades.length > 0
+    ) {
+
+        const firstDate =
+            parseTradeDate(
+                trades[0].trade_date
+            );
 
 
-    const balances = [
-        balance
-    ];
+        allTrades.forEach(
+            trade => {
+
+                const tradeDate =
+                    parseTradeDate(
+                        trade.trade_date
+                    );
+
+
+                if (
+                    tradeDate <
+                    firstDate
+                ) {
+
+                    balance +=
+                        Number(
+                            trade.profit_loss ||
+                            0
+                        );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    const labels =
+        [
+            "Start"
+        ];
+
+
+    const balances =
+        [
+            balance
+        ];
 
 
     trades.forEach(
-        (trade, index) => {
+        (
+            trade,
+            index
+        ) => {
 
             balance +=
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 );
 
 
             labels.push(
                 trade.trade_date +
                 " #" +
-                (index + 1)
+                (
+                    index +
+                    1
+                )
             );
 
 
@@ -316,7 +918,9 @@ function createEquityChart(
     );
 
 
-    if (equityChart) {
+    if (
+        equityChart
+    ) {
 
         equityChart.destroy();
 
@@ -330,14 +934,15 @@ function createEquityChart(
             ),
             {
 
-                type: "line",
+                type:
+                    "line",
 
                 data: {
 
-                    labels: labels,
+                    labels:
+                        labels,
 
                     datasets: [
-
                         {
 
                             label:
@@ -350,11 +955,9 @@ function createEquityChart(
                                 0.25
 
                         }
-
                     ]
 
                 },
-
 
                 options: {
 
@@ -372,39 +975,69 @@ function createEquityChart(
 }
 
 
+/* =========================================
+   P&L BY SESSION
+========================================= */
 
 function createSessionChart(
     trades
 ) {
 
     const sessions = {
-        "Asian": 0,
-        "London": 0,
-        "New York": 0
+
+        "Asian":
+            0,
+
+        "London":
+            0,
+
+        "London/NY Overlap":
+            0,
+
+        "New York":
+            0
+
     };
 
 
-    trades.forEach(trade => {
+    trades.forEach(
+        trade => {
 
-        if (
-            sessions[
-                trade.session
-            ] !== undefined
-        ) {
+            const session =
+                trade.session ||
+                "Unknown";
+
+
+            if (
+                sessions[
+                    session
+                ] ===
+                undefined
+            ) {
+
+                sessions[
+                    session
+                ] =
+                    0;
+
+            }
+
 
             sessions[
-                trade.session
+                session
             ] +=
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 );
 
         }
+    );
 
-    });
 
-
-    if (sessionChart) {
+    if (
+        sessionChart
+    ) {
 
         sessionChart.destroy();
 
@@ -418,7 +1051,8 @@ function createSessionChart(
             ),
             {
 
-                type: "bar",
+                type:
+                    "bar",
 
                 data: {
 
@@ -428,7 +1062,6 @@ function createSessionChart(
                         ),
 
                     datasets: [
-
                         {
 
                             label:
@@ -440,11 +1073,9 @@ function createSessionChart(
                                 )
 
                         }
-
                     ]
 
                 },
-
 
                 options: {
 
@@ -462,6 +1093,9 @@ function createSessionChart(
 }
 
 
+/* =========================================
+   WIN RATE BY SETUP
+========================================= */
 
 function createSetupChart(
     trades
@@ -470,58 +1104,85 @@ function createSetupChart(
     const setups = {};
 
 
-    trades.forEach(trade => {
+    trades.forEach(
+        trade => {
 
-        const setup =
-            trade.setup ||
-            "Unknown";
+            const setup =
+                trade.setup ||
+                "Unknown";
 
 
-        if (!setups[setup]) {
+            if (
+                !setups[
+                    setup
+                ]
+            ) {
 
-            setups[setup] = {
-                wins: 0,
-                total: 0
-            };
+                setups[
+                    setup
+                ] = {
+
+                    wins:
+                        0,
+
+                    total:
+                        0
+
+                };
+
+            }
+
+
+            setups[
+                setup
+            ].total++;
+
+
+            if (
+                Number(
+                    trade.profit_loss ||
+                    0
+                ) > 0
+            ) {
+
+                setups[
+                    setup
+                ].wins++;
+
+            }
 
         }
-
-
-        setups[setup].total++;
-
-
-        if (
-            trade.result ===
-            "Win"
-        ) {
-
-            setups[setup].wins++;
-
-        }
-
-    });
+    );
 
 
     const labels =
-        Object.keys(setups);
+        Object.keys(
+            setups
+        );
 
 
     const winRates =
-        labels.map(setup => {
+        labels.map(
+            setup => {
 
-            const item =
-                setups[setup];
-
-
-            return (
-                item.wins /
-                item.total
-            ) * 100;
-
-        });
+                const item =
+                    setups[
+                        setup
+                    ];
 
 
-    if (setupChart) {
+                return (
+                    item.wins /
+                    item.total
+                ) * 100;
+
+            }
+        );
+
+
+    if (
+        setupChart
+    ) {
 
         setupChart.destroy();
 
@@ -535,7 +1196,8 @@ function createSetupChart(
             ),
             {
 
-                type: "bar",
+                type:
+                    "bar",
 
                 data: {
 
@@ -543,7 +1205,6 @@ function createSetupChart(
                         labels,
 
                     datasets: [
-
                         {
 
                             label:
@@ -553,11 +1214,9 @@ function createSetupChart(
                                 winRates
 
                         }
-
                     ]
 
                 },
-
 
                 options: {
 
@@ -589,6 +1248,9 @@ function createSetupChart(
 }
 
 
+/* =========================================
+   P&L BY WEEKDAY
+========================================= */
 
 function createWeekdayChart(
     trades
@@ -596,45 +1258,64 @@ function createWeekdayChart(
 
     const weekdays = {
 
-        Monday: 0,
-        Tuesday: 0,
-        Wednesday: 0,
-        Thursday: 0,
-        Friday: 0,
-        Saturday: 0,
-        Sunday: 0
+        Monday:
+            0,
+
+        Tuesday:
+            0,
+
+        Wednesday:
+            0,
+
+        Thursday:
+            0,
+
+        Friday:
+            0,
+
+        Saturday:
+            0,
+
+        Sunday:
+            0
 
     };
 
 
-    trades.forEach(trade => {
+    trades.forEach(
+        trade => {
 
-        const date =
-            new Date(
-                trade.trade_date +
-                "T00:00:00"
-            );
-
-
-        const day =
-            date.toLocaleDateString(
-                "en-US",
-                {
-                    weekday:
-                        "long"
-                }
-            );
+            const date =
+                parseTradeDate(
+                    trade.trade_date
+                );
 
 
-        weekdays[day] +=
-            Number(
-                trade.profit_loss || 0
-            );
+            const day =
+                date.toLocaleDateString(
+                    "en-US",
+                    {
+                        weekday:
+                            "long"
+                    }
+                );
 
-    });
+
+            weekdays[
+                day
+            ] +=
+                Number(
+                    trade.profit_loss ||
+                    0
+                );
+
+        }
+    );
 
 
-    if (weekdayChart) {
+    if (
+        weekdayChart
+    ) {
 
         weekdayChart.destroy();
 
@@ -648,7 +1329,8 @@ function createWeekdayChart(
             ),
             {
 
-                type: "bar",
+                type:
+                    "bar",
 
                 data: {
 
@@ -658,7 +1340,6 @@ function createWeekdayChart(
                         ),
 
                     datasets: [
-
                         {
 
                             label:
@@ -670,11 +1351,9 @@ function createWeekdayChart(
                                 )
 
                         }
-
                     ]
 
                 },
-
 
                 options: {
 
@@ -692,26 +1371,58 @@ function createWeekdayChart(
 }
 
 
+/* =========================================
+   MONEY FORMAT
+========================================= */
 
-function signedMoney(value) {
+function signedMoney(
+    value
+) {
 
     value =
-        Number(value);
+        Number(
+            value || 0
+        );
 
 
-    if (value > 0) {
+    if (
+        value > 0
+    ) {
 
         return "+$" +
-            value.toFixed(2);
+            value
+                .toLocaleString(
+                    "en-AU",
+                    {
+                        minimumFractionDigits:
+                            2,
+
+                        maximumFractionDigits:
+                            2
+                    }
+                );
 
     }
 
 
-    if (value < 0) {
+    if (
+        value < 0
+    ) {
 
         return "-$" +
-            Math.abs(value)
-                .toFixed(2);
+            Math.abs(
+                value
+            )
+            .toLocaleString(
+                "en-AU",
+                {
+                    minimumFractionDigits:
+                        2,
+
+                    maximumFractionDigits:
+                        2
+                }
+            );
 
     }
 
@@ -721,6 +1432,9 @@ function signedMoney(value) {
 }
 
 
+/* =========================================
+   ACCOUNT CHANGE
+========================================= */
 
 analyticsAccount
     .addEventListener(
@@ -730,16 +1444,22 @@ analyticsAccount
             const account =
                 analyticsAccounts.find(
                     item =>
-                        Number(item.id) ===
+                        Number(
+                            item.id
+                        ) ===
                         Number(
                             analyticsAccount.value
                         )
                 );
 
 
-            if (account) {
+            if (
+                account
+            ) {
 
-                loadAnalytics(account);
+                loadAnalytics(
+                    account
+                );
 
             }
 
@@ -747,5 +1467,58 @@ analyticsAccount
     );
 
 
+/* =========================================
+   PERIOD SELECTOR
+========================================= */
+
+periodFilter
+    .addEventListener(
+        "change",
+        function() {
+
+            const custom =
+                periodFilter.value ===
+                "custom";
+
+
+            customDateRange.hidden =
+                !custom;
+
+
+            /*
+               Daily, Weekly, Monthly
+               and Yearly apply immediately.
+            */
+
+            if (
+                !custom
+            ) {
+
+                applyPeriodFilter();
+
+            }
+
+        }
+    );
+
+
+/* =========================================
+   CUSTOM DATE APPLY
+========================================= */
+
+applyCustomRange
+    .addEventListener(
+        "click",
+        function() {
+
+            applyPeriodFilter();
+
+        }
+    );
+
+
+/* =========================================
+   START
+========================================= */
 
 loadAnalyticsAccounts();
