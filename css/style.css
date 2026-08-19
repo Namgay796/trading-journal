@@ -280,13 +280,6 @@ button {
 }
 
 
-.mobile-nav {
-
-    display: none;
-}
-
-
-
 @media (
     max-width: 700px
 ) {
@@ -1452,6 +1445,304 @@ th {
     .stat-card strong {
 
         font-size: 21px;
+
+    }
+
+}
+
+/* =========================================
+   RESPONSIVE MAIN HEADER + NAVIGATION
+========================================= */
+
+.main-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 20px 30px;
+
+    background: #161b22;
+
+    border-bottom: 1px solid #21262d;
+
+}
+
+
+.brand {
+
+    min-width: 0;
+
+}
+
+
+.brand-link {
+
+    color: white;
+
+    text-decoration: none;
+
+}
+
+
+.brand-link h1 {
+
+    margin: 0;
+
+}
+
+
+.brand-link:hover {
+
+    opacity: 0.9;
+
+}
+
+
+.subtitle {
+
+    display: block;
+
+    color: #8b949e;
+
+    margin-top: 4px;
+
+    font-size: 13px;
+
+}
+
+
+.header-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex-shrink: 0;
+
+}
+
+
+.add-trade-button {
+
+    display: inline-flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    background: #30363d;
+
+    color: white;
+
+    text-decoration: none;
+
+    padding: 11px 16px;
+
+    border-radius: 8px;
+
+}
+
+
+.logout-button {
+
+    width: auto;
+
+    background: #da3633;
+
+    color: white;
+
+    border: none;
+
+    padding: 11px 16px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================
+   TOP NAVIGATION
+========================================= */
+
+.main-nav {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 10px 20px;
+
+    background: #0d1117;
+
+    border-bottom: 1px solid #30363d;
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 500;
+
+}
+
+
+.main-nav a {
+
+    color: #8b949e;
+
+    text-decoration: none;
+
+    padding: 10px 15px;
+
+    border-radius: 8px;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+
+    transition: 0.2s ease;
+
+}
+
+
+.main-nav a:hover {
+
+    background: #21262d;
+
+    color: white;
+
+}
+
+
+.main-nav a.active {
+
+    background: #238636;
+
+    color: white;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+
+    .main-header {
+
+        padding: 18px 20px;
+
+    }
+
+
+    .main-nav {
+
+        justify-content: flex-start;
+
+        overflow-x: auto;
+
+        -webkit-overflow-scrolling: touch;
+
+        scrollbar-width: none;
+
+    }
+
+
+    .main-nav::-webkit-scrollbar {
+
+        display: none;
+
+    }
+
+}
+
+
+/* =========================================
+   PHONE
+========================================= */
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding-bottom: 0;
+
+    }
+
+
+    .main-header {
+
+        padding: 16px;
+
+        align-items: flex-start;
+
+    }
+
+
+    .brand-link h1 {
+
+        font-size: 30px;
+
+        line-height: 1.05;
+
+    }
+
+
+    .subtitle {
+
+        font-size: 11px;
+
+        margin-top: 6px;
+
+    }
+
+
+    .header-actions {
+
+        gap: 6px;
+
+    }
+
+
+    .add-trade-button,
+    .logout-button {
+
+        padding: 9px 10px;
+
+        font-size: 12px;
+
+    }
+
+
+    .main-nav {
+
+        padding: 8px 10px;
+
+        gap: 5px;
+
+    }
+
+
+    .main-nav a {
+
+        padding: 9px 12px;
+
+        font-size: 12px;
 
     }
 
