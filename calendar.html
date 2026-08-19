@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Trading Calendar</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<header class="main-header">
+
+    <div class="brand">
+
+        <h1>Trading Journal</h1>
+
+        <span class="subtitle">
+            Performance & Risk Dashboard
+        </span>
+
+    </div>
+
+
+    <div class="header-actions">
+
+        <a
+            href="add-trade.html"
+            class="add-trade-button"
+        >
+            + Add Trade
+        </a>
+
+        <button
+            type="button"
+            onclick="logout()"
+            class="logout-button"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<nav class="desktop-nav">
+
+    <a
+        href="index.html"
+        class="active"
+    >
+        Dashboard
+    </a>
+
+    <a href="add-trade.html">
+        Add Trade
+    </a>
+
+    <a href="trades.html">
+        Trade History
+    </a>
+
+    <a href="analytics.html">
+        Analytics
+    </a>
+
+    <a href="calendar.html">
+        Calendar
+    </a>
+
+    <a href="accounts.html">
+        Accounts
+    </a>
+
+</nav>
+<header>
+
+<main>
+
+    <section class="dashboard-account">
+
+        <label>
+            Trading Account
+
+            <select id="calendarAccount">
+                <option>Loading...</option>
+            </select>
+        </label>
+
+    </section>
+
+
+    <section class="calendar-controls">
+
+        <button id="prevMonth">←</button>
+
+        <h2 id="calendarTitle"></h2>
+
+        <button id="nextMonth">→</button>
+
+    </section>
+
+
+    <section class="calendar-wrapper">
+
+        <div class="calendar-grid calendar-header">
+
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+            <div>Sun</div>
+
+        </div>
+
+
+        <div
+            id="calendarGrid"
+            class="calendar-grid"
+        ></div>
+
+    </section>
+
+
+    <section
+        id="dayDetails"
+        class="dashboard-section"
+    >
+
+        <h2>Select a day</h2>
+
+        <p class="empty">
+            Click a trading day to see its trades.
+        </p>
+
+    </section>
+
+</main>
+
+
+<nav class="mobile-nav">
+
+    <a href="index.html">Dashboard</a>
+
+    <a href="add-trade.html">+ Trade</a>
+
+    <a href="trades.html">History</a>
+
+    <a href="analytics.html">Analytics</a>
+
+    <a href="calendar.html">Calendar</a>
+
+</nav>
+
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+    requireLogin();
+</script>
+<script src="js/calendar.js"></script>
+<script src="js/navigation.js"></script>
+
+</body>
+
+</html>

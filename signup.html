@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Create Account</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+</head>
+
+
+<body>
+
+
+<main class="login-page">
+
+    <section class="login-card">
+
+        <h1>
+            Create Account
+        </h1>
+
+        <p class="subtitle">
+            Start your trading journal
+        </p>
+
+
+        <form id="signupForm">
+
+            <label>
+
+                Email
+
+                <input
+                    id="signupEmail"
+                    type="email"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                Password
+
+                <input
+                    id="signupPassword"
+                    type="password"
+                    minlength="6"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+
+                Confirm Password
+
+                <input
+                    id="confirmPassword"
+                    type="password"
+                    minlength="6"
+                    required
+                >
+
+            </label>
+
+
+            <button
+                type="submit"
+                class="full"
+            >
+                Create Account
+            </button>
+
+
+            <p
+                id="signupMessage"
+                class="full"
+            ></p>
+
+        </form>
+
+
+        <p class="auth-switch">
+
+            Already have an account?
+
+            <a href="login.html">
+                Sign In
+            </a>
+
+        </p>
+
+    </section>
+
+</main>
+
+
+<script src="js/config.js"></script>
+
+<script src="js/signup.js"></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Trading Journal Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+</head>
+
+
+<body>
+
+
+<header class="main-header">
+
+    <div class="brand">
+
+        <h1>Trading Journal</h1>
+
+        <span class="subtitle">
+            Performance & Risk Dashboard
+        </span>
+
+    </div>
+
+
+    <div class="header-actions">
+
+        <a
+            href="add-trade.html"
+            class="add-trade-button"
+        >
+            + Add Trade
+        </a>
+
+        <button
+            type="button"
+            onclick="logout()"
+            class="logout-button"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<nav class="desktop-nav">
+
+    <a
+        href="index.html"
+        class="active"
+    >
+        Dashboard
+    </a>
+
+    <a href="add-trade.html">
+        Add Trade
+    </a>
+
+    <a href="trades.html">
+        Trade History
+    </a>
+
+    <a href="analytics.html">
+        Analytics
+    </a>
+
+    <a href="calendar.html">
+        Calendar
+    </a>
+
+    <a href="accounts.html">
+        Accounts
+    </a>
+
+</nav>
+<header>
+
+
+<main>
+
+
+    <!-- ACCOUNT SELECTOR -->
+
+    <section class="dashboard-account">
+
+        <label>
+
+            Trading Account
+
+            <select id="dashboardAccount">
+
+                <option>
+                    Loading...
+                </option>
+
+            </select>
+
+        </label>
+
+    </section>
+
+
+
+    <!-- MAIN STATISTICS -->
+
+    <section class="stats-grid">
+
+
+        <div class="stat-card">
+
+            <span>
+                Current Balance
+            </span>
+
+            <strong id="balance">
+                $0.00
+            </strong>
+
+            <small id="balanceChange">
+                $0.00
+            </small>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <span>
+                Total P&L
+            </span>
+
+            <strong id="totalPnL">
+                $0.00
+            </strong>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <span>
+                Win Rate
+            </span>
+
+            <strong id="winRate">
+                0%
+            </strong>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <span>
+                Average R
+            </span>
+
+            <strong id="averageR">
+                0.00R
+            </strong>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <span>
+                Profit Factor
+            </span>
+
+            <strong id="profitFactor">
+                0.00
+            </strong>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <span>
+                Total Trades
+            </span>
+
+            <strong id="totalTrades">
+                0
+            </strong>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- PROP FIRM RISK -->
+
+    <section class="dashboard-section">
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>
+                    Prop Firm Risk
+                </h2>
+
+                <small id="accountInfo">
+                    -
+                </small>
+
+            </div>
+
+            <span
+                id="accountStatusBadge"
+                class="risk-status"
+            >
+                Active
+            </span>
+
+        </div>
+
+
+
+        <div class="risk-grid">
+
+
+            <!-- PROFIT TARGET -->
+
+            <div class="risk-card">
+
+                <div class="risk-title">
+
+                    <span>
+                        Profit Target
+                    </span>
+
+                    <strong id="profitTargetPercent">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-track">
+
+                    <div
+                        id="profitTargetBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+
+                <div class="risk-details">
+
+                    <span id="profitTargetAmount">
+                        $0 / $0
+                    </span>
+
+                    <span id="profitTargetRemaining">
+                        Remaining: $0
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- DAILY LOSS -->
+
+            <div class="risk-card">
+
+                <div class="risk-title">
+
+                    <span>
+                        Today's P&L
+                    </span>
+
+                    <strong id="dailyLossPercent">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-track">
+
+                    <div
+                        id="dailyLossBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+
+                <div class="risk-details">
+
+                    <span id="todayPnL">
+                        $0.00
+                    </span>
+
+                    <span id="dailyLossRemaining">
+                        Daily limit remaining: $0
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- MAX LOSS -->
+
+            <div class="risk-card">
+
+                <div class="risk-title">
+
+                    <span>
+                        Maximum Loss
+                    </span>
+
+                    <strong id="maxLossPercent">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-track">
+
+                    <div
+                        id="maxLossBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+
+                <div class="risk-details">
+
+                    <span id="maxLossUsed">
+                        Used: $0
+                    </span>
+
+                    <span id="maxLossRemaining">
+                        Remaining: $0
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- CONSISTENCY -->
+
+            <div class="risk-card">
+
+                <div class="risk-title">
+
+                    <span>
+                        Consistency
+                    </span>
+
+                    <strong id="consistencyPercent">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-track">
+
+                    <div
+                        id="consistencyBar"
+                        class="progress-fill"
+                    ></div>
+
+                </div>
+
+
+                <div class="risk-details">
+
+                    <span id="highestDay">
+                        Highest Day: $0
+                    </span>
+
+                    <span id="consistencyLimit">
+                        Limit: 0%
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div
+            id="riskWarnings"
+            class="risk-warnings"
+        ></div>
+
+    </section>
+
+
+
+    <!-- RECENT TRADES -->
+
+    <section class="dashboard-section recent-section">
+
+        <div class="section-header">
+
+            <h2>
+                Recent Trades
+            </h2>
+
+            <a href="trades.html">
+                View All
+            </a>
+
+        </div>
+
+
+        <div id="recentTrades">
+
+            Loading trades...
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+
+<nav class="mobile-nav">
+
+    <a href="index.html">
+        Dashboard
+    </a>
+
+    <a href="add-trade.html">
+        + Trade
+    </a>
+
+    <a href="trades.html">
+        History
+    </a>
+
+    <a href="analytics.html">
+        Analytics
+    </a>
+
+    <a href="calendar.html">
+        Calendar
+    </a>
+
+    <a href="accounts.html">
+        Accounts
+    </a>
+
+</nav>
+
+
+
+<script src="js/config.js"></script>
+
+<script src="js/auth.js"></script>
+
+<script>
+    requireLogin();
+</script>
+
+<script src="js/dashboard.js"></script>
+<script src="js/navigation.js"></script>
+
+</body>
+
+</html>

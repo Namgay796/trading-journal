@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Add Trade</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+</head>
+
+
+<body>
+
+<header class="main-header">
+
+    <div class="brand">
+
+        <h1>Trading Journal</h1>
+
+        <span class="subtitle">
+            Performance & Risk Dashboard
+        </span>
+
+    </div>
+
+
+    <div class="header-actions">
+
+        <a
+            href="add-trade.html"
+            class="add-trade-button"
+        >
+            + Add Trade
+        </a>
+
+        <button
+            type="button"
+            onclick="logout()"
+            class="logout-button"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<nav class="desktop-nav">
+
+    <a
+        href="index.html"
+        class="active"
+    >
+        Dashboard
+    </a>
+
+    <a href="add-trade.html">
+        Add Trade
+    </a>
+
+    <a href="trades.html">
+        Trade History
+    </a>
+
+    <a href="analytics.html">
+        Analytics
+    </a>
+
+    <a href="calendar.html">
+        Calendar
+    </a>
+
+    <a href="accounts.html">
+        Accounts
+    </a>
+
+</nav>
+<header>
+
+
+<main>
+
+<form id="tradeForm">
+
+
+    <label>
+        Account
+
+        <select
+            id="account"
+            required
+        >
+
+            <option value="">
+                Loading...
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+        Date
+
+        <input
+            id="tradeDate"
+            type="date"
+            required
+        >
+
+    </label>
+
+
+    <label>
+        Symbol
+
+        <input
+            id="symbol"
+            value="XAUUSD"
+            required
+        >
+
+    </label>
+
+
+    <label>
+        Direction
+
+        <select id="direction">
+
+            <option value="BUY">
+                BUY
+            </option>
+
+            <option value="SELL">
+                SELL
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+        Entry
+
+        <input
+            id="entry"
+            type="number"
+            step="any"
+            required
+        >
+
+    </label>
+
+
+    <label>
+        Stop Loss
+
+        <input
+            id="stopLoss"
+            type="number"
+            step="any"
+            required
+        >
+
+    </label>
+
+
+    <label>
+        Take Profit
+
+        <input
+            id="takeProfit"
+            type="number"
+            step="any"
+        >
+
+    </label>
+
+
+    <label>
+        Exit Price
+
+        <input
+            id="exitPrice"
+            type="number"
+            step="any"
+        >
+
+    </label>
+
+
+    <label>
+        Lot Size
+
+        <input
+            id="lotSize"
+            type="number"
+            step="any"
+        >
+
+    </label>
+
+
+    <label>
+        Risk %
+
+        <input
+            id="riskPercent"
+            type="number"
+            step="0.01"
+            value="1"
+        >
+
+    </label>
+
+
+    <label>
+        Profit / Loss ($)
+
+        <input
+            id="profitLoss"
+            type="number"
+            step="0.01"
+            value="0"
+        >
+
+    </label>
+
+
+    <label>
+        Session
+
+        <select id="session">
+
+            <option>
+                Asian
+            </option>
+
+            <option>
+                London
+            </option>
+
+            <option>
+                New York
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+        Setup
+
+        <select id="setup">
+
+            <option>
+                Liquidity Sweep
+            </option>
+
+            <option>
+                CHOCH
+            </option>
+
+            <option>
+                BOS
+            </option>
+
+            <option>
+                Session AMD
+            </option>
+
+            <option>
+                Breakout
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+        Result
+
+        <select id="result">
+
+            <option>
+                Win
+            </option>
+
+            <option>
+                Loss
+            </option>
+
+            <option>
+                BE
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+        Rules Followed?
+
+        <select id="rulesFollowed">
+
+            <option value="true">
+                Yes
+            </option>
+
+            <option value="false">
+                No
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label class="full">
+        Mistakes
+
+        <input
+            id="mistakes"
+            placeholder="FOMO, late entry..."
+        >
+
+    </label>
+
+
+    <label class="full">
+        Notes
+
+        <textarea
+            id="notes"
+            rows="5"
+        ></textarea>
+
+    </label>
+
+
+    <div class="calculation full">
+
+        Planned RR:
+
+        <strong id="rr">
+            0
+        </strong>
+
+    <label class="full">
+        Before Trade Screenshot
+
+        <input
+            id="beforeScreenshot"
+            type="file"
+            accept="image/*"
+        >
+    </label>
+
+
+    <label class="full">
+        After Trade Screenshot
+
+        <input
+            id="afterScreenshot"
+            type="file"
+            accept="image/*"
+        >
+    </label>
+    
+
+    </div>
+
+
+    <button
+        type="submit"
+        class="full"
+    >
+        Save Trade
+    </button>
+
+
+    <p
+        id="message"
+        class="full"
+    ></p>
+
+</form>
+
+</main>
+
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+    requireLogin();
+</script>
+
+<script src="js/add-trade.js"></script>
+<script src="js/navigation.js"></script>
+
+</body>
+
+</html>
