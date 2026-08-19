@@ -1371,3 +1371,88 @@ th {
         rgba(63, 185, 80, 0.35);
 
 }
+@media (max-width: 700px) {
+
+    body {
+        padding-bottom: 75px;
+    }
+
+
+    .mobile-nav {
+
+        display: flex;
+
+        position: fixed;
+
+        bottom: 0;
+
+        left: 0;
+
+        right: 0;
+
+        z-index: 999;
+
+        justify-content:
+            space-around;
+
+        align-items: center;
+
+        background: #161b22;
+
+        border-top:
+            1px solid #30363d;
+
+        padding:
+            10px 4px;
+
+    }
+
+
+    .mobile-nav a {
+
+        flex: 1;
+
+        text-align: center;
+
+        padding: 8px 3px;
+
+        color: #8b949e;
+
+        text-decoration: none;
+
+        font-size: 11px;
+
+    }
+
+
+    .mobile-nav a.active {
+
+        color: white;
+
+        font-weight: bold;
+
+    }
+
+
+    .stats-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+
+    .stat-card {
+
+        padding: 15px;
+
+    }
+
+
+    .stat-card strong {
+
+        font-size: 21px;
+
+    }
+
+}
