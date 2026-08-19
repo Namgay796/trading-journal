@@ -661,7 +661,18 @@ document
                 --------------------------------- */
 
                 message.textContent =
-                    "Saving trade...";
+                    "Trade saved successfully!";
+
+
+                setTimeout(
+                    function() {
+
+                        window.location.href =
+                            "index.html";
+
+                    },
+                    800
+                );
 
 
                 const { error } =

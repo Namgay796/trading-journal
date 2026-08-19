@@ -2,62 +2,75 @@ document.addEventListener(
     "DOMContentLoaded",
     function() {
 
-        const currentPage =
+        let currentPage =
             window.location.pathname
                 .split("/")
                 .pop()
                 .toLowerCase();
 
 
+        if (
+            currentPage === ""
+        ) {
+
+            currentPage =
+                "index.html";
+
+        }
+
+
+        /*
+           Edit Trade belongs to History
+        */
+
+        if (
+            currentPage ===
+            "edit-trade.html"
+        ) {
+
+            currentPage =
+                "trades.html";
+
+        }
+
+
         const navLinks =
             document.querySelectorAll(
-                ".desktop-nav a, .mobile-nav a"
+                ".main-nav a"
             );
 
 
-        navLinks.forEach(link => {
+        navLinks.forEach(
+            link => {
 
-            const linkPage =
-                link
-                    .getAttribute("href")
-                    .split("/")
-                    .pop()
-                    .toLowerCase();
-
-
-            link.classList.remove(
-                "active"
-            );
+                const linkPage =
+                    link
+                        .getAttribute(
+                            "href"
+                        )
+                        .split("/")
+                        .pop()
+                        .toLowerCase();
 
 
-            if (
-                currentPage === linkPage
-            ) {
-
-                link.classList.add(
+                link.classList.remove(
                     "active"
                 );
 
-            }
 
+                if (
+                    currentPage ===
+                    linkPage
+                ) {
 
-            /*
-               If opening root /
-               treat it as index.html
-            */
+                    link.classList.add(
+                        "active"
+                    );
 
-            if (
-                currentPage === "" &&
-                linkPage === "index.html"
-            ) {
-
-                link.classList.add(
-                    "active"
-                );
+                }
 
             }
-
-        });
+        );
 
     }
 );
