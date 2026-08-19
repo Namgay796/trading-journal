@@ -11,7 +11,7 @@ document.addEventListener(
 
         const navLinks =
             document.querySelectorAll(
-                ".desktop-nav a"
+                ".desktop-nav a, .mobile-nav a"
             );
 
 
