@@ -5,7 +5,42 @@ const message =
     document.getElementById("message");
 
 
+let accounts = [];
+
 let currentAccount = null;
+
+let currentCapital = 0;
+
+
+/* =========================================
+   CONTRACT MULTIPLIER
+
+   XAUUSD commonly uses:
+   1.00 lot = 100 oz
+
+   Later we can expand this for
+   forex, NAS100, BTC, etc.
+========================================= */
+
+function getContractMultiplier(symbol) {
+
+    symbol =
+        String(symbol)
+            .trim()
+            .toUpperCase();
+
+
+    if (
+        symbol.includes("XAUUSD")
+    ) {
+
+        return 100;
+
+    }
+
+
+    return 1;
+}
 
 
 /* =========================================
@@ -41,12 +76,16 @@ async function loadAccounts() {
     }
 
 
-    accountBox.innerHTML = "";
+    accounts =
+        data || [];
+
+
+    accountBox.innerHTML =
+        "";
 
 
     if (
-        !data ||
-        data.length === 0
+        accounts.length === 0
     ) {
 
         message.textContent =
@@ -57,7 +96,7 @@ async function loadAccounts() {
     }
 
 
-    data.forEach(account => {
+    accounts.forEach(account => {
 
         const option =
             document.createElement(
@@ -70,12 +109,7 @@ async function loadAccounts() {
 
 
         option.textContent =
-            account.name +
-            " ($" +
-            Number(
-                account.starting_balance || 0
-            ).toFixed(2) +
-            ")";
+            account.name;
 
 
         accountBox.appendChild(
@@ -86,15 +120,103 @@ async function loadAccounts() {
 
 
     currentAccount =
-        data[0];
+        accounts[0];
 
 
-    accountBox.dataset.accounts =
-        JSON.stringify(data);
+    await loadCurrentCapital();
 
 
     message.textContent =
         "Ready.";
+
+}
+
+
+/* =========================================
+   CURRENT CAPITAL
+
+   Starting balance
+   +
+   all saved P&L for selected account
+========================================= */
+
+async function loadCurrentCapital() {
+
+    if (
+        !currentAccount
+    ) {
+
+        return;
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await db
+            .from("trades")
+            .select("profit_loss")
+            .eq(
+                "account_id",
+                currentAccount.id
+            );
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Unable to calculate current capital.";
+
+        return;
+
+    }
+
+
+    const totalPnL =
+        (data || [])
+            .reduce(
+                (
+                    total,
+                    trade
+                ) => {
+
+                    return (
+                        total +
+                        Number(
+                            trade.profit_loss ||
+                            0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+    currentCapital =
+        Number(
+            currentAccount.starting_balance ||
+            0
+        )
+        +
+        totalPnL;
+
+
+    document
+        .getElementById(
+            "currentCapital"
+        )
+        .textContent =
+        money(
+            currentCapital
+        );
+
+
+    calculateTrade();
 
 }
 
@@ -105,36 +227,38 @@ async function loadAccounts() {
 
 accountBox.addEventListener(
     "change",
-    function() {
-
-        const accounts =
-            JSON.parse(
-                accountBox.dataset.accounts ||
-                "[]"
-            );
-
+    async function() {
 
         currentAccount =
             accounts.find(
                 account =>
-                    Number(account.id) ===
-                    Number(accountBox.value)
+                    Number(
+                        account.id
+                    ) ===
+                    Number(
+                        accountBox.value
+                    )
             ) || null;
 
 
-        calculateTrade();
+        await loadCurrentCapital();
 
     }
 );
 
 
 /* =========================================
-   ADD ENTRY LAYER
+   ADD NEW ENTRY LAYER
+
+   ORDER:
+   Lot Size
+   Entry Price
+   Exit Price
 ========================================= */
 
 document
     .getElementById(
-        "addEntryLayer"
+        "addLayer"
     )
     .addEventListener(
         "click",
@@ -142,7 +266,7 @@ document
 
             const container =
                 document.getElementById(
-                    "entryLayers"
+                    "tradeLayers"
                 );
 
 
@@ -153,10 +277,24 @@ document
 
 
             row.className =
-                "layer-row entry-layer";
+                "layer-row trade-layer";
 
 
             row.innerHTML = `
+
+                <label>
+
+                    Lot Size
+
+                    <input
+                        class="layer-lot-size"
+                        type="number"
+                        step="0.01"
+                        required
+                    >
+
+                </label>
+
 
                 <label>
 
@@ -174,12 +312,12 @@ document
 
                 <label>
 
-                    Lot Size
+                    Exit Price
 
                     <input
-                        class="layer-entry-lot"
+                        class="layer-exit-price"
                         type="number"
-                        step="0.01"
+                        step="any"
                         required
                     >
 
@@ -189,6 +327,7 @@ document
                 <button
                     type="button"
                     class="remove-layer"
+                    title="Remove layer"
                 >
                     ×
                 </button>
@@ -208,84 +347,7 @@ document
 
 
 /* =========================================
-   ADD EXIT LAYER
-========================================= */
-
-document
-    .getElementById(
-        "addExitLayer"
-    )
-    .addEventListener(
-        "click",
-        function() {
-
-            const container =
-                document.getElementById(
-                    "exitLayers"
-                );
-
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "layer-row exit-layer";
-
-
-            row.innerHTML = `
-
-                <label>
-
-                    Exit Price
-
-                    <input
-                        class="layer-exit-price"
-                        type="number"
-                        step="any"
-                    >
-
-                </label>
-
-
-                <label>
-
-                    Lot Size
-
-                    <input
-                        class="layer-exit-lot"
-                        type="number"
-                        step="0.01"
-                    >
-
-                </label>
-
-
-                <button
-                    type="button"
-                    class="remove-layer"
-                >
-                    ×
-                </button>
-
-            `;
-
-
-            container.appendChild(
-                row
-            );
-
-
-            attachLayerEvents();
-
-        }
-    );
-
-
-/* =========================================
-   REMOVE LAYERS + INPUT EVENTS
+   ATTACH LAYER EVENTS
 ========================================= */
 
 function attachLayerEvents() {
@@ -301,18 +363,29 @@ function attachLayerEvents() {
 
                     const row =
                         button.closest(
-                            ".layer-row"
+                            ".trade-layer"
                         );
 
 
-                    const parent =
-                        row.parentElement;
+                    const container =
+                        document.getElementById(
+                            "tradeLayers"
+                        );
 
+
+                    const rows =
+                        container
+                            .querySelectorAll(
+                                ".trade-layer"
+                            );
+
+
+                    /*
+                       Keep at least one layer
+                    */
 
                     if (
-                        parent.querySelectorAll(
-                            ".layer-row"
-                        ).length <= 1
+                        rows.length <= 1
                     ) {
 
                         return;
@@ -321,6 +394,7 @@ function attachLayerEvents() {
 
 
                     row.remove();
+
 
                     calculateTrade();
 
@@ -331,10 +405,9 @@ function attachLayerEvents() {
 
     document
         .querySelectorAll(
+            ".layer-lot-size, " +
             ".layer-entry-price, " +
-            ".layer-entry-lot, " +
-            ".layer-exit-price, " +
-            ".layer-exit-lot"
+            ".layer-exit-price"
         )
         .forEach(input => {
 
@@ -347,50 +420,71 @@ function attachLayerEvents() {
 
 
 /* =========================================
-   READ ENTRY LAYERS
+   READ TRADE LAYERS
 ========================================= */
 
-function getEntryLayers() {
+function getLayers() {
 
     const rows =
         document.querySelectorAll(
-            ".entry-layer"
+            ".trade-layer"
         );
 
 
-    const entries = [];
+    const layers = [];
 
 
     rows.forEach(row => {
 
-        const price =
+        const lot =
             Number(
-                row.querySelector(
-                    ".layer-entry-price"
-                ).value
+                row
+                    .querySelector(
+                        ".layer-lot-size"
+                    )
+                    .value
             );
 
 
-        const lot =
+        const entry =
             Number(
-                row.querySelector(
-                    ".layer-entry-lot"
-                ).value
+                row
+                    .querySelector(
+                        ".layer-entry-price"
+                    )
+                    .value
+            );
+
+
+        const exit =
+            Number(
+                row
+                    .querySelector(
+                        ".layer-exit-price"
+                    )
+                    .value
             );
 
 
         if (
-            price > 0 &&
-            lot > 0
+            lot > 0 &&
+            entry > 0
         ) {
 
-            entries.push({
-
-                price:
-                    price,
+            layers.push({
 
                 lot:
-                    lot
+                    lot,
+
+                entry:
+                    entry,
+
+                exit:
+                    exit > 0
+                        ?
+                        exit
+                        :
+                        null
 
             });
 
@@ -399,66 +493,7 @@ function getEntryLayers() {
     });
 
 
-    return entries;
-
-}
-
-
-/* =========================================
-   READ EXIT LAYERS
-========================================= */
-
-function getExitLayers() {
-
-    const rows =
-        document.querySelectorAll(
-            ".exit-layer"
-        );
-
-
-    const exits = [];
-
-
-    rows.forEach(row => {
-
-        const price =
-            Number(
-                row.querySelector(
-                    ".layer-exit-price"
-                ).value
-            );
-
-
-        const lot =
-            Number(
-                row.querySelector(
-                    ".layer-exit-lot"
-                ).value
-            );
-
-
-        if (
-            price > 0 &&
-            lot > 0
-        ) {
-
-            exits.push({
-
-                price:
-                    price,
-
-                lot:
-                    lot
-
-            });
-
-        }
-
-    });
-
-
-    return exits;
-
+    return layers;
 }
 
 
@@ -467,13 +502,27 @@ function getExitLayers() {
 ========================================= */
 
 function weightedAverage(
-    layers
+    layers,
+    priceField
 ) {
 
+    const validLayers =
+        layers.filter(
+            layer =>
+                Number(
+                    layer[priceField]
+                ) > 0
+        );
+
+
     const totalLots =
-        layers.reduce(
-            (sum, layer) =>
-                sum + layer.lot,
+        validLayers.reduce(
+            (
+                total,
+                layer
+            ) =>
+                total +
+                layer.lot,
             0
         );
 
@@ -488,13 +537,26 @@ function weightedAverage(
 
 
     const weightedTotal =
-        layers.reduce(
-            (sum, layer) =>
-                sum +
-                (
-                    layer.price *
-                    layer.lot
-                ),
+        validLayers.reduce(
+            (
+                total,
+                layer
+            ) => {
+
+                return (
+                    total +
+                    (
+                        Number(
+                            layer[
+                                priceField
+                            ]
+                        )
+                        *
+                        layer.lot
+                    )
+                );
+
+            },
             0
         );
 
@@ -503,22 +565,31 @@ function weightedAverage(
         weightedTotal /
         totalLots
     );
-
 }
 
 
 /* =========================================
-   CALCULATE EVERYTHING
+   CALCULATE TRADE
 ========================================= */
 
 function calculateTrade() {
 
-    const entries =
-        getEntryLayers();
+    const layers =
+        getLayers();
 
 
-    const exits =
-        getExitLayers();
+    const symbol =
+        document
+            .getElementById(
+                "symbol"
+            )
+            .value;
+
+
+    const multiplier =
+        getContractMultiplier(
+            symbol
+        );
 
 
     const direction =
@@ -549,49 +620,17 @@ function calculateTrade() {
         );
 
 
-    const contractSize =
-        Number(
-            document
-                .getElementById(
-                    "contractSize"
-                )
-                .value || 100
-        );
-
-
-    const totalEntryLots =
-        entries.reduce(
-            (sum, layer) =>
-                sum + layer.lot,
-            0
-        );
-
-
-    const totalExitLots =
-        exits.reduce(
-            (sum, layer) =>
-                sum + layer.lot,
-            0
-        );
-
-
-    const remainingLots =
-        Math.max(
-            totalEntryLots -
-            totalExitLots,
-            0
-        );
-
-
     const averageEntry =
         weightedAverage(
-            entries
+            layers,
+            "entry"
         );
 
 
     const averageExit =
         weightedAverage(
-            exits
+            layers,
+            "exit"
         );
 
 
@@ -606,32 +645,42 @@ function calculateTrade() {
         stopLoss > 0
     ) {
 
-        entries.forEach(entry => {
+        layers.forEach(
+            layer => {
 
-            const priceDistance =
-                direction === "BUY"
-                    ?
-                    entry.price -
-                    stopLoss
-                    :
-                    stopLoss -
-                    entry.price;
+                const distance =
+                    Math.abs(
+                        layer.entry -
+                        stopLoss
+                    );
 
-
-            if (
-                priceDistance > 0
-            ) {
 
                 plannedRisk +=
-                    priceDistance *
-                    entry.lot *
-                    contractSize;
+                    distance
+                    *
+                    layer.lot
+                    *
+                    multiplier;
 
             }
-
-        });
+        );
 
     }
+
+
+    /* =================================
+       RISK %
+    ================================= */
+
+    const riskPercent =
+        currentCapital > 0
+            ?
+            (
+                plannedRisk /
+                currentCapital
+            ) * 100
+            :
+            0;
 
 
     /* =================================
@@ -645,33 +694,32 @@ function calculateTrade() {
         takeProfit > 0
     ) {
 
-        entries.forEach(entry => {
+        layers.forEach(
+            layer => {
 
-            const rewardDistance =
-                direction === "BUY"
-                    ?
-                    takeProfit -
-                    entry.price
-                    :
-                    entry.price -
-                    takeProfit;
+                const distance =
+                    Math.abs(
+                        takeProfit -
+                        layer.entry
+                    );
 
-
-            if (
-                rewardDistance > 0
-            ) {
 
                 plannedReward +=
-                    rewardDistance *
-                    entry.lot *
-                    contractSize;
+                    distance
+                    *
+                    layer.lot
+                    *
+                    multiplier;
 
             }
-
-        });
+        );
 
     }
 
+
+    /* =================================
+       PLANNED RR
+    ================================= */
 
     const plannedRR =
         plannedRisk > 0
@@ -684,39 +732,65 @@ function calculateTrade() {
 
     /* =================================
        ACTUAL P&L
-       
-       We match exits against entries
-       using weighted average entry.
+
+       Each exit is paired with its
+       corresponding entry and lot size.
     ================================= */
 
     let actualPnL = 0;
 
 
-    if (
-        averageEntry > 0
-    ) {
+    layers.forEach(
+        layer => {
 
-        exits.forEach(exit => {
+            if (
+                !layer.exit
+            ) {
 
-            const priceDifference =
+                return;
+
+            }
+
+
+            let movement = 0;
+
+
+            if (
                 direction === "BUY"
-                    ?
-                    exit.price -
-                    averageEntry
-                    :
-                    averageEntry -
-                    exit.price;
+            ) {
+
+                movement =
+                    layer.exit -
+                    layer.entry;
+
+            }
+
+
+            if (
+                direction === "SELL"
+            ) {
+
+                movement =
+                    layer.entry -
+                    layer.exit;
+
+            }
 
 
             actualPnL +=
-                priceDifference *
-                exit.lot *
-                contractSize;
+                movement
+                *
+                layer.lot
+                *
+                multiplier;
 
-        });
+        }
+    );
 
-    }
 
+    /* =================================
+       ACTUAL RR
+    ================================= */
 
     const actualRR =
         plannedRisk > 0
@@ -733,29 +807,32 @@ function calculateTrade() {
 
     document
         .getElementById(
-            "totalEntryLots"
+            "plannedRisk"
         )
         .textContent =
-        totalEntryLots
-            .toFixed(2);
+        money(
+            plannedRisk
+        );
 
 
     document
         .getElementById(
-            "totalExitLots"
+            "riskPercentDisplay"
         )
         .textContent =
-        totalExitLots
-            .toFixed(2);
+        riskPercent
+            .toFixed(2) +
+        "%";
 
 
     document
         .getElementById(
-            "remainingLots"
+            "plannedRR"
         )
         .textContent =
-        remainingLots
-            .toFixed(2);
+        plannedRR
+            .toFixed(2) +
+        "R";
 
 
     document
@@ -765,7 +842,8 @@ function calculateTrade() {
         .textContent =
         averageEntry > 0
             ?
-            averageEntry.toFixed(3)
+            averageEntry
+                .toFixed(3)
             :
             "-";
 
@@ -777,29 +855,10 @@ function calculateTrade() {
         .textContent =
         averageExit > 0
             ?
-            averageExit.toFixed(3)
+            averageExit
+                .toFixed(3)
             :
             "-";
-
-
-    document
-        .getElementById(
-            "plannedRisk"
-        )
-        .textContent =
-        money(
-            plannedRisk
-        );
-
-
-    document
-        .getElementById(
-            "plannedRR"
-        )
-        .textContent =
-        plannedRR
-            .toFixed(2) +
-        "R";
 
 
     document
@@ -824,20 +883,11 @@ function calculateTrade() {
 
     return {
 
-        entries:
-            entries,
+        layers:
+            layers,
 
-        exits:
-            exits,
-
-        totalEntryLots:
-            totalEntryLots,
-
-        totalExitLots:
-            totalExitLots,
-
-        remainingLots:
-            remainingLots,
+        multiplier:
+            multiplier,
 
         averageEntry:
             averageEntry,
@@ -847,6 +897,9 @@ function calculateTrade() {
 
         plannedRisk:
             plannedRisk,
+
+        riskPercent:
+            riskPercent,
 
         plannedRR:
             plannedRR,
@@ -858,7 +911,6 @@ function calculateTrade() {
             actualRR
 
     };
-
 }
 
 
@@ -867,15 +919,17 @@ function calculateTrade() {
 ========================================= */
 
 [
+    "symbol",
+    "direction",
     "stopLoss",
-    "takeProfit",
-    "contractSize",
-    "direction"
+    "takeProfit"
 ]
 .forEach(id => {
 
     document
-        .getElementById(id)
+        .getElementById(
+            id
+        )
         .addEventListener(
             "input",
             calculateTrade
@@ -885,7 +939,7 @@ function calculateTrade() {
 
 
 /* =========================================
-   UPLOAD SCREENSHOT
+   SCREENSHOT UPLOAD
 ========================================= */
 
 async function uploadScreenshot(
@@ -894,7 +948,9 @@ async function uploadScreenshot(
     userId
 ) {
 
-    if (!file) {
+    if (
+        !file
+    ) {
 
         return null;
 
@@ -917,7 +973,9 @@ async function uploadScreenshot(
         `${userId}/trades/${fileName}`;
 
 
-    const { error } =
+    const {
+        error
+    } =
         await db
             .storage
             .from(
@@ -929,7 +987,9 @@ async function uploadScreenshot(
             );
 
 
-    if (error) {
+    if (
+        error
+    ) {
 
         throw new Error(
             "Screenshot upload failed: " +
@@ -940,7 +1000,6 @@ async function uploadScreenshot(
 
 
     return filePath;
-
 }
 
 
@@ -964,6 +1023,10 @@ document
                 message.textContent =
                     "Saving trade...";
 
+
+                /* =================================
+                   LOGGED-IN USER
+                ================================= */
 
                 const {
                     data: {
@@ -989,59 +1052,55 @@ document
                 }
 
 
+                /* =================================
+                   CALCULATE TRADE
+                ================================= */
+
                 const calculations =
                     calculateTrade();
 
 
                 if (
-                    calculations.entries.length ===
+                    calculations.layers.length ===
                     0
                 ) {
 
                     message.textContent =
-                        "Add at least one valid entry.";
+                        "Add at least one trade layer.";
 
                     return;
 
                 }
+
+
+                /*
+                   Since journal entry is made
+                   only after trade is closed,
+                   require exit for every entry.
+                */
+
+                const missingExit =
+                    calculations.layers.some(
+                        layer =>
+                            !layer.exit
+                    );
 
 
                 if (
-                    calculations.totalExitLots >
-                    calculations.totalEntryLots
+                    missingExit
                 ) {
 
                     message.textContent =
-                        "Exit lots cannot be greater than entry lots.";
+                        "Please enter an exit price for every entry.";
 
                     return;
 
                 }
 
 
-                const status =
-                    document
-                        .getElementById(
-                            "tradeStatus"
-                        )
-                        .value;
-
-
-                if (
-                    status === "CLOSED" &&
-                    Math.abs(
-                        calculations.totalEntryLots -
-                        calculations.totalExitLots
-                    ) > 0.0001
-                ) {
-
-                    message.textContent =
-                        "For a CLOSED trade, entry lots and exit lots must match.";
-
-                    return;
-
-                }
-
+                /* =================================
+                   SCREENSHOTS
+                ================================= */
 
                 const beforeFile =
                     document
@@ -1076,7 +1135,7 @@ document
 
 
                 /* =================================
-                   AUTO RESULT
+                   RESULT
                 ================================= */
 
                 let result =
@@ -1106,6 +1165,23 @@ document
 
 
                 /* =================================
+                   TOTAL LOT SIZE
+                ================================= */
+
+                const totalLots =
+                    calculations.layers
+                        .reduce(
+                            (
+                                total,
+                                layer
+                            ) =>
+                                total +
+                                layer.lot,
+                            0
+                        );
+
+
+                /* =================================
                    MAIN TRADE ROW
                 ================================= */
 
@@ -1114,10 +1190,12 @@ document
                     user_id:
                         user.id,
 
+
                     account_id:
                         Number(
                             accountBox.value
                         ),
+
 
                     trade_date:
                         document
@@ -1125,6 +1203,7 @@ document
                                 "tradeDate"
                             )
                             .value,
+
 
                     symbol:
                         document
@@ -1135,6 +1214,7 @@ document
                             .trim()
                             .toUpperCase(),
 
+
                     direction:
                         document
                             .getElementById(
@@ -1142,8 +1222,10 @@ document
                             )
                             .value,
 
+
                     entry_price:
                         calculations.averageEntry,
+
 
                     stop_loss:
                         Number(
@@ -1154,6 +1236,7 @@ document
                                 .value
                         ),
 
+
                     take_profit:
                         Number(
                             document
@@ -1161,30 +1244,28 @@ document
                                     "takeProfit"
                                 )
                                 .value
-                        ) || null,
+                        ),
+
 
                     exit_price:
-                        calculations.averageExit ||
-                        null,
+                        calculations.averageExit,
+
 
                     lot_size:
-                        calculations.totalEntryLots,
+                        totalLots,
+
 
                     risk_percent:
-                        Number(
-                            document
-                                .getElementById(
-                                    "riskPercent"
-                                )
-                                .value ||
-                            0
-                        ),
+                        calculations.riskPercent,
+
 
                     profit_loss:
                         calculations.actualPnL,
 
+
                     r_multiple:
                         calculations.actualRR,
+
 
                     session:
                         document
@@ -1193,6 +1274,7 @@ document
                             )
                             .value,
 
+
                     setup:
                         document
                             .getElementById(
@@ -1200,8 +1282,10 @@ document
                             )
                             .value,
 
+
                     result:
                         result,
+
 
                     rules_followed:
                         document
@@ -1211,6 +1295,7 @@ document
                             .value ===
                         "true",
 
+
                     mistakes:
                         document
                             .getElementById(
@@ -1218,6 +1303,7 @@ document
                             )
                             .value
                             .trim(),
+
 
                     notes:
                         document
@@ -1227,40 +1313,44 @@ document
                             .value
                             .trim(),
 
+
                     before_screenshot:
                         beforePath,
+
 
                     after_screenshot:
                         afterPath,
 
+
                     contract_size:
-                        Number(
-                            document
-                                .getElementById(
-                                    "contractSize"
-                                )
-                                .value ||
-                            100
-                        ),
+                        calculations.multiplier,
+
 
                     average_entry:
                         calculations.averageEntry,
 
+
                     average_exit:
-                        calculations.averageExit ||
-                        null,
+                        calculations.averageExit,
+
 
                     planned_rr:
                         calculations.plannedRR,
 
+
                     actual_rr:
                         calculations.actualRR,
+
 
                     planned_risk:
                         calculations.plannedRisk
 
                 };
 
+
+                /* =================================
+                   SAVE MAIN TRADE
+                ================================= */
 
                 const {
                     data:
@@ -1269,7 +1359,9 @@ document
                         tradeError
                 } =
                     await db
-                        .from("trades")
+                        .from(
+                            "trades"
+                        )
                         .insert([
                             trade
                         ])
@@ -1293,23 +1385,24 @@ document
                 ================================= */
 
                 const entryRows =
-                    calculations.entries.map(
-                        entry => ({
+                    calculations.layers
+                        .map(
+                            layer => ({
 
-                            trade_id:
-                                insertedTrade.id,
+                                trade_id:
+                                    insertedTrade.id,
 
-                            user_id:
-                                user.id,
+                                user_id:
+                                    user.id,
 
-                            entry_price:
-                                entry.price,
+                                entry_price:
+                                    layer.entry,
 
-                            lot_size:
-                                entry.lot
+                                lot_size:
+                                    layer.lot
 
-                        })
-                    );
+                            })
+                        );
 
 
                 const {
@@ -1341,14 +1434,10 @@ document
                    SAVE EXIT LAYERS
                 ================================= */
 
-                if (
-                    calculations.exits.length >
-                    0
-                ) {
-
-                    const exitRows =
-                        calculations.exits.map(
-                            exit => ({
+                const exitRows =
+                    calculations.layers
+                        .map(
+                            layer => ({
 
                                 trade_id:
                                     insertedTrade.id,
@@ -1357,41 +1446,43 @@ document
                                     user.id,
 
                                 exit_price:
-                                    exit.price,
+                                    layer.exit,
 
                                 lot_size:
-                                    exit.lot
+                                    layer.lot
 
                             })
                         );
 
 
-                    const {
-                        error:
-                            exitError
-                    } =
-                        await db
-                            .from(
-                                "trade_exits"
-                            )
-                            .insert(
-                                exitRows
-                            );
-
-
-                    if (
+                const {
+                    error:
                         exitError
-                    ) {
-
-                        throw new Error(
-                            "Exit layer error: " +
-                            exitError.message
+                } =
+                    await db
+                        .from(
+                            "trade_exits"
+                        )
+                        .insert(
+                            exitRows
                         );
 
-                    }
+
+                if (
+                    exitError
+                ) {
+
+                    throw new Error(
+                        "Exit layer error: " +
+                        exitError.message
+                    );
 
                 }
 
+
+                /* =================================
+                   SUCCESS
+                ================================= */
 
                 message.textContent =
                     "Trade saved successfully!";
@@ -1404,7 +1495,7 @@ document
                             "index.html";
 
                     },
-                    800
+                    700
                 );
 
             }
@@ -1513,7 +1604,7 @@ function signedMoney(
 
 
 /* =========================================
-   TODAY
+   DEFAULT DATE
 ========================================= */
 
 document
