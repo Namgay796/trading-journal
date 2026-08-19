@@ -1,5 +1,5 @@
 const CACHE_NAME =
-    "trading-journal-v4";
+    "trading-journal-v6";
 
 
 const FILES_TO_CACHE = [
