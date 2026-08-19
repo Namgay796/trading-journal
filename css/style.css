@@ -1752,144 +1752,346 @@ th {
 ========================================= */
 
 .layer-section {
-
     background: #0d1117;
-
     border: 1px solid #30363d;
-
     padding: 18px;
-
     border-radius: 10px;
-
+    width: 100%;
+    box-sizing: border-box;
 }
-
 
 .layer-heading {
-
     display: flex;
-
     justify-content: space-between;
-
     align-items: center;
-
+    gap: 15px;
     margin-bottom: 15px;
-
 }
-
 
 .layer-heading h3 {
-
     margin: 0;
-
 }
 
+.layer-heading small {
+    display: block;
+    margin-top: 4px;
+}
 
 .layer-add-button {
-
     width: auto;
-
     background: #238636;
-
     padding: 8px 14px;
-
+    flex-shrink: 0;
 }
 
-
+/* Lot Size = smaller, Entry = equal, Exit = equal */
 .layer-row {
-
     display: grid;
-
     grid-template-columns:
-        1fr
-        1fr
-        45px;
-
+        120px
+        minmax(0, 1fr)
+        minmax(0, 1fr)
+        42px;
     gap: 10px;
-
     align-items: end;
-
-    margin-bottom: 10px;
-
+    width: 100%;
+    margin-bottom: 12px;
+    box-sizing: border-box;
 }
 
+.layer-row label {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.layer-row input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+.layer-lot-size,
+.layer-entry-price,
+.layer-exit-price {
+    width: 100%;
+    box-sizing: border-box;
+}
 
 .remove-layer {
-
     width: 42px;
-
-    height: 42px;
-
+    height: 44px;
     background: #da3633;
-
     padding: 0;
-
     font-size: 20px;
-
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
-
 
 .trade-calculations {
-
     display: grid;
-
     grid-template-columns:
-        repeat(4, 1fr);
-
+        repeat(4, minmax(0, 1fr));
     gap: 10px;
-
 }
-
 
 .trade-calculations div {
-
     background: #0d1117;
-
     border: 1px solid #30363d;
-
     border-radius: 8px;
-
     padding: 14px;
-
+    min-width: 0;
+    box-sizing: border-box;
 }
-
 
 .trade-calculations span {
-
     display: block;
-
     color: #8b949e;
-
     margin-bottom: 7px;
-
     font-size: 12px;
-
 }
-
 
 .trade-calculations strong {
-
     font-size: 18px;
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+    .layer-row {
+        grid-template-columns:
+            100px
+            minmax(0, 1fr)
+            minmax(0, 1fr)
+            42px;
+        gap: 8px;
+    }
+
+    .trade-calculations {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* =========================================
+   PHONE
+========================================= */
+
+@media (max-width: 700px) {
+    .layer-section {
+        padding: 14px;
+    }
+
+    .layer-row {
+        grid-template-columns:
+            70px
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+        gap: 8px;
+        align-items: end;
+        width: 100%;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #30363d;
+    }
+
+    .layer-row label {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .layer-row input {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        padding: 8px;
+        height: 42px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .remove-layer {
+        grid-column: 1 / -1;
+        width: 42px;
+        height: 40px;
+        margin-top: 2px;
+    }
+
+    .trade-calculations {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .trade-calculations div {
+        padding: 12px;
+    }
+
+    .trade-calculations strong {
+        font-size: 16px;
+    }
+}
+
+/* =========================================
+   VERY SMALL PHONE
+========================================= */
+
+@media (max-width: 400px) {
+    .layer-section {
+        padding: 10px;
+    }
+
+    .layer-heading {
+        gap: 8px;
+    }
+
+    .layer-add-button {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .layer-row {
+        grid-template-columns:
+            62px
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+        gap: 6px;
+    }
+
+    .layer-row label {
+        font-size: 12px;
+    }
+
+    .layer-row input {
+        padding: 6px;
+        font-size: 13px;
+    }
+}
+/* =========================================================
+   FINAL TRADE LAYER SIZE OVERRIDE
+========================================================= */
+
+#tradeLayers .trade-layer {
+    display: grid !important;
+
+    grid-template-columns:
+        110px
+        minmax(0, 1fr)
+        minmax(0, 1fr)
+        44px !important;
+
+    gap: 12px !important;
+
+    width: 100% !important;
+
+    align-items: end !important;
+}
+
+
+#tradeLayers .trade-layer label {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+
+#tradeLayers .trade-layer input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* LOT SIZE SMALL */
+
+#tradeLayers .layer-lot-size {
+    width: 100% !important;
+}
+
+
+/* ENTRY AND EXIT SAME WIDTH */
+
+#tradeLayers .layer-entry-price,
+#tradeLayers .layer-exit-price {
+    width: 100% !important;
+}
+
+
+/* DELETE */
+
+#tradeLayers .remove-layer {
+    width: 44px !important;
+    height: 44px !important;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    #tradeLayers .trade-layer {
+
+        grid-template-columns:
+            90px
+            minmax(0, 1fr)
+            minmax(0, 1fr)
+            44px !important;
+    }
 
 }
 
+
+/* =========================================================
+   PHONE
+========================================================= */
 
 @media (max-width: 700px) {
 
-    .layer-row {
+    #tradeLayers .trade-layer {
 
         grid-template-columns:
-            1fr
-            1fr
-            38px;
+            70px
+            minmax(0, 1fr)
+            minmax(0, 1fr) !important;
 
+        gap: 7px !important;
     }
 
 
-    .trade-calculations {
+    #tradeLayers .remove-layer {
 
-        grid-template-columns:
-            repeat(2, 1fr);
+        grid-column: 1 / -1 !important;
 
+        width: 44px !important;
+        height: 40px !important;
     }
 
 }
+
+
+/* VERY SMALL PHONE */
+
+@media (max-width: 390px) {
+
+    #tradeLayers .trade-layer {
+
+        grid-template-columns:
+            60px
+            minmax(0, 1fr)
+            minmax(0, 1fr) !important;
+
+        gap: 6px !important;
+    }
+
+}
+
