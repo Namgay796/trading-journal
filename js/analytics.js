@@ -31,6 +31,7 @@ let equityChart;
 let sessionChart;
 let setupChart;
 let weekdayChart;
+Chart.defaults.color = "#ffffff";
 
 Chart.register(
     ChartDataLabels
@@ -1135,131 +1136,67 @@ function createPairChart(
 
                         legend: {
 
-                            display:
-                                true,
+    display: true,
+    position: "bottom",
 
+    labels: {
 
-                            position:
-                                "bottom",
+        color: "#ffffff",
 
+        font: {
+            size: 14,
+            weight: "bold"
+        },
 
-                            labels: {
+        padding: 20,
+        usePointStyle: true,
+        pointStyle: "circle",
 
-                                color:
-                                    "#ffffff",
+        generateLabels: function(chart) {
 
+            const data = chart.data;
 
-                                padding:
-                                    18,
+            return data.labels.map(
+                (label, index) => {
 
+                    const count =
+                        Number(
+                            data.datasets[0].data[index] || 0
+                        );
 
-                                usePointStyle:
-                                    true,
+                    const percentage =
+                        totalTrades > 0
+                            ? (count / totalTrades) * 100
+                            : 0;
 
+                    return {
 
-                                pointStyle:
-                                    "circle",
+                        text:
+                            label +
+                            "  " +
+                            percentage.toFixed(1) +
+                            "%",
 
+                        fillStyle:
+                            data.datasets[0]
+                                .backgroundColor[index],
 
-                                font: {
+                        strokeStyle:
+                            data.datasets[0]
+                                .backgroundColor[index],
 
-                                    size:
-                                        13,
+                        /* IMPORTANT */
+                        fontColor: "#ffffff",
 
-                                    weight:
-                                        "bold"
-
-                                },
-
-
-                                generateLabels:
-                                    function(
-                                        chart
-                                    ) {
-
-                                        const data =
-                                            chart.data;
-
-
-                                        return data.labels.map(
-                                            (
-                                                label,
-                                                index
-                                            ) => {
-
-                                                const count =
-                                                    Number(
-                                                        data
-                                                            .datasets[0]
-                                                            .data[
-                                                                index
-                                                            ] ||
-                                                        0
-                                                    );
-
-
-                                                const percentage =
-                                                    totalTrades > 0
-                                                        ?
-                                                        (
-                                                            count /
-                                                            totalTrades
-                                                        ) *
-                                                        100
-                                                        :
-                                                        0;
-
-
-                                                return {
-
-                                                    text:
-                                                        label +
-                                                        "  " +
-                                                        percentage
-                                                            .toFixed(
-                                                                1
-                                                            ) +
-                                                        "%",
-
-
-                                                    fillStyle:
-                                                        data
-                                                            .datasets[0]
-                                                            .backgroundColor[
-                                                                index
-                                                            ],
-
-
-                                                    strokeStyle:
-                                                        data
-                                                            .datasets[0]
-                                                            .backgroundColor[
-                                                                index
-                                                            ],
-
-
-                                                    lineWidth:
-                                                        0,
-
-
-                                                    hidden:
-                                                        false,
-
-
-                                                    index:
-                                                        index
-
-                                                };
-
-                                            }
-                                        );
-
-                                    }
-
-                            }
-
-                        },
-
+                        lineWidth: 0,
+                        hidden: false,
+                        index: index
+                    };
+                }
+            );
+        }
+    }
+},
 
                         /* =================================
                            HOVER TOOLTIP
