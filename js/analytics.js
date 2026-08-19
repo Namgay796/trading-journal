@@ -37,7 +37,7 @@ Chart.register(
 );
 
 Chart.defaults.color =
-    "#cc7e7e";
+    "#ffffff";
 
 
 /* =========================================
