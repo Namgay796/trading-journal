@@ -178,61 +178,105 @@ async function loadTrade() {
 
 
 
-function showScreenshots(
-    trade
-) {
+async function showScreenshots(trade) {
 
     const box =
         document.getElementById(
             "screenshots"
         );
 
-
     let html = "";
 
 
-    if (
-        trade.before_screenshot
-    ) {
+    if (trade.before_screenshot) {
 
-        html += `
+        const {
+            data,
+            error
+        } =
+            await db
+                .storage
+                .from(
+                    "trade-screenshots"
+                )
+                .createSignedUrl(
+                    trade.before_screenshot,
+                    3600
+                );
 
-            <div class="screenshot-box">
 
-                <h3>
-                    Before Trade
-                </h3>
+        if (!error && data) {
 
-                <img
-                    src="${trade.before_screenshot}"
-                    alt="Before Trade"
-                >
+            html += `
 
-            </div>
+                <div class="screenshot-box">
 
-        `;
+                    <h3>
+                        Before Trade
+                    </h3>
+
+                    <img
+                        src="${data.signedUrl}"
+                        alt="Before Trade"
+                    >
+
+                </div>
+
+            `;
+
+        }
 
     }
 
 
-    if (
-        trade.after_screenshot
-    ) {
+    if (trade.after_screenshot) {
 
-        html += `
+        const {
+            data,
+            error
+        } =
+            await db
+                .storage
+                .from(
+                    "trade-screenshots"
+                )
+                .createSignedUrl(
+                    trade.after_screenshot,
+                    3600
+                );
 
-            <div class="screenshot-box">
 
-                <h3>
-                    After Trade
-                </h3>
+        if (!error && data) {
 
-                <img
-                    src="${trade.after_screenshot}"
-                    alt="After Trade"
-                >
+            html += `
 
-            </div>
+                <div class="screenshot-box">
+
+                    <h3>
+                        After Trade
+                    </h3>
+
+                    <img
+                        src="${data.signedUrl}"
+                        alt="After Trade"
+                    >
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+    if (!html) {
+
+        html = `
+
+            <p class="empty">
+                No screenshots for this trade.
+            </p>
 
         `;
 
@@ -241,7 +285,6 @@ function showScreenshots(
 
     box.innerHTML =
         html;
-
 }
 
 
