@@ -6,22 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="manifest" href="manifest.json">
-
     <meta name="theme-color" content="#161b22">
-
     <meta name="apple-mobile-web-app-capable" content="yes">
-
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
     <meta name="apple-mobile-web-app-title" content="Trading Journal">
 
     <title>Trading Analytics</title>
 
     <link rel="stylesheet" href="css/style.css">
-    <link
-        rel="apple-touch-icon"
-        href="icons/icon-192.png"
-    >
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,33 +23,18 @@
 <body>
 
 <header class="main-header">
-
     <div class="brand">
-
-        <a
-            href="index.html"
-            class="brand-link"
-        >
-
-            <h1>
-                Trading Journal
-            </h1>
-
+        <a href="index.html" class="brand-link">
+            <h1>Trading Journal</h1>
         </a>
 
         <span class="subtitle">
             Performance & Risk Dashboard
         </span>
-
     </div>
 
-
     <div class="header-actions">
-
-        <a
-            href="add-trade.html"
-            class="add-trade-button"
-        >
+        <a href="add-trade.html" class="add-trade-button">
             + Add Trade
         </a>
 
@@ -67,55 +45,94 @@
         >
             Logout
         </button>
-
     </div>
-
 </header>
 
 
 <nav class="main-nav">
-
-    <a href="index.html">
-        Dashboard
-    </a>
-
-    <a href="add-trade.html">
-        Add Trade
-    </a>
-
-    <a href="trades.html">
-        History
-    </a>
-
-    <a href="analytics.html">
-        Analytics
-    </a>
-
-    <a href="calendar.html">
-        Calendar
-    </a>
-
-    <a href="accounts.html">
-        Accounts
-    </a>
-
+    <a href="index.html">Dashboard</a>
+    <a href="add-trade.html">Add Trade</a>
+    <a href="trades.html">History</a>
+    <a href="analytics.html">Analytics</a>
+    <a href="calendar.html">Calendar</a>
+    <a href="accounts.html">Accounts</a>
 </nav>
-<header>
 
 
 <main>
 
-    <!-- ACCOUNT FILTER -->
+    <!-- ACCOUNT + PERIOD FILTER -->
 
-    <section class="dashboard-account">
+    <section class="analytics-filter-card">
 
-        <label>
-            Trading Account
+        <div class="analytics-filter-grid">
 
-            <select id="analyticsAccount">
-                <option>Loading...</option>
-            </select>
-        </label>
+            <label>
+                Trading Account
+
+                <select id="analyticsAccount">
+                    <option>Loading...</option>
+                </select>
+            </label>
+
+
+            <label>
+                P&L Period
+
+                <select id="periodFilter">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly" selected>Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </label>
+
+        </div>
+
+
+        <div
+            id="customDateRange"
+            class="custom-date-range"
+            hidden
+        >
+
+            <label>
+                From
+
+                <input
+                    id="customStartDate"
+                    type="date"
+                >
+            </label>
+
+
+            <label>
+                To
+
+                <input
+                    id="customEndDate"
+                    type="date"
+                >
+            </label>
+
+
+            <button
+                id="applyCustomRange"
+                type="button"
+            >
+                Apply
+            </button>
+
+        </div>
+
+
+        <div
+            id="periodDescription"
+            class="period-description"
+        >
+            Current month
+        </div>
 
     </section>
 
@@ -219,6 +236,7 @@
 <script>
     requireLogin();
 </script>
+
 <script src="js/analytics.js"></script>
 <script src="js/navigation.js"></script>
 <script src="js/pwa.js"></script>
