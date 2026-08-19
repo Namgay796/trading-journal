@@ -32,6 +32,13 @@ let sessionChart;
 let setupChart;
 let weekdayChart;
 
+Chart.register(
+    ChartDataLabels
+);
+
+Chart.defaults.color =
+    "#cc7e7e";
+
 
 /* =========================================
    LOAD ACCOUNTS
@@ -860,6 +867,10 @@ function getBestCategory(
    TRADED PAIRS PIE CHART
 ========================================= */
 
+/* =========================================
+   TRADED PAIRS PIE CHART
+========================================= */
+
 function createPairChart(
     trades
 ) {
@@ -870,9 +881,7 @@ function createPairChart(
         );
 
 
-    if (
-        !canvas
-    ) {
+    if (!canvas) {
 
         console.error(
             "pairChart canvas not found."
@@ -882,6 +891,10 @@ function createPairChart(
 
     }
 
+
+    /* =====================================
+       COUNT TRADES BY PAIR
+    ===================================== */
 
     const totals = {};
 
@@ -896,22 +909,16 @@ function createPairChart(
 
 
             if (
-                !totals[
-                    symbol
-                ]
+                !totals[symbol]
             ) {
 
-                totals[
-                    symbol
-                ] =
+                totals[symbol] =
                     0;
 
             }
 
 
-            totals[
-                symbol
-            ]++;
+            totals[symbol]++;
 
         }
     );
@@ -941,11 +948,9 @@ function createPairChart(
         );
 
 
-    console.log(
-        "Pair chart:",
-        totals
-    );
-
+    /* =====================================
+       REMOVE OLD CHART
+    ===================================== */
 
     if (
         pairChart
@@ -968,30 +973,29 @@ function createPairChart(
     }
 
 
+    /* =====================================
+       PIE COLOURS
+    ===================================== */
+
     const chartColors = [
 
         "#58a6ff",
-
         "#3fb950",
-
         "#d29922",
-
         "#f85149",
-
         "#a371f7",
-
         "#39c5cf",
-
         "#db61a2",
-
         "#8b949e",
-
         "#ff7b72",
-
         "#56d364"
 
     ];
 
+
+    /* =====================================
+       CREATE CHART
+    ===================================== */
 
     pairChart =
         new Chart(
@@ -1061,10 +1065,79 @@ function createPairChart(
 
 
                         /* =================================
-                           LEGEND WITH %
+                           TEXT DIRECTLY ON PIE
+                        ================================= */
+
+                        datalabels: {
+
+                            color:
+                                "#ffffff",
+
+
+                            font: {
+
+                                weight:
+                                    "bold",
+
+                                size:
+                                    13
+
+                            },
+
+
+                            textAlign:
+                                "center",
+
+
+                            formatter:
+                                function(
+                                    value,
+                                    context
+                                ) {
+
+                                    const percentage =
+                                        totalTrades > 0
+                                            ?
+                                            (
+                                                value /
+                                                totalTrades
+                                            ) *
+                                            100
+                                            :
+                                            0;
+
+
+                                    const symbol =
+                                        context
+                                            .chart
+                                            .data
+                                            .labels[
+                                                context.dataIndex
+                                            ];
+
+
+                                    return (
+                                        symbol +
+                                        "\n" +
+                                        percentage
+                                            .toFixed(1) +
+                                        "%"
+                                    );
+
+                                }
+
+                        },
+
+
+                        /* =================================
+                           BOTTOM LEGEND
                         ================================= */
 
                         legend: {
+
+                            display:
+                                true,
+
 
                             position:
                                 "bottom",
@@ -1073,7 +1146,7 @@ function createPairChart(
                             labels: {
 
                                 color:
-                                    "#c9d1d9",
+                                    "#ffffff",
 
 
                                 padding:
@@ -1082,6 +1155,21 @@ function createPairChart(
 
                                 usePointStyle:
                                     true,
+
+
+                                pointStyle:
+                                    "circle",
+
+
+                                font: {
+
+                                    size:
+                                        13,
+
+                                    weight:
+                                        "bold"
+
+                                },
 
 
                                 generateLabels:
@@ -1099,7 +1187,7 @@ function createPairChart(
                                                 index
                                             ) => {
 
-                                                const value =
+                                                const count =
                                                     Number(
                                                         data
                                                             .datasets[0]
@@ -1111,11 +1199,10 @@ function createPairChart(
 
 
                                                 const percentage =
-                                                    totalTrades >
-                                                    0
+                                                    totalTrades > 0
                                                         ?
                                                         (
-                                                            value /
+                                                            count /
                                                             totalTrades
                                                         ) *
                                                         100
@@ -1127,7 +1214,7 @@ function createPairChart(
 
                                                     text:
                                                         label +
-                                                        " — " +
+                                                        "  " +
                                                         percentage
                                                             .toFixed(
                                                                 1
@@ -1151,6 +1238,10 @@ function createPairChart(
                                                             ],
 
 
+                                                    lineWidth:
+                                                        0,
+
+
                                                     hidden:
                                                         false,
 
@@ -1171,7 +1262,7 @@ function createPairChart(
 
 
                         /* =================================
-                           TOOLTIP
+                           HOVER TOOLTIP
                         ================================= */
 
                         tooltip: {
@@ -1191,16 +1282,11 @@ function createPairChart(
 
 
                                         const percentage =
-                                            totalTrades >
-                                            0
-                                                ?
-                                                (
-                                                    count /
-                                                    totalTrades
-                                                ) *
-                                                100
-                                                :
-                                                0;
+                                            (
+                                                count /
+                                                totalTrades
+                                            ) *
+                                            100;
 
 
                                         return (
@@ -1208,8 +1294,7 @@ function createPairChart(
                                             ": " +
                                             count +
                                             (
-                                                count ===
-                                                1
+                                                count === 1
                                                     ?
                                                     " trade"
                                                     :
@@ -1237,7 +1322,6 @@ function createPairChart(
         );
 
 }
-
 
 /* =========================================
    EQUITY CURVE
