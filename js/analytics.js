@@ -26,16 +26,17 @@ let allTrades = [];
 
 let selectedAccount = null;
 
+
 let pairChart;
 let equityChart;
 let sessionChart;
 let setupChart;
 let weekdayChart;
-Chart.defaults.color = "#ffffff";
 
-Chart.register(
-    ChartDataLabels
-);
+
+/* =========================================
+   CHART DEFAULT TEXT
+========================================= */
 
 Chart.defaults.color =
     "#ffffff";
@@ -190,8 +191,7 @@ function parseTradeDate(
 
 
 /* =========================================
-   START OF WEEK
-   MONDAY
+   START OF WEEK - MONDAY
 ========================================= */
 
 function startOfWeek(
@@ -230,8 +230,7 @@ function startOfWeek(
 
 
 /* =========================================
-   END OF WEEK
-   SUNDAY
+   END OF WEEK - SUNDAY
 ========================================= */
 
 function endOfWeek(
@@ -262,7 +261,7 @@ function endOfWeek(
 
 
 /* =========================================
-   FORMAT DISPLAY DATE
+   DISPLAY DATE
 ========================================= */
 
 function formatDisplayDate(
@@ -272,6 +271,7 @@ function formatDisplayDate(
     return date.toLocaleDateString(
         "en-AU",
         {
+
             day:
                 "2-digit",
 
@@ -280,6 +280,7 @@ function formatDisplayDate(
 
             year:
                 "numeric"
+
         }
     );
 
@@ -399,11 +400,13 @@ function getSelectedRange() {
             now.toLocaleDateString(
                 "en-AU",
                 {
+
                     month:
                         "long",
 
                     year:
                         "numeric"
+
                 }
             );
 
@@ -515,7 +518,7 @@ function getSelectedRange() {
 
 
 /* =========================================
-   APPLY FILTER
+   APPLY PERIOD FILTER
 ========================================= */
 
 function applyPeriodFilter() {
@@ -573,10 +576,18 @@ function applyPeriodFilter() {
     );
 
 
+    /*
+       ONLY ADDITIONAL PAIR FEATURE
+    */
+
     createPairChart(
         filteredTrades
     );
 
+
+    /*
+       ORIGINAL CLEAN ANALYTICS
+    */
 
     createEquityChart(
         filteredTrades,
@@ -606,51 +617,6 @@ function applyPeriodFilter() {
 
 
 /* =========================================
-   NORMALIZE SYMBOL
-========================================= */
-
-function getSymbol(
-    trade
-) {
-
-    const symbol =
-        String(
-            trade.symbol ||
-            "Unknown"
-        )
-        .trim()
-        .toUpperCase();
-
-
-    return symbol ||
-        "UNKNOWN";
-
-}
-
-
-/* =========================================
-   GET ALL SYMBOLS
-========================================= */
-
-function getSymbols(
-    trades
-) {
-
-    return [
-        ...new Set(
-            trades.map(
-                trade =>
-                    getSymbol(
-                        trade
-                    )
-            )
-        )
-    ].sort();
-
-}
-
-
-/* =========================================
    SUMMARY
 ========================================= */
 
@@ -668,7 +634,8 @@ function updateSummary(
                 Number(
                     trade.profit_loss ||
                     0
-                ) > 0
+                ) >
+                0
         );
 
 
@@ -687,13 +654,12 @@ function updateSummary(
         );
 
 
-    /*
-       NEW layered trades:
-       actual_rr
+    /* =====================================
+       ACTUAL R
 
-       OLD trades:
-       r_multiple
-    */
+       New trades = actual_rr
+       Old trades = r_multiple
+    ===================================== */
 
     const totalR =
         trades.reduce(
@@ -865,11 +831,17 @@ function getBestCategory(
 
 
 /* =========================================
+   ADDITIONAL FEATURE
    TRADED PAIRS PIE CHART
+
+   This is completely separate from
+   the original analytics calculations.
 ========================================= */
 
 /* =========================================
    TRADED PAIRS PIE CHART
+   Permanent text inside pie only
+   No legend underneath
 ========================================= */
 
 function createPairChart(
@@ -897,29 +869,31 @@ function createPairChart(
        COUNT TRADES BY PAIR
     ===================================== */
 
-    const totals = {};
+    const pairs = {};
 
 
     trades.forEach(
         trade => {
 
             const symbol =
-                getSymbol(
-                    trade
-                );
+                String(
+                    trade.symbol ||
+                    "Unknown"
+                )
+                .trim()
+                .toUpperCase();
 
 
             if (
-                !totals[symbol]
+                !pairs[symbol]
             ) {
 
-                totals[symbol] =
-                    0;
+                pairs[symbol] = 0;
 
             }
 
 
-            totals[symbol]++;
+            pairs[symbol]++;
 
         }
     );
@@ -927,13 +901,13 @@ function createPairChart(
 
     const labels =
         Object.keys(
-            totals
+            pairs
         );
 
 
     const values =
         Object.values(
-            totals
+            pairs
         );
 
 
@@ -943,14 +917,13 @@ function createPairChart(
                 total,
                 value
             ) =>
-                total +
-                value,
+                total + value,
             0
         );
 
 
     /* =====================================
-       REMOVE OLD CHART
+       DESTROY OLD PIE
     ===================================== */
 
     if (
@@ -959,8 +932,7 @@ function createPairChart(
 
         pairChart.destroy();
 
-        pairChart =
-            null;
+        pairChart = null;
 
     }
 
@@ -978,7 +950,7 @@ function createPairChart(
        PIE COLOURS
     ===================================== */
 
-    const chartColors = [
+    const colors = [
 
         "#58a6ff",
         "#3fb950",
@@ -987,15 +959,13 @@ function createPairChart(
         "#a371f7",
         "#39c5cf",
         "#db61a2",
-        "#8b949e",
-        "#ff7b72",
-        "#56d364"
+        "#8b949e"
 
     ];
 
 
     /* =====================================
-       CREATE CHART
+       CREATE PIE
     ===================================== */
 
     pairChart =
@@ -1005,6 +975,11 @@ function createPairChart(
 
                 type:
                     "pie",
+
+
+                plugins: [
+                    ChartDataLabels
+                ],
 
 
                 data: {
@@ -1017,10 +992,6 @@ function createPairChart(
 
                         {
 
-                            label:
-                                "Trades",
-
-
                             data:
                                 values,
 
@@ -1031,9 +1002,9 @@ function createPairChart(
                                         label,
                                         index
                                     ) =>
-                                        chartColors[
+                                        colors[
                                             index %
-                                            chartColors.length
+                                            colors.length
                                         ]
                                 ),
 
@@ -1066,28 +1037,56 @@ function createPairChart(
 
 
                         /* =================================
-                           TEXT DIRECTLY ON PIE
+                           REMOVE BOTTOM LEGEND
+                        ================================= */
+
+                        legend: {
+
+                            display:
+                                false
+
+                        },
+
+
+                        /* =================================
+                           PERMANENT TEXT ON PIE
                         ================================= */
 
                         datalabels: {
+
+                            display:
+                                true,
+
 
                             color:
                                 "#ffffff",
 
 
-                            font: {
-
-                                weight:
-                                    "bold",
-
-                                size:
-                                    13
-
-                            },
-
-
                             textAlign:
                                 "center",
+
+
+                            anchor:
+                                "center",
+
+
+                            align:
+                                "center",
+
+
+                            clamp:
+                                true,
+
+
+                            font: {
+
+                                size:
+                                    14,
+
+                                weight:
+                                    "bold"
+
+                            },
 
 
                             formatter:
@@ -1102,8 +1101,7 @@ function createPairChart(
                                             (
                                                 value /
                                                 totalTrades
-                                            ) *
-                                            100
+                                            ) * 100
                                             :
                                             0;
 
@@ -1131,75 +1129,7 @@ function createPairChart(
 
 
                         /* =================================
-                           BOTTOM LEGEND
-                        ================================= */
-
-                        legend: {
-
-    display: true,
-    position: "bottom",
-
-    labels: {
-
-        color: "#ffffff",
-
-        font: {
-            size: 14,
-            weight: "bold"
-        },
-
-        padding: 20,
-        usePointStyle: true,
-        pointStyle: "circle",
-
-        generateLabels: function(chart) {
-
-            const data = chart.data;
-
-            return data.labels.map(
-                (label, index) => {
-
-                    const count =
-                        Number(
-                            data.datasets[0].data[index] || 0
-                        );
-
-                    const percentage =
-                        totalTrades > 0
-                            ? (count / totalTrades) * 100
-                            : 0;
-
-                    return {
-
-                        text:
-                            label +
-                            "  " +
-                            percentage.toFixed(1) +
-                            "%",
-
-                        fillStyle:
-                            data.datasets[0]
-                                .backgroundColor[index],
-
-                        strokeStyle:
-                            data.datasets[0]
-                                .backgroundColor[index],
-
-                        /* IMPORTANT */
-                        fontColor: "#ffffff",
-
-                        lineWidth: 0,
-                        hidden: false,
-                        index: index
-                    };
-                }
-            );
-        }
-    }
-},
-
-                        /* =================================
-                           HOVER TOOLTIP
+                           TOOLTIP STILL AVAILABLE
                         ================================= */
 
                         tooltip: {
@@ -1219,11 +1149,14 @@ function createPairChart(
 
 
                                         const percentage =
-                                            (
-                                                count /
-                                                totalTrades
-                                            ) *
-                                            100;
+                                            totalTrades > 0
+                                                ?
+                                                (
+                                                    count /
+                                                    totalTrades
+                                                ) * 100
+                                                :
+                                                0;
 
 
                                         return (
@@ -1239,9 +1172,7 @@ function createPairChart(
                                             ) +
                                             " (" +
                                             percentage
-                                                .toFixed(
-                                                    1
-                                                ) +
+                                                .toFixed(1) +
                                             "%)"
                                         );
 
@@ -1261,7 +1192,7 @@ function createPairChart(
 }
 
 /* =========================================
-   EQUITY CURVE
+   ORIGINAL EQUITY CURVE
 ========================================= */
 
 function createEquityChart(
@@ -1274,12 +1205,13 @@ function createEquityChart(
 
 
     /*
-       Calculate balance before
-       selected period
+       Find account balance before
+       selected period.
     */
 
     if (
-        trades.length > 0
+        trades.length >
+        0
     ) {
 
         const firstDate =
@@ -1343,10 +1275,6 @@ function createEquityChart(
 
 
             labels.push(
-                getSymbol(
-                    trade
-                ) +
-                " • " +
                 trade.trade_date +
                 " #" +
                 (
@@ -1430,26 +1358,31 @@ function createEquityChart(
 
 
 /* =========================================
-   P&L BY SESSION + PAIR
+   ORIGINAL P&L BY SESSION
+
+   NOT separated by trading pair.
 ========================================= */
 
 function createSessionChart(
     trades
 ) {
 
-    const sessions =
-        [
-            "Asian",
-            "London",
-            "London/NY Overlap",
-            "New York"
-        ];
+    const sessions = {
 
+        "Asian":
+            0,
 
-    /*
-       Keep old/other session values
-       if present
-    */
+        "London":
+            0,
+
+        "London/NY Overlap":
+            0,
+
+        "New York":
+            0
+
+    };
+
 
     trades.forEach(
         trade => {
@@ -1460,78 +1393,30 @@ function createSessionChart(
 
 
             if (
-                !sessions.includes(
+                sessions[
                     session
-                )
+                ] ===
+                undefined
             ) {
 
-                sessions.push(
+                sessions[
                     session
-                );
+                ] =
+                    0;
 
             }
+
+
+            sessions[
+                session
+            ] +=
+                Number(
+                    trade.profit_loss ||
+                    0
+                );
 
         }
     );
-
-
-    const symbols =
-        getSymbols(
-            trades
-        );
-
-
-    const datasets =
-        symbols.map(
-            symbol => {
-
-                const data =
-                    sessions.map(
-                        session => {
-
-                            return trades
-                                .filter(
-                                    trade =>
-                                        getSymbol(
-                                            trade
-                                        ) ===
-                                        symbol
-                                        &&
-                                        (
-                                            trade.session ||
-                                            "Unknown"
-                                        ) ===
-                                        session
-                                )
-                                .reduce(
-                                    (
-                                        total,
-                                        trade
-                                    ) =>
-                                        total +
-                                        Number(
-                                            trade.profit_loss ||
-                                            0
-                                        ),
-                                    0
-                                );
-
-                        }
-                    );
-
-
-                return {
-
-                    label:
-                        symbol,
-
-                    data:
-                        data
-
-                };
-
-            }
-        );
 
 
     if (
@@ -1557,11 +1442,27 @@ function createSessionChart(
                 data: {
 
                     labels:
-                        sessions,
+                        Object.keys(
+                            sessions
+                        ),
 
 
-                    datasets:
-                        datasets
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Net P&L ($)",
+
+
+                            data:
+                                Object.values(
+                                    sessions
+                                )
+
+                        }
+
+                    ]
 
                 },
 
@@ -1576,44 +1477,12 @@ function createSessionChart(
                         false,
 
 
-                    interaction: {
-
-                        mode:
-                            "index",
-
-
-                        intersect:
-                            false
-
-                    },
-
-
                     plugins: {
 
                         legend: {
 
-                            position:
-                                "bottom"
-
-                        }
-
-                    },
-
-
-                    scales: {
-
-                        x: {
-
-                            stacked:
-                                false
-
-                        },
-
-
-                        y: {
-
-                            stacked:
-                                false
+                            display:
+                                true
 
                         }
 
@@ -1628,94 +1497,92 @@ function createSessionChart(
 
 
 /* =========================================
-   WIN RATE BY SETUP + PAIR
+   ORIGINAL WIN RATE BY SETUP
+
+   A++
+   A+
+   A
 ========================================= */
 
 function createSetupChart(
     trades
 ) {
 
-    const setups =
-        [
-            ...new Set(
-                trades.map(
-                    trade =>
-                        trade.setup ||
-                        "Unknown"
-                )
-            )
-        ];
+    const setups = {};
 
 
-    const symbols =
-        getSymbols(
-            trades
+    trades.forEach(
+        trade => {
+
+            const setup =
+                trade.setup ||
+                "Unknown";
+
+
+            if (
+                !setups[
+                    setup
+                ]
+            ) {
+
+                setups[
+                    setup
+                ] = {
+
+                    wins:
+                        0,
+
+                    total:
+                        0
+
+                };
+
+            }
+
+
+            setups[
+                setup
+            ].total++;
+
+
+            if (
+                Number(
+                    trade.profit_loss ||
+                    0
+                ) >
+                0
+            ) {
+
+                setups[
+                    setup
+                ].wins++;
+
+            }
+
+        }
+    );
+
+
+    const labels =
+        Object.keys(
+            setups
         );
 
 
-    const datasets =
-        symbols.map(
-            symbol => {
+    const winRates =
+        labels.map(
+            setup => {
 
-                const data =
-                    setups.map(
-                        setup => {
-
-                            const pairTrades =
-                                trades.filter(
-                                    trade =>
-                                        getSymbol(
-                                            trade
-                                        ) ===
-                                        symbol
-                                        &&
-                                        (
-                                            trade.setup ||
-                                            "Unknown"
-                                        ) ===
-                                        setup
-                                );
+                const item =
+                    setups[
+                        setup
+                    ];
 
 
-                            if (
-                                pairTrades.length ===
-                                0
-                            ) {
-
-                                return 0;
-
-                            }
-
-
-                            const wins =
-                                pairTrades.filter(
-                                    trade =>
-                                        Number(
-                                            trade.profit_loss ||
-                                            0
-                                        ) >
-                                        0
-                                ).length;
-
-
-                            return (
-                                wins /
-                                pairTrades.length
-                            ) * 100;
-
-                        }
-                    );
-
-
-                return {
-
-                    label:
-                        symbol,
-
-                    data:
-                        data
-
-                };
+                return (
+                    item.wins /
+                    item.total
+                ) * 100;
 
             }
         );
@@ -1744,11 +1611,23 @@ function createSetupChart(
                 data: {
 
                     labels:
-                        setups,
+                        labels,
 
 
-                    datasets:
-                        datasets
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Win Rate",
+
+
+                            data:
+                                winRates
+
+                        }
+
+                    ]
 
                 },
 
@@ -1763,24 +1642,30 @@ function createSetupChart(
                         false,
 
 
-                    interaction: {
-
-                        mode:
-                            "index",
-
-
-                        intersect:
-                            false
-
-                    },
-
-
                     plugins: {
 
-                        legend: {
+                        tooltip: {
 
-                            position:
-                                "bottom"
+                            callbacks: {
+
+                                label:
+                                    function(
+                                        context
+                                    ) {
+
+                                        return (
+                                            "Win Rate: " +
+                                            Number(
+                                                context.raw
+                                            ).toFixed(
+                                                1
+                                            ) +
+                                            "%"
+                                        );
+
+                                    }
+
+                            }
 
                         }
 
@@ -1796,7 +1681,24 @@ function createSetupChart(
 
 
                             max:
-                                100
+                                100,
+
+
+                            ticks: {
+
+                                callback:
+                                    function(
+                                        value
+                                    ) {
+
+                                        return (
+                                            value +
+                                            "%"
+                                        );
+
+                                    }
+
+                            }
 
                         }
 
@@ -1811,108 +1713,72 @@ function createSetupChart(
 
 
 /* =========================================
-   P&L BY WEEKDAY + PAIR
+   ORIGINAL P&L BY WEEKDAY
+
+   NOT separated by pair.
 ========================================= */
 
 function createWeekdayChart(
     trades
 ) {
 
-    const weekdays =
-        [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday"
-        ];
+    const weekdays = {
+
+        Monday:
+            0,
+
+        Tuesday:
+            0,
+
+        Wednesday:
+            0,
+
+        Thursday:
+            0,
+
+        Friday:
+            0,
+
+        Saturday:
+            0,
+
+        Sunday:
+            0
+
+    };
 
 
-    const symbols =
-        getSymbols(
-            trades
-        );
+    trades.forEach(
+        trade => {
+
+            const date =
+                parseTradeDate(
+                    trade.trade_date
+                );
 
 
-    const datasets =
-        symbols.map(
-            symbol => {
+            const day =
+                date.toLocaleDateString(
+                    "en-US",
+                    {
 
-                const data =
-                    weekdays.map(
-                        weekday => {
+                        weekday:
+                            "long"
 
-                            return trades
-                                .filter(
-                                    trade => {
-
-                                        if (
-                                            getSymbol(
-                                                trade
-                                            ) !==
-                                            symbol
-                                        ) {
-
-                                            return false;
-
-                                        }
+                    }
+                );
 
 
-                                        const date =
-                                            parseTradeDate(
-                                                trade.trade_date
-                                            );
+            weekdays[
+                day
+            ] +=
+                Number(
+                    trade.profit_loss ||
+                    0
+                );
 
-
-                                        const day =
-                                            date
-                                                .toLocaleDateString(
-                                                    "en-US",
-                                                    {
-                                                        weekday:
-                                                            "long"
-                                                    }
-                                                );
-
-
-                                        return (
-                                            day ===
-                                            weekday
-                                        );
-
-                                    }
-                                )
-                                .reduce(
-                                    (
-                                        total,
-                                        trade
-                                    ) =>
-                                        total +
-                                        Number(
-                                            trade.profit_loss ||
-                                            0
-                                        ),
-                                    0
-                                );
-
-                        }
-                    );
-
-
-                return {
-
-                    label:
-                        symbol,
-
-                    data:
-                        data
-
-                };
-
-            }
-        );
+        }
+    );
 
 
     if (
@@ -1938,11 +1804,27 @@ function createWeekdayChart(
                 data: {
 
                     labels:
-                        weekdays,
+                        Object.keys(
+                            weekdays
+                        ),
 
 
-                    datasets:
-                        datasets
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Net P&L ($)",
+
+
+                            data:
+                                Object.values(
+                                    weekdays
+                                )
+
+                        }
+
+                    ]
 
                 },
 
@@ -1954,31 +1836,7 @@ function createWeekdayChart(
 
 
                     maintainAspectRatio:
-                        false,
-
-
-                    interaction: {
-
-                        mode:
-                            "index",
-
-
-                        intersect:
-                            false
-
-                    },
-
-
-                    plugins: {
-
-                        legend: {
-
-                            position:
-                                "bottom"
-
-                        }
-
-                    }
+                        false
 
                 }
 
@@ -1989,7 +1847,7 @@ function createWeekdayChart(
 
 
 /* =========================================
-   MONEY FORMAT
+   MONEY
 ========================================= */
 
 function signedMoney(
@@ -2017,7 +1875,6 @@ function signedMoney(
                         minimumFractionDigits:
                             2,
 
-
                         maximumFractionDigits:
                             2
 
@@ -2042,7 +1899,6 @@ function signedMoney(
 
                     minimumFractionDigits:
                         2,
-
 
                     maximumFractionDigits:
                         2
@@ -2094,7 +1950,7 @@ analyticsAccount
 
 
 /* =========================================
-   PERIOD SELECTOR
+   PERIOD CHANGE
 ========================================= */
 
 periodFilter
