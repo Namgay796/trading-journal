@@ -5,6 +5,9 @@ const message =
     document.getElementById("message");
 
 
+let currentAccount = null;
+
+
 /* =========================================
    LOAD ACCOUNTS
 ========================================= */
@@ -12,10 +15,13 @@ const message =
 async function loadAccounts() {
 
     message.textContent =
-        "Connecting to Supabase...";
+        "Loading accounts...";
 
 
-    const { data, error } =
+    const {
+        data,
+        error
+    } =
         await db
             .from("accounts")
             .select("*")
@@ -27,17 +33,8 @@ async function loadAccounts() {
         console.error(error);
 
         message.textContent =
-            "ERROR: " + error.message;
-
-        return;
-
-    }
-
-
-    if (!data || data.length === 0) {
-
-        message.textContent =
-            "No accounts found.";
+            "ERROR: " +
+            error.message;
 
         return;
 
@@ -47,10 +44,25 @@ async function loadAccounts() {
     accountBox.innerHTML = "";
 
 
+    if (
+        !data ||
+        data.length === 0
+    ) {
+
+        message.textContent =
+            "No trading accounts found.";
+
+        return;
+
+    }
+
+
     data.forEach(account => {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
 
         option.value =
@@ -61,105 +73,815 @@ async function loadAccounts() {
             account.name +
             " ($" +
             Number(
-                account.starting_balance
+                account.starting_balance || 0
             ).toFixed(2) +
             ")";
 
 
-        accountBox.appendChild(option);
+        accountBox.appendChild(
+            option
+        );
 
     });
 
 
+    currentAccount =
+        data[0];
+
+
+    accountBox.dataset.accounts =
+        JSON.stringify(data);
+
+
     message.textContent =
-        "Connected to Supabase.";
+        "Ready.";
 
 }
 
 
-
 /* =========================================
-   CALCULATE RR
+   ACCOUNT CHANGE
 ========================================= */
 
-function calculateRR() {
+accountBox.addEventListener(
+    "change",
+    function() {
 
-    const entry =
-        Number(
-            document
-                .getElementById("entry")
-                .value
+        const accounts =
+            JSON.parse(
+                accountBox.dataset.accounts ||
+                "[]"
+            );
+
+
+        currentAccount =
+            accounts.find(
+                account =>
+                    Number(account.id) ===
+                    Number(accountBox.value)
+            ) || null;
+
+
+        calculateTrade();
+
+    }
+);
+
+
+/* =========================================
+   ADD ENTRY LAYER
+========================================= */
+
+document
+    .getElementById(
+        "addEntryLayer"
+    )
+    .addEventListener(
+        "click",
+        function() {
+
+            const container =
+                document.getElementById(
+                    "entryLayers"
+                );
+
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "layer-row entry-layer";
+
+
+            row.innerHTML = `
+
+                <label>
+
+                    Entry Price
+
+                    <input
+                        class="layer-entry-price"
+                        type="number"
+                        step="any"
+                        required
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Lot Size
+
+                    <input
+                        class="layer-entry-lot"
+                        type="number"
+                        step="0.01"
+                        required
+                    >
+
+                </label>
+
+
+                <button
+                    type="button"
+                    class="remove-layer"
+                >
+                    ×
+                </button>
+
+            `;
+
+
+            container.appendChild(
+                row
+            );
+
+
+            attachLayerEvents();
+
+        }
+    );
+
+
+/* =========================================
+   ADD EXIT LAYER
+========================================= */
+
+document
+    .getElementById(
+        "addExitLayer"
+    )
+    .addEventListener(
+        "click",
+        function() {
+
+            const container =
+                document.getElementById(
+                    "exitLayers"
+                );
+
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "layer-row exit-layer";
+
+
+            row.innerHTML = `
+
+                <label>
+
+                    Exit Price
+
+                    <input
+                        class="layer-exit-price"
+                        type="number"
+                        step="any"
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Lot Size
+
+                    <input
+                        class="layer-exit-lot"
+                        type="number"
+                        step="0.01"
+                    >
+
+                </label>
+
+
+                <button
+                    type="button"
+                    class="remove-layer"
+                >
+                    ×
+                </button>
+
+            `;
+
+
+            container.appendChild(
+                row
+            );
+
+
+            attachLayerEvents();
+
+        }
+    );
+
+
+/* =========================================
+   REMOVE LAYERS + INPUT EVENTS
+========================================= */
+
+function attachLayerEvents() {
+
+    document
+        .querySelectorAll(
+            ".remove-layer"
+        )
+        .forEach(button => {
+
+            button.onclick =
+                function() {
+
+                    const row =
+                        button.closest(
+                            ".layer-row"
+                        );
+
+
+                    const parent =
+                        row.parentElement;
+
+
+                    if (
+                        parent.querySelectorAll(
+                            ".layer-row"
+                        ).length <= 1
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    row.remove();
+
+                    calculateTrade();
+
+                };
+
+        });
+
+
+    document
+        .querySelectorAll(
+            ".layer-entry-price, " +
+            ".layer-entry-lot, " +
+            ".layer-exit-price, " +
+            ".layer-exit-lot"
+        )
+        .forEach(input => {
+
+            input.oninput =
+                calculateTrade;
+
+        });
+
+}
+
+
+/* =========================================
+   READ ENTRY LAYERS
+========================================= */
+
+function getEntryLayers() {
+
+    const rows =
+        document.querySelectorAll(
+            ".entry-layer"
         );
 
 
-    const stop =
-        Number(
-            document
-                .getElementById("stopLoss")
-                .value
+    const entries = [];
+
+
+    rows.forEach(row => {
+
+        const price =
+            Number(
+                row.querySelector(
+                    ".layer-entry-price"
+                ).value
+            );
+
+
+        const lot =
+            Number(
+                row.querySelector(
+                    ".layer-entry-lot"
+                ).value
+            );
+
+
+        if (
+            price > 0 &&
+            lot > 0
+        ) {
+
+            entries.push({
+
+                price:
+                    price,
+
+                lot:
+                    lot
+
+            });
+
+        }
+
+    });
+
+
+    return entries;
+
+}
+
+
+/* =========================================
+   READ EXIT LAYERS
+========================================= */
+
+function getExitLayers() {
+
+    const rows =
+        document.querySelectorAll(
+            ".exit-layer"
         );
 
 
-    const target =
-        Number(
-            document
-                .getElementById("takeProfit")
-                .value
+    const exits = [];
+
+
+    rows.forEach(row => {
+
+        const price =
+            Number(
+                row.querySelector(
+                    ".layer-exit-price"
+                ).value
+            );
+
+
+        const lot =
+            Number(
+                row.querySelector(
+                    ".layer-exit-lot"
+                ).value
+            );
+
+
+        if (
+            price > 0 &&
+            lot > 0
+        ) {
+
+            exits.push({
+
+                price:
+                    price,
+
+                lot:
+                    lot
+
+            });
+
+        }
+
+    });
+
+
+    return exits;
+
+}
+
+
+/* =========================================
+   WEIGHTED AVERAGE
+========================================= */
+
+function weightedAverage(
+    layers
+) {
+
+    const totalLots =
+        layers.reduce(
+            (sum, layer) =>
+                sum + layer.lot,
+            0
         );
 
 
     if (
-        !entry ||
-        !stop ||
-        !target
+        totalLots <= 0
     ) {
 
-        document
-            .getElementById("rr")
-            .textContent =
-            "0";
-
-        return;
+        return 0;
 
     }
 
 
-    const risk =
-        Math.abs(
-            entry - stop
+    const weightedTotal =
+        layers.reduce(
+            (sum, layer) =>
+                sum +
+                (
+                    layer.price *
+                    layer.lot
+                ),
+            0
         );
 
 
-    const reward =
-        Math.abs(
-            target - entry
-        );
-
-
-    if (risk === 0) {
-
-        document
-            .getElementById("rr")
-            .textContent =
-            "0";
-
-        return;
-
-    }
-
-
-    const rr =
-        reward / risk;
-
-
-    document
-        .getElementById("rr")
-        .textContent =
-        "1:" +
-        rr.toFixed(2);
+    return (
+        weightedTotal /
+        totalLots
+    );
 
 }
 
+
+/* =========================================
+   CALCULATE EVERYTHING
+========================================= */
+
+function calculateTrade() {
+
+    const entries =
+        getEntryLayers();
+
+
+    const exits =
+        getExitLayers();
+
+
+    const direction =
+        document
+            .getElementById(
+                "direction"
+            )
+            .value;
+
+
+    const stopLoss =
+        Number(
+            document
+                .getElementById(
+                    "stopLoss"
+                )
+                .value
+        );
+
+
+    const takeProfit =
+        Number(
+            document
+                .getElementById(
+                    "takeProfit"
+                )
+                .value
+        );
+
+
+    const contractSize =
+        Number(
+            document
+                .getElementById(
+                    "contractSize"
+                )
+                .value || 100
+        );
+
+
+    const totalEntryLots =
+        entries.reduce(
+            (sum, layer) =>
+                sum + layer.lot,
+            0
+        );
+
+
+    const totalExitLots =
+        exits.reduce(
+            (sum, layer) =>
+                sum + layer.lot,
+            0
+        );
+
+
+    const remainingLots =
+        Math.max(
+            totalEntryLots -
+            totalExitLots,
+            0
+        );
+
+
+    const averageEntry =
+        weightedAverage(
+            entries
+        );
+
+
+    const averageExit =
+        weightedAverage(
+            exits
+        );
+
+
+    /* =================================
+       PLANNED RISK
+    ================================= */
+
+    let plannedRisk = 0;
+
+
+    if (
+        stopLoss > 0
+    ) {
+
+        entries.forEach(entry => {
+
+            const priceDistance =
+                direction === "BUY"
+                    ?
+                    entry.price -
+                    stopLoss
+                    :
+                    stopLoss -
+                    entry.price;
+
+
+            if (
+                priceDistance > 0
+            ) {
+
+                plannedRisk +=
+                    priceDistance *
+                    entry.lot *
+                    contractSize;
+
+            }
+
+        });
+
+    }
+
+
+    /* =================================
+       PLANNED REWARD
+    ================================= */
+
+    let plannedReward = 0;
+
+
+    if (
+        takeProfit > 0
+    ) {
+
+        entries.forEach(entry => {
+
+            const rewardDistance =
+                direction === "BUY"
+                    ?
+                    takeProfit -
+                    entry.price
+                    :
+                    entry.price -
+                    takeProfit;
+
+
+            if (
+                rewardDistance > 0
+            ) {
+
+                plannedReward +=
+                    rewardDistance *
+                    entry.lot *
+                    contractSize;
+
+            }
+
+        });
+
+    }
+
+
+    const plannedRR =
+        plannedRisk > 0
+            ?
+            plannedReward /
+            plannedRisk
+            :
+            0;
+
+
+    /* =================================
+       ACTUAL P&L
+       
+       We match exits against entries
+       using weighted average entry.
+    ================================= */
+
+    let actualPnL = 0;
+
+
+    if (
+        averageEntry > 0
+    ) {
+
+        exits.forEach(exit => {
+
+            const priceDifference =
+                direction === "BUY"
+                    ?
+                    exit.price -
+                    averageEntry
+                    :
+                    averageEntry -
+                    exit.price;
+
+
+            actualPnL +=
+                priceDifference *
+                exit.lot *
+                contractSize;
+
+        });
+
+    }
+
+
+    const actualRR =
+        plannedRisk > 0
+            ?
+            actualPnL /
+            plannedRisk
+            :
+            0;
+
+
+    /* =================================
+       DISPLAY
+    ================================= */
+
+    document
+        .getElementById(
+            "totalEntryLots"
+        )
+        .textContent =
+        totalEntryLots
+            .toFixed(2);
+
+
+    document
+        .getElementById(
+            "totalExitLots"
+        )
+        .textContent =
+        totalExitLots
+            .toFixed(2);
+
+
+    document
+        .getElementById(
+            "remainingLots"
+        )
+        .textContent =
+        remainingLots
+            .toFixed(2);
+
+
+    document
+        .getElementById(
+            "averageEntry"
+        )
+        .textContent =
+        averageEntry > 0
+            ?
+            averageEntry.toFixed(3)
+            :
+            "-";
+
+
+    document
+        .getElementById(
+            "averageExit"
+        )
+        .textContent =
+        averageExit > 0
+            ?
+            averageExit.toFixed(3)
+            :
+            "-";
+
+
+    document
+        .getElementById(
+            "plannedRisk"
+        )
+        .textContent =
+        money(
+            plannedRisk
+        );
+
+
+    document
+        .getElementById(
+            "plannedRR"
+        )
+        .textContent =
+        plannedRR
+            .toFixed(2) +
+        "R";
+
+
+    document
+        .getElementById(
+            "calculatedPnL"
+        )
+        .textContent =
+        signedMoney(
+            actualPnL
+        );
+
+
+    document
+        .getElementById(
+            "actualRR"
+        )
+        .textContent =
+        actualRR
+            .toFixed(2) +
+        "R";
+
+
+    return {
+
+        entries:
+            entries,
+
+        exits:
+            exits,
+
+        totalEntryLots:
+            totalEntryLots,
+
+        totalExitLots:
+            totalExitLots,
+
+        remainingLots:
+            remainingLots,
+
+        averageEntry:
+            averageEntry,
+
+        averageExit:
+            averageExit,
+
+        plannedRisk:
+            plannedRisk,
+
+        plannedRR:
+            plannedRR,
+
+        actualPnL:
+            actualPnL,
+
+        actualRR:
+            actualRR
+
+    };
+
+}
+
+
+/* =========================================
+   GENERAL CALCULATION EVENTS
+========================================= */
+
+[
+    "stopLoss",
+    "takeProfit",
+    "contractSize",
+    "direction"
+]
+.forEach(id => {
+
+    document
+        .getElementById(id)
+        .addEventListener(
+            "input",
+            calculateTrade
+        );
+
+});
 
 
 /* =========================================
@@ -209,8 +931,6 @@ async function uploadScreenshot(
 
     if (error) {
 
-        console.error(error);
-
         throw new Error(
             "Screenshot upload failed: " +
             error.message
@@ -220,50 +940,8 @@ async function uploadScreenshot(
 
 
     return filePath;
+
 }
-
-
-
-/* =========================================
-   RR EVENT LISTENERS
-========================================= */
-
-document
-    .getElementById("entry")
-    .addEventListener(
-        "input",
-        calculateRR
-    );
-
-
-document
-    .getElementById("stopLoss")
-    .addEventListener(
-        "input",
-        calculateRR
-    );
-
-
-document
-    .getElementById("takeProfit")
-    .addEventListener(
-        "input",
-        calculateRR
-    );
-
-
-
-/* =========================================
-   TODAY'S DATE
-========================================= */
-
-document
-    .getElementById("tradeDate")
-    .value =
-    new Date()
-        .toISOString()
-        .slice(0, 10);
-
 
 
 /* =========================================
@@ -271,7 +949,9 @@ document
 ========================================= */
 
 document
-    .getElementById("tradeForm")
+    .getElementById(
+        "tradeForm"
+    )
     .addEventListener(
         "submit",
         async function(event) {
@@ -282,18 +962,15 @@ document
             try {
 
                 message.textContent =
-                    "Checking login...";
+                    "Saving trade...";
 
-
-                /* ---------------------------------
-                   GET LOGGED-IN USER
-                --------------------------------- */
 
                 const {
                     data: {
                         user
                     },
-                    error: userError
+                    error:
+                        userError
                 } =
                     await db.auth
                         .getUser();
@@ -304,11 +981,6 @@ document
                     !user
                 ) {
 
-                    console.error(
-                        userError
-                    );
-
-
                     message.textContent =
                         "You are not logged in.";
 
@@ -317,181 +989,77 @@ document
                 }
 
 
-
-                /* ---------------------------------
-                   BASIC VALUES
-                --------------------------------- */
-
-                const entry =
-                    Number(
-                        document
-                            .getElementById("entry")
-                            .value
-                    );
-
-
-                const stop =
-                    Number(
-                        document
-                            .getElementById("stopLoss")
-                            .value
-                    );
-
-
-                const takeProfitValue =
-                    document
-                        .getElementById(
-                            "takeProfit"
-                        )
-                        .value;
-
-
-                const exitValue =
-                    document
-                        .getElementById(
-                            "exitPrice"
-                        )
-                        .value;
-
-
-                const lotSizeValue =
-                    document
-                        .getElementById(
-                            "lotSize"
-                        )
-                        .value;
-
-
-                const target =
-                    takeProfitValue
-                        ?
-                        Number(
-                            takeProfitValue
-                        )
-                        :
-                        null;
-
-
-                const exit =
-                    exitValue
-                        ?
-                        Number(
-                            exitValue
-                        )
-                        :
-                        null;
-
-
-                const lotSize =
-                    lotSizeValue
-                        ?
-                        Number(
-                            lotSizeValue
-                        )
-                        :
-                        null;
-
-
-
-                /* ---------------------------------
-                   CALCULATE R MULTIPLE
-                --------------------------------- */
-
-                let rMultiple = 0;
+                const calculations =
+                    calculateTrade();
 
 
                 if (
-                    entry &&
-                    stop &&
-                    exit !== null
+                    calculations.entries.length ===
+                    0
                 ) {
 
-                    const risk =
-                        Math.abs(
-                            entry - stop
-                        );
+                    message.textContent =
+                        "Add at least one valid entry.";
 
-
-                    if (risk > 0) {
-
-                        const direction =
-                            document
-                                .getElementById(
-                                    "direction"
-                                )
-                                .value;
-
-
-                        if (
-                            direction ===
-                            "BUY"
-                        ) {
-
-                            rMultiple =
-                                (
-                                    exit -
-                                    entry
-                                )
-                                /
-                                risk;
-
-                        } else {
-
-                            rMultiple =
-                                (
-                                    entry -
-                                    exit
-                                )
-                                /
-                                risk;
-
-                        }
-
-                    }
+                    return;
 
                 }
 
 
+                if (
+                    calculations.totalExitLots >
+                    calculations.totalEntryLots
+                ) {
 
-                /* ---------------------------------
-                   SCREENSHOTS
-                --------------------------------- */
+                    message.textContent =
+                        "Exit lots cannot be greater than entry lots.";
 
-                const beforeInput =
+                    return;
+
+                }
+
+
+                const status =
                     document
                         .getElementById(
-                            "beforeScreenshot"
-                        );
+                            "tradeStatus"
+                        )
+                        .value;
 
 
-                const afterInput =
-                    document
-                        .getElementById(
-                            "afterScreenshot"
-                        );
+                if (
+                    status === "CLOSED" &&
+                    Math.abs(
+                        calculations.totalEntryLots -
+                        calculations.totalExitLots
+                    ) > 0.0001
+                ) {
+
+                    message.textContent =
+                        "For a CLOSED trade, entry lots and exit lots must match.";
+
+                    return;
+
+                }
 
 
                 const beforeFile =
-                    beforeInput
-                        ?
-                        beforeInput.files[0]
-                        :
-                        null;
+                    document
+                        .getElementById(
+                            "beforeScreenshot"
+                        )
+                        .files[0];
 
 
                 const afterFile =
-                    afterInput
-                        ?
-                        afterInput.files[0]
-                        :
-                        null;
+                    document
+                        .getElementById(
+                            "afterScreenshot"
+                        )
+                        .files[0];
 
 
-                message.textContent =
-                    "Uploading screenshots...";
-
-
-                const beforeScreenshotURL =
+                const beforePath =
                     await uploadScreenshot(
                         beforeFile,
                         "before",
@@ -499,7 +1067,7 @@ document
                     );
 
 
-                const afterScreenshotURL =
+                const afterPath =
                     await uploadScreenshot(
                         afterFile,
                         "after",
@@ -507,22 +1075,49 @@ document
                     );
 
 
+                /* =================================
+                   AUTO RESULT
+                ================================= */
 
-                /* ---------------------------------
-                   TRADE OBJECT
-                --------------------------------- */
+                let result =
+                    "BE";
+
+
+                if (
+                    calculations.actualPnL >
+                    0
+                ) {
+
+                    result =
+                        "Win";
+
+                }
+
+
+                if (
+                    calculations.actualPnL <
+                    0
+                ) {
+
+                    result =
+                        "Loss";
+
+                }
+
+
+                /* =================================
+                   MAIN TRADE ROW
+                ================================= */
 
                 const trade = {
 
                     user_id:
                         user.id,
 
-
                     account_id:
                         Number(
                             accountBox.value
                         ),
-
 
                     trade_date:
                         document
@@ -530,7 +1125,6 @@ document
                                 "tradeDate"
                             )
                             .value,
-
 
                     symbol:
                         document
@@ -541,7 +1135,6 @@ document
                             .trim()
                             .toUpperCase(),
 
-
                     direction:
                         document
                             .getElementById(
@@ -549,26 +1142,33 @@ document
                             )
                             .value,
 
-
                     entry_price:
-                        entry,
-
+                        calculations.averageEntry,
 
                     stop_loss:
-                        stop,
-
+                        Number(
+                            document
+                                .getElementById(
+                                    "stopLoss"
+                                )
+                                .value
+                        ),
 
                     take_profit:
-                        target,
-
+                        Number(
+                            document
+                                .getElementById(
+                                    "takeProfit"
+                                )
+                                .value
+                        ) || null,
 
                     exit_price:
-                        exit,
-
+                        calculations.averageExit ||
+                        null,
 
                     lot_size:
-                        lotSize,
-
+                        calculations.totalEntryLots,
 
                     risk_percent:
                         Number(
@@ -576,23 +1176,15 @@ document
                                 .getElementById(
                                     "riskPercent"
                                 )
-                                .value || 0
+                                .value ||
+                            0
                         ),
-
 
                     profit_loss:
-                        Number(
-                            document
-                                .getElementById(
-                                    "profitLoss"
-                                )
-                                .value || 0
-                        ),
-
+                        calculations.actualPnL,
 
                     r_multiple:
-                        rMultiple,
-
+                        calculations.actualRR,
 
                     session:
                         document
@@ -601,7 +1193,6 @@ document
                             )
                             .value,
 
-
                     setup:
                         document
                             .getElementById(
@@ -609,14 +1200,8 @@ document
                             )
                             .value,
 
-
                     result:
-                        document
-                            .getElementById(
-                                "result"
-                            )
-                            .value,
-
+                        result,
 
                     rules_followed:
                         document
@@ -626,7 +1211,6 @@ document
                             .value ===
                         "true",
 
-
                     mistakes:
                         document
                             .getElementById(
@@ -634,7 +1218,6 @@ document
                             )
                             .value
                             .trim(),
-
 
                     notes:
                         document
@@ -644,21 +1227,171 @@ document
                             .value
                             .trim(),
 
-
                     before_screenshot:
-                        beforeScreenshotURL,
-
+                        beforePath,
 
                     after_screenshot:
-                        afterScreenshotURL
+                        afterPath,
+
+                    contract_size:
+                        Number(
+                            document
+                                .getElementById(
+                                    "contractSize"
+                                )
+                                .value ||
+                            100
+                        ),
+
+                    average_entry:
+                        calculations.averageEntry,
+
+                    average_exit:
+                        calculations.averageExit ||
+                        null,
+
+                    planned_rr:
+                        calculations.plannedRR,
+
+                    actual_rr:
+                        calculations.actualRR,
+
+                    planned_risk:
+                        calculations.plannedRisk
 
                 };
 
 
+                const {
+                    data:
+                        insertedTrade,
+                    error:
+                        tradeError
+                } =
+                    await db
+                        .from("trades")
+                        .insert([
+                            trade
+                        ])
+                        .select()
+                        .single();
 
-                /* ---------------------------------
-                   SAVE TO SUPABASE
-                --------------------------------- */
+
+                if (
+                    tradeError
+                ) {
+
+                    throw new Error(
+                        tradeError.message
+                    );
+
+                }
+
+
+                /* =================================
+                   SAVE ENTRY LAYERS
+                ================================= */
+
+                const entryRows =
+                    calculations.entries.map(
+                        entry => ({
+
+                            trade_id:
+                                insertedTrade.id,
+
+                            user_id:
+                                user.id,
+
+                            entry_price:
+                                entry.price,
+
+                            lot_size:
+                                entry.lot
+
+                        })
+                    );
+
+
+                const {
+                    error:
+                        entryError
+                } =
+                    await db
+                        .from(
+                            "trade_entries"
+                        )
+                        .insert(
+                            entryRows
+                        );
+
+
+                if (
+                    entryError
+                ) {
+
+                    throw new Error(
+                        "Entry layer error: " +
+                        entryError.message
+                    );
+
+                }
+
+
+                /* =================================
+                   SAVE EXIT LAYERS
+                ================================= */
+
+                if (
+                    calculations.exits.length >
+                    0
+                ) {
+
+                    const exitRows =
+                        calculations.exits.map(
+                            exit => ({
+
+                                trade_id:
+                                    insertedTrade.id,
+
+                                user_id:
+                                    user.id,
+
+                                exit_price:
+                                    exit.price,
+
+                                lot_size:
+                                    exit.lot
+
+                            })
+                        );
+
+
+                    const {
+                        error:
+                            exitError
+                    } =
+                        await db
+                            .from(
+                                "trade_exits"
+                            )
+                            .insert(
+                                exitRows
+                            );
+
+
+                    if (
+                        exitError
+                    ) {
+
+                        throw new Error(
+                            "Exit layer error: " +
+                            exitError.message
+                        );
+
+                    }
+
+                }
+
 
                 message.textContent =
                     "Trade saved successfully!";
@@ -674,56 +1407,17 @@ document
                     800
                 );
 
-
-                const { error } =
-                    await db
-                        .from("trades")
-                        .insert([
-                            trade
-                        ]);
-
-
-                if (error) {
-
-                    console.error(error);
-
-                    message.textContent =
-                        "ERROR: " +
-                        error.message;
-
-                    return;
-
-                }
-
-
-
-                /* ---------------------------------
-                   SUCCESS
-                --------------------------------- */
-
-                message.textContent =
-                    "Trade saved successfully!";
-
-
-                if (beforeInput) {
-
-                    beforeInput.value = "";
-
-                }
-
-
-                if (afterInput) {
-
-                    afterInput.value = "";
-
-                }
-
             }
 
 
-            catch (error) {
+            catch (
+                error
+            ) {
 
-                console.error(error);
+                console.error(
+                    error
+                );
+
 
                 message.textContent =
                     "ERROR: " +
@@ -735,9 +1429,112 @@ document
     );
 
 
+/* =========================================
+   MONEY HELPERS
+========================================= */
+
+function money(
+    value
+) {
+
+    return "$" +
+        Number(
+            value || 0
+        )
+        .toLocaleString(
+            "en-AU",
+            {
+                minimumFractionDigits:
+                    2,
+
+                maximumFractionDigits:
+                    2
+            }
+        );
+
+}
+
+
+function signedMoney(
+    value
+) {
+
+    value =
+        Number(
+            value || 0
+        );
+
+
+    if (
+        value > 0
+    ) {
+
+        return "+$" +
+            value
+                .toLocaleString(
+                    "en-AU",
+                    {
+                        minimumFractionDigits:
+                            2,
+
+                        maximumFractionDigits:
+                            2
+                    }
+                );
+
+    }
+
+
+    if (
+        value < 0
+    ) {
+
+        return "-$" +
+            Math.abs(
+                value
+            )
+            .toLocaleString(
+                "en-AU",
+                {
+                    minimumFractionDigits:
+                        2,
+
+                    maximumFractionDigits:
+                        2
+                }
+            );
+
+    }
+
+
+    return "$0.00";
+
+}
+
+
+/* =========================================
+   TODAY
+========================================= */
+
+document
+    .getElementById(
+        "tradeDate"
+    )
+    .value =
+    new Date()
+        .toISOString()
+        .slice(
+            0,
+            10
+        );
+
 
 /* =========================================
    START
 ========================================= */
 
+attachLayerEvents();
+
 loadAccounts();
+
+calculateTrade();
