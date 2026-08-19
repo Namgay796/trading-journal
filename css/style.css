@@ -2152,3 +2152,28 @@ th {
     }
 
 }
+/* =========================================
+   TRADED PAIRS PIE CHART
+========================================= */
+
+.pair-chart-container {
+    position: relative;
+    width: 100%;
+    height: 360px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#pairChart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@media (max-width: 700px) {
+
+    .pair-chart-container {
+        height: 300px;
+        max-width: 100%;
+    }
+
+}
