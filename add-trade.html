@@ -9,15 +9,6 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-    <link rel="manifest" href="manifest.json">
-
-    <meta name="theme-color" content="#161b22">
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <meta name="apple-mobile-web-app-title" content="Trading Journal">
 
     <title>Add Trade</title>
 
@@ -25,9 +16,15 @@
         rel="stylesheet"
         href="css/style.css"
     >
+
     <link
-        rel="apple-touch-icon"
-        href="icons/icon-192.png"
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <meta
+        name="theme-color"
+        content="#161b22"
     >
 
     <script
@@ -38,6 +35,7 @@
 
 
 <body>
+
 
 <header class="main-header">
 
@@ -55,7 +53,7 @@
         </a>
 
         <span class="subtitle">
-            Performance & Risk Dashboard
+            Add Trade
         </span>
 
     </div>
@@ -64,10 +62,10 @@
     <div class="header-actions">
 
         <a
-            href="add-trade.html"
+            href="index.html"
             class="add-trade-button"
         >
-            + Add Trade
+            Dashboard
         </a>
 
         <button
@@ -110,7 +108,6 @@
     </a>
 
 </nav>
-<header>
 
 
 <main>
@@ -119,6 +116,7 @@
 
 
     <label>
+
         Account
 
         <select
@@ -126,7 +124,7 @@
             required
         >
 
-            <option value="">
+            <option>
                 Loading...
             </option>
 
@@ -136,6 +134,7 @@
 
 
     <label>
+
         Date
 
         <input
@@ -148,6 +147,7 @@
 
 
     <label>
+
         Symbol
 
         <input
@@ -160,6 +160,7 @@
 
 
     <label>
+
         Direction
 
         <select id="direction">
@@ -178,19 +179,7 @@
 
 
     <label>
-        Entry
 
-        <input
-            id="entry"
-            type="number"
-            step="any"
-            required
-        >
-
-    </label>
-
-
-    <label>
         Stop Loss
 
         <input
@@ -204,6 +193,7 @@
 
 
     <label>
+
         Take Profit
 
         <input
@@ -216,30 +206,21 @@
 
 
     <label>
-        Exit Price
+
+        Contract Size
 
         <input
-            id="exitPrice"
+            id="contractSize"
             type="number"
             step="any"
+            value="100"
         >
 
     </label>
 
 
     <label>
-        Lot Size
 
-        <input
-            id="lotSize"
-            type="number"
-            step="any"
-        >
-
-    </label>
-
-
-    <label>
         Risk %
 
         <input
@@ -253,19 +234,7 @@
 
 
     <label>
-        Profit / Loss ($)
 
-        <input
-            id="profitLoss"
-            type="number"
-            step="0.01"
-            value="0"
-        >
-
-    </label>
-
-
-    <label>
         Session
 
         <select id="session">
@@ -288,6 +257,7 @@
 
 
     <label>
+
         Setup
 
         <select id="setup">
@@ -312,26 +282,8 @@
                 Breakout
             </option>
 
-        </select>
-
-    </label>
-
-
-    <label>
-        Result
-
-        <select id="result">
-
             <option>
-                Win
-            </option>
-
-            <option>
-                Loss
-            </option>
-
-            <option>
-                BE
+                Other
             </option>
 
         </select>
@@ -340,6 +292,30 @@
 
 
     <label>
+
+        Trade Status
+
+        <select id="tradeStatus">
+
+            <option value="OPEN">
+                OPEN
+            </option>
+
+            <option value="PARTIAL">
+                PARTIAL
+            </option>
+
+            <option value="CLOSED">
+                CLOSED
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+
         Rules Followed?
 
         <select id="rulesFollowed">
@@ -357,18 +333,234 @@
     </label>
 
 
+
+    <!-- ENTRY LAYERS -->
+
+    <div class="full layer-section">
+
+        <div class="layer-heading">
+
+            <h3>
+                Entry Layers
+            </h3>
+
+            <button
+                type="button"
+                id="addEntryLayer"
+                class="layer-add-button"
+            >
+                + Add Entry
+            </button>
+
+        </div>
+
+
+        <div id="entryLayers">
+
+            <div class="layer-row entry-layer">
+
+                <label>
+
+                    Entry Price
+
+                    <input
+                        class="layer-entry-price"
+                        type="number"
+                        step="any"
+                        required
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Lot Size
+
+                    <input
+                        class="layer-entry-lot"
+                        type="number"
+                        step="0.01"
+                        required
+                    >
+
+                </label>
+
+
+                <button
+                    type="button"
+                    class="remove-layer"
+                >
+                    ×
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- EXIT LAYERS -->
+
+    <div class="full layer-section">
+
+        <div class="layer-heading">
+
+            <h3>
+                Exit Layers
+            </h3>
+
+            <button
+                type="button"
+                id="addExitLayer"
+                class="layer-add-button"
+            >
+                + Add Exit
+            </button>
+
+        </div>
+
+
+        <div id="exitLayers">
+
+            <div class="layer-row exit-layer">
+
+                <label>
+
+                    Exit Price
+
+                    <input
+                        class="layer-exit-price"
+                        type="number"
+                        step="any"
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Lot Size
+
+                    <input
+                        class="layer-exit-lot"
+                        type="number"
+                        step="0.01"
+                    >
+
+                </label>
+
+
+                <button
+                    type="button"
+                    class="remove-layer"
+                >
+                    ×
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- CALCULATIONS -->
+
+    <div class="trade-calculations full">
+
+        <div>
+            <span>Total Entry Lots</span>
+            <strong id="totalEntryLots">
+                0.00
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Total Exit Lots</span>
+            <strong id="totalExitLots">
+                0.00
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Remaining Lots</span>
+            <strong id="remainingLots">
+                0.00
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Average Entry</span>
+            <strong id="averageEntry">
+                -
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Average Exit</span>
+            <strong id="averageExit">
+                -
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Planned Risk</span>
+            <strong id="plannedRisk">
+                $0.00
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Planned RR</span>
+            <strong id="plannedRR">
+                0.00R
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Actual P&L</span>
+            <strong id="calculatedPnL">
+                $0.00
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Actual R</span>
+            <strong id="actualRR">
+                0.00R
+            </strong>
+        </div>
+
+    </div>
+
+
+
     <label class="full">
+
         Mistakes
 
         <input
             id="mistakes"
-            placeholder="FOMO, late entry..."
+            placeholder="FOMO, late entry, over-risk..."
         >
 
     </label>
 
 
     <label class="full">
+
         Notes
 
         <textarea
@@ -379,15 +571,9 @@
     </label>
 
 
-    <div class="calculation full">
-
-        Planned RR:
-
-        <strong id="rr">
-            0
-        </strong>
 
     <label class="full">
+
         Before Trade Screenshot
 
         <input
@@ -395,10 +581,12 @@
             type="file"
             accept="image/*"
         >
+
     </label>
 
 
     <label class="full">
+
         After Trade Screenshot
 
         <input
@@ -406,10 +594,9 @@
             type="file"
             accept="image/*"
         >
-    </label>
-    
 
-    </div>
+    </label>
+
 
 
     <button
@@ -425,21 +612,26 @@
         class="full"
     ></p>
 
+
 </form>
 
 </main>
 
 
 <script src="js/config.js"></script>
+
 <script src="js/auth.js"></script>
 
 <script>
     requireLogin();
 </script>
 
-<script src="js/add-trade.js"></script>
 <script src="js/navigation.js"></script>
+
+<script src="js/add-trade.js"></script>
+
 <script src="js/pwa.js"></script>
+
 
 </body>
 
