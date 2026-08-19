@@ -219,19 +219,7 @@ async function uploadScreenshot(
     }
 
 
-    const { data } =
-        db
-            .storage
-            .from(
-                "trade-screenshots"
-            )
-            .getPublicUrl(
-                filePath
-            );
-
-
-    return data.publicUrl;
-
+    return filePath;
 }
 
 
