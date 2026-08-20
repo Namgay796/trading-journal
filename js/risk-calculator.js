@@ -3,132 +3,110 @@ const riskAccount =
         "riskAccount"
     );
 
-
 const assetClass =
     document.getElementById(
         "assetClass"
     );
-
 
 const riskSymbol =
     document.getElementById(
         "riskSymbol"
     );
 
-
 const riskDirection =
     document.getElementById(
         "riskDirection"
     );
-
 
 const riskLeverage =
     document.getElementById(
         "riskLeverage"
     );
 
-
 const riskPercent =
     document.getElementById(
         "riskPercent"
     );
-
 
 const riskDollars =
     document.getElementById(
         "riskDollars"
     );
 
-
 const entryPrice =
     document.getElementById(
         "entryPrice"
     );
-
 
 const stopLossPrice =
     document.getElementById(
         "stopLossPrice"
     );
 
-
 const takeProfitPrice =
     document.getElementById(
         "takeProfitPrice"
     );
-
 
 const slPips =
     document.getElementById(
         "slPips"
     );
 
-
 const tpPips =
     document.getElementById(
         "tpPips"
     );
-
 
 const calculateRiskButton =
     document.getElementById(
         "calculateRiskButton"
     );
 
-
 const initialBalanceDisplay =
     document.getElementById(
         "initialBalanceDisplay"
     );
-
 
 const leverageDisplay =
     document.getElementById(
         "leverageDisplay"
     );
 
-
 const riskAmountDisplay =
     document.getElementById(
         "riskAmountDisplay"
     );
-
 
 const requiredLotSize =
     document.getElementById(
         "requiredLotSize"
     );
 
-
 const marginRequired =
     document.getElementById(
         "marginRequired"
     );
-
 
 const lossAtStop =
     document.getElementById(
         "lossAtStop"
     );
 
-
 const profitAtTp =
     document.getElementById(
         "profitAtTp"
     );
-
 
 const plannedRR =
     document.getElementById(
         "plannedRR"
     );
 
-
 const positionNotional =
     document.getElementById(
         "positionNotional"
     );
-
 
 const riskMessage =
     document.getElementById(
@@ -154,7 +132,6 @@ async function loadRiskAccounts() {
         </option>
         `;
 
-
     try {
 
         const {
@@ -162,9 +139,7 @@ async function loadRiskAccounts() {
             error
         } =
             await db
-                .from(
-                    "accounts"
-                )
+                .from("accounts")
                 .select("*")
                 .order(
                     "id",
@@ -174,9 +149,7 @@ async function loadRiskAccounts() {
                 );
 
 
-        if (
-            error
-        ) {
+        if (error) {
 
             throw error;
 
@@ -192,8 +165,7 @@ async function loadRiskAccounts() {
 
 
         if (
-            accounts.length ===
-            0
+            accounts.length === 0
         ) {
 
             riskAccount.innerHTML =
@@ -203,10 +175,8 @@ async function loadRiskAccounts() {
                 </option>
                 `;
 
-
             riskMessage.textContent =
                 "No trading accounts found.";
-
 
             return;
 
@@ -221,14 +191,11 @@ async function loadRiskAccounts() {
                         "option"
                     );
 
-
                 option.value =
                     account.id;
 
-
                 option.textContent =
                     account.name;
-
 
                 riskAccount.appendChild(
                     option
@@ -253,7 +220,6 @@ async function loadRiskAccounts() {
             "";
 
     }
-
 
     catch (
         error
@@ -518,16 +484,7 @@ function getPipSize() {
         .toUpperCase();
 
 
-    /* =====================================
-       FOREX JPY PAIRS
-
-       Example:
-       USDJPY
-       GBPJPY
-       EURJPY
-
-       1 pip = 0.01
-    ===================================== */
+    /* JPY FOREX PAIRS */
 
     if (
         assetClass.value ===
@@ -542,11 +499,7 @@ function getPipSize() {
     }
 
 
-    /* =====================================
-       NORMAL FOREX
-
-       1 pip = 0.0001
-    ===================================== */
+    /* STANDARD FOREX */
 
     if (
         assetClass.value ===
@@ -558,12 +511,7 @@ function getPipSize() {
     }
 
 
-    /* =====================================
-       METALS
-
-       XAUUSD:
-       0.01 = 1 pip
-    ===================================== */
+    /* METALS */
 
     if (
         assetClass.value ===
@@ -575,11 +523,7 @@ function getPipSize() {
     }
 
 
-    /* =====================================
-       INDICES
-
-       Display as points
-    ===================================== */
+    /* INDICES */
 
     if (
         assetClass.value ===
@@ -591,11 +535,7 @@ function getPipSize() {
     }
 
 
-    /* =====================================
-       CRYPTO
-
-       Display as price points
-    ===================================== */
+    /* CRYPTO */
 
     if (
         assetClass.value ===
@@ -619,19 +559,19 @@ function getPipSize() {
 function updatePipDistances() {
 
     const entry =
-        Number(
+        parseFloat(
             entryPrice.value
         );
 
 
     const stop =
-        Number(
+        parseFloat(
             stopLossPrice.value
         );
 
 
     const target =
-        Number(
+        parseFloat(
             takeProfitPrice.value
         );
 
@@ -640,61 +580,52 @@ function updatePipDistances() {
         getPipSize();
 
 
-    /* =====================================
-       STOP LOSS DISTANCE
-    ===================================== */
+    const usePoints =
+        assetClass.value ===
+            "indices" ||
+        assetClass.value ===
+            "crypto";
+
+
+    /* SL */
 
     if (
-        entry &&
-        stop &&
+        Number.isFinite(entry) &&
+        Number.isFinite(stop) &&
         pipSize >
         0
     ) {
 
-        const pips =
+        const distance =
             Math.abs(
                 entry -
                 stop
-            ) /
+            );
+
+
+        const pips =
+            distance /
             pipSize;
 
 
-        if (
-            assetClass.value ===
-            "indices" ||
-            assetClass.value ===
-            "crypto"
-        ) {
-
-            slPips.textContent =
-                formatPips(
-                    pips
-                ) +
-                " points";
-
-        }
-
-
-        else {
-
-            slPips.textContent =
-                formatPips(
-                    pips
-                ) +
-                " pips";
-
-        }
+        slPips.textContent =
+            formatPips(
+                pips
+            ) +
+            (
+                usePoints
+                    ?
+                    " points"
+                    :
+                    " pips"
+            );
 
     }
-
 
     else {
 
         slPips.textContent =
-            assetClass.value ===
-                "indices" ||
-            assetClass.value ===
-                "crypto"
+            usePoints
                 ?
                 "0 points"
                 :
@@ -703,61 +634,45 @@ function updatePipDistances() {
     }
 
 
-    /* =====================================
-       TAKE PROFIT DISTANCE
-    ===================================== */
+    /* TP */
 
     if (
-        entry &&
-        target &&
+        Number.isFinite(entry) &&
+        Number.isFinite(target) &&
         pipSize >
         0
     ) {
 
-        const pips =
+        const distance =
             Math.abs(
                 target -
                 entry
-            ) /
+            );
+
+
+        const pips =
+            distance /
             pipSize;
 
 
-        if (
-            assetClass.value ===
-            "indices" ||
-            assetClass.value ===
-            "crypto"
-        ) {
-
-            tpPips.textContent =
-                formatPips(
-                    pips
-                ) +
-                " points";
-
-        }
-
-
-        else {
-
-            tpPips.textContent =
-                formatPips(
-                    pips
-                ) +
-                " pips";
-
-        }
+        tpPips.textContent =
+            formatPips(
+                pips
+            ) +
+            (
+                usePoints
+                    ?
+                    " points"
+                    :
+                    " pips"
+            );
 
     }
-
 
     else {
 
         tpPips.textContent =
-            assetClass.value ===
-                "indices" ||
-            assetClass.value ===
-                "crypto"
+            usePoints
                 ?
                 "0 points"
                 :
@@ -800,6 +715,8 @@ function formatPips(
 
 /* =========================================
    INTERNAL CONTRACT MULTIPLIER
+
+   This is hidden from the user.
 ========================================= */
 
 function getContractMultiplier() {
@@ -851,7 +768,7 @@ function getContractMultiplier() {
     }
 
 
-    /* INDICES */
+    /* INDEX CFD DEFAULT */
 
     if (
         assetClass.value ===
@@ -863,7 +780,7 @@ function getContractMultiplier() {
     }
 
 
-    /* CRYPTO */
+    /* CRYPTO CFD DEFAULT */
 
     if (
         assetClass.value ===
@@ -892,7 +809,7 @@ function getLotStep() {
 
 
 /* =========================================
-   RISK % -> $
+   RISK % -> RISK $
 ========================================= */
 
 riskPercent.addEventListener(
@@ -927,16 +844,25 @@ function calculateRiskFromPercent() {
 
 
     const percent =
-        Number(
-            riskPercent.value ||
-            0
+        parseFloat(
+            riskPercent.value
         );
+
+
+    const safePercent =
+        Number.isFinite(
+            percent
+        )
+            ?
+            percent
+            :
+            0;
 
 
     const dollars =
         balance *
         (
-            percent /
+            safePercent /
             100
         );
 
@@ -956,7 +882,7 @@ function calculateRiskFromPercent() {
 
 
 /* =========================================
-   RISK $ -> %
+   RISK $ -> RISK %
 ========================================= */
 
 riskDollars.addEventListener(
@@ -991,10 +917,19 @@ function calculateRiskFromDollars() {
 
 
     const dollars =
-        Number(
-            riskDollars.value ||
-            0
+        parseFloat(
+            riskDollars.value
         );
+
+
+    const safeDollars =
+        Number.isFinite(
+            dollars
+        )
+            ?
+            dollars
+            :
+            0;
 
 
     let percent =
@@ -1008,7 +943,7 @@ function calculateRiskFromDollars() {
 
         percent =
             (
-                dollars /
+                safeDollars /
                 balance
             ) *
             100;
@@ -1024,14 +959,14 @@ function calculateRiskFromDollars() {
 
     riskAmountDisplay.textContent =
         money(
-            dollars
+            safeDollars
         );
 
 }
 
 
 /* =========================================
-   BUTTON
+   CALCULATE BUTTON
 ========================================= */
 
 calculateRiskButton.addEventListener(
@@ -1047,15 +982,14 @@ calculateRiskButton.addEventListener(
 
 
 /* =========================================
-   LIVE UPDATES
+   LIVE CALCULATION
 ========================================= */
 
 [
     entryPrice,
     stopLossPrice,
     takeProfitPrice,
-    riskSymbol,
-    riskDirection
+    riskSymbol
 
 ].forEach(
     field => {
@@ -1088,6 +1022,22 @@ calculateRiskButton.addEventListener(
 
 
 /* =========================================
+   DIRECTION CHANGE
+========================================= */
+
+riskDirection.addEventListener(
+    "change",
+    function() {
+
+        updatePipDistances();
+
+        calculateResults();
+
+    }
+);
+
+
+/* =========================================
    MAIN CALCULATION
 ========================================= */
 
@@ -1104,40 +1054,43 @@ function calculateResults() {
         !currentAccount
     ) {
 
+        resetResults();
+
+        riskMessage.textContent =
+            "Select a trading account.";
+
         return;
 
     }
 
 
     const entry =
-        Number(
+        parseFloat(
             entryPrice.value
         );
 
 
     const stop =
-        Number(
+        parseFloat(
             stopLossPrice.value
         );
 
 
     const target =
-        Number(
+        parseFloat(
             takeProfitPrice.value
         );
 
 
     const riskCash =
-        Number(
-            riskDollars.value ||
-            0
+        parseFloat(
+            riskDollars.value
         );
 
 
     const leverage =
-        Number(
-            riskLeverage.value ||
-            1
+        parseFloat(
+            riskLeverage.value
         );
 
 
@@ -1149,10 +1102,15 @@ function calculateResults() {
         getLotStep();
 
 
+    /* =====================================
+       ENTRY CHECK
+    ===================================== */
+
     if (
-        !entry ||
-        !stop ||
-        riskCash <=
+        !Number.isFinite(
+            entry
+        ) ||
+        entry <=
         0
     ) {
 
@@ -1164,7 +1122,48 @@ function calculateResults() {
 
 
     /* =====================================
-       BUY VALIDATION
+       STOP CHECK
+    ===================================== */
+
+    if (
+        !Number.isFinite(
+            stop
+        ) ||
+        stop <=
+        0
+    ) {
+
+        resetResults();
+
+        return;
+
+    }
+
+
+    /* =====================================
+       RISK CHECK
+    ===================================== */
+
+    if (
+        !Number.isFinite(
+            riskCash
+        ) ||
+        riskCash <=
+        0
+    ) {
+
+        resetResults();
+
+        riskMessage.textContent =
+            "Enter Risk % or Risk $.";
+
+        return;
+
+    }
+
+
+    /* =====================================
+       BUY STOP CHECK
     ===================================== */
 
     if (
@@ -1187,7 +1186,7 @@ function calculateResults() {
 
 
     /* =====================================
-       SELL VALIDATION
+       SELL STOP CHECK
     ===================================== */
 
     if (
@@ -1227,16 +1226,25 @@ function calculateResults() {
 
         resetResults();
 
+
+        riskMessage.textContent =
+            "Entry and Stop Loss cannot be the same.";
+
+
         return;
 
     }
 
 
     /* =====================================
-       LOT SIZE FROM RISK
+       RAW LOT SIZE
+
+       Risk $
+       -----------------------------
+       Price distance × multiplier
     ===================================== */
 
-    let lots =
+    const rawLots =
         riskCash /
         (
             stopDistance *
@@ -1244,14 +1252,21 @@ function calculateResults() {
         );
 
 
-    lots =
+    /* =====================================
+       ROUND DOWN TO 0.01 LOT
+    ===================================== */
+
+    const lots =
         roundDownToStep(
-            lots,
+            rawLots,
             lotStep
         );
 
 
     if (
+        !Number.isFinite(
+            lots
+        ) ||
         lots <=
         0
     ) {
@@ -1289,21 +1304,30 @@ function calculateResults() {
 
 
     /* =====================================
-       MARGIN
+       MARGIN REQUIRED
     ===================================== */
 
-    const margin =
+    let margin =
+        0;
+
+
+    if (
+        Number.isFinite(
+            leverage
+        ) &&
         leverage >
         0
-            ?
+    ) {
+
+        margin =
             positionValue /
-            leverage
-            :
-            0;
+            leverage;
+
+    }
 
 
     /* =====================================
-       REWARD DISTANCE
+       TAKE PROFIT / REWARD
     ===================================== */
 
     let rewardDistance =
@@ -1311,7 +1335,11 @@ function calculateResults() {
 
 
     if (
-        target
+        Number.isFinite(
+            target
+        ) &&
+        target >
+        0
     ) {
 
         if (
@@ -1338,7 +1366,7 @@ function calculateResults() {
 
 
     /* =====================================
-       PROFIT
+       PROFIT AT TP
     ===================================== */
 
     let profit =
@@ -1362,20 +1390,26 @@ function calculateResults() {
        RR
     ===================================== */
 
-    const rr =
+    let rr =
+        0;
+
+
+    if (
         actualRisk >
         0 &&
         profit >
         0
-            ?
+    ) {
+
+        rr =
             profit /
-            actualRisk
-            :
-            0;
+            actualRisk;
+
+    }
 
 
     /* =====================================
-       RESULTS
+       DISPLAY RESULTS
     ===================================== */
 
     requiredLotSize.textContent =
@@ -1423,7 +1457,7 @@ function calculateResults() {
 
 
     /* =====================================
-       ROUNDING INFORMATION
+       RESULT MESSAGE
     ===================================== */
 
     if (
@@ -1431,13 +1465,7 @@ function calculateResults() {
         riskCash
     ) {
 
-        const difference =
-            riskCash -
-            actualRisk;
-
-
         riskMessage.textContent =
-            "Lot size rounded down to 0.01. " +
             "Selected risk: " +
             money(
                 riskCash
@@ -1446,10 +1474,15 @@ function calculateResults() {
             money(
                 actualRisk
             ) +
-            " | Unused risk: " +
-            money(
-                difference
-            );
+            " | Lot size rounded down to 0.01.";
+
+    }
+
+
+    else {
+
+        riskMessage.textContent =
+            "Calculation complete.";
 
     }
 
@@ -1466,6 +1499,20 @@ function roundDownToStep(
 ) {
 
     if (
+        !Number.isFinite(
+            value
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            step
+        ) ||
         step <=
         0
     ) {
@@ -1528,28 +1575,29 @@ function resetResults() {
 
 
 /* =========================================
-   MONEY
+   MONEY FORMAT
 ========================================= */
 
 function money(
     value
 ) {
 
-    return "$" +
+    const amount =
         Number(
             value ||
             0
-        )
-        .toLocaleString(
+        );
+
+
+    return "$" +
+        amount.toLocaleString(
             "en-AU",
             {
-
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
-
             }
         );
 
