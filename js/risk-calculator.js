@@ -135,11 +135,6 @@ let currentAccount = null;
 
 async function loadRiskAccounts() {
 
-    console.log(
-        "Loading trading accounts..."
-    );
-
-
     riskAccount.innerHTML =
         `
         <option value="">
@@ -150,45 +145,6 @@ async function loadRiskAccounts() {
 
     try {
 
-        /* =====================================
-           GET LOGGED-IN USER
-        ===================================== */
-
-        const {
-            data: {
-                user
-            },
-            error:
-                userError
-        } =
-            await db.auth
-                .getUser();
-
-
-        if (
-            userError
-        ) {
-
-            throw userError;
-
-        }
-
-
-        if (
-            !user
-        ) {
-
-            throw new Error(
-                "User is not logged in."
-            );
-
-        }
-
-
-        /* =====================================
-           LOAD USER ACCOUNTS
-        ===================================== */
-
         const {
             data,
             error
@@ -198,10 +154,6 @@ async function loadRiskAccounts() {
                     "accounts"
                 )
                 .select("*")
-                .eq(
-                    "user_id",
-                    user.id
-                )
                 .order(
                     "id",
                     {
@@ -224,13 +176,15 @@ async function loadRiskAccounts() {
             data || [];
 
 
+        console.log(
+            "Risk calculator accounts:",
+            accounts
+        );
+
+
         riskAccount.innerHTML =
             "";
 
-
-        /* =====================================
-           NO ACCOUNTS
-        ===================================== */
 
         if (
             accounts.length ===
@@ -246,17 +200,13 @@ async function loadRiskAccounts() {
 
 
             riskMessage.textContent =
-                "No trading accounts found. Add an account first.";
+                "No trading accounts found.";
 
 
             return;
 
         }
 
-
-        /* =====================================
-           ADD ACCOUNTS TO SELECTOR
-        ===================================== */
 
         accounts.forEach(
             account => {
@@ -283,10 +233,6 @@ async function loadRiskAccounts() {
         );
 
 
-        /* =====================================
-           SELECT FIRST ACCOUNT
-        ===================================== */
-
         currentAccount =
             accounts[0];
 
@@ -309,7 +255,7 @@ async function loadRiskAccounts() {
     ) {
 
         console.error(
-            "Risk calculator account error:",
+            "Unable to load accounts:",
             error
         );
 
@@ -326,7 +272,7 @@ async function loadRiskAccounts() {
             "ERROR: " +
             (
                 error.message ||
-                "Unable to load trading accounts."
+                "Unable to load accounts."
             );
 
     }
@@ -367,7 +313,7 @@ riskAccount.addEventListener(
 
 
 /* =========================================
-   ACCOUNT DETAILS
+   UPDATE ACCOUNT INFO
 ========================================= */
 
 function updateAccountDetails() {
@@ -400,7 +346,25 @@ function updateAccountDetails() {
 
 
 /* =========================================
-   LEVERAGE
+   ASSET CLASS CHANGE
+========================================= */
+
+assetClass.addEventListener(
+    "change",
+    function() {
+
+        updateLeverage();
+
+        updateDefaultSymbol();
+
+        calculateResults();
+
+    }
+);
+
+
+/* =========================================
+   GET LEVERAGE FROM SELECTED ACCOUNT
 ========================================= */
 
 function updateLeverage() {
@@ -421,7 +385,6 @@ function updateLeverage() {
     switch (
         assetClass.value
     ) {
-
 
         case "metals":
 
@@ -485,24 +448,6 @@ function updateLeverage() {
 
 
 /* =========================================
-   ASSET CLASS CHANGE
-========================================= */
-
-assetClass.addEventListener(
-    "change",
-    function() {
-
-        updateLeverage();
-
-        updateDefaultSymbol();
-
-        calculateResults();
-
-    }
-);
-
-
-/* =========================================
    DEFAULT SYMBOL
 ========================================= */
 
@@ -549,12 +494,7 @@ function updateDefaultSymbol() {
 
 
 /* =========================================
-   INTERNAL CONTRACT MULTIPLIER
-
-   The user only sees lot size.
-
-   This is used internally to convert
-   price movement into P&L per lot.
+   INTERNAL MULTIPLIER
 ========================================= */
 
 function getContractMultiplier() {
@@ -829,7 +769,7 @@ calculateRiskButton.addEventListener(
 
 
 /* =========================================
-   MAIN RISK CALCULATION
+   MAIN CALCULATION
 ========================================= */
 
 function calculateResults() {
@@ -887,10 +827,6 @@ function calculateResults() {
         getLotStep();
 
 
-    /* =====================================
-       WAIT UNTIL REQUIRED DATA EXISTS
-    ===================================== */
-
     if (
         !entry ||
         !stop ||
@@ -906,7 +842,7 @@ function calculateResults() {
 
 
     /* =====================================
-       CHECK BUY / SELL STOP
+       VALIDATE STOP LOSS
     ===================================== */
 
     if (
@@ -971,24 +907,7 @@ function calculateResults() {
 
 
     /* =====================================
-       LOT SIZE
-
-       Risk Amount
-       ---------------------------
-       Stop Distance × Multiplier
-
-       Example:
-
-       XAUUSD
-       Risk = $250
-       Entry = 3350
-       SL = 3345
-
-       Distance = $5
-
-       $5 × 100 = $500 per 1 lot
-
-       $250 / $500 = 0.50 lots
+       LOT SIZE FROM RISK AMOUNT
     ===================================== */
 
     let lots =
@@ -998,11 +917,6 @@ function calculateResults() {
             multiplier
         );
 
-
-    /*
-       Round DOWN so the trade
-       does not exceed selected risk.
-    */
 
     lots =
         roundDownToStep(
@@ -1029,7 +943,7 @@ function calculateResults() {
 
 
     /* =====================================
-       ACTUAL RISK AFTER LOT ROUNDING
+       ACTUAL RISK
     ===================================== */
 
     const actualRisk =
@@ -1063,7 +977,7 @@ function calculateResults() {
 
 
     /* =====================================
-       TP DISTANCE
+       TAKE PROFIT DISTANCE
     ===================================== */
 
     let rewardDistance =
@@ -1098,7 +1012,7 @@ function calculateResults() {
 
 
     /* =====================================
-       PROFIT AT TP
+       PROFIT
     ===================================== */
 
     let profit =
@@ -1119,7 +1033,7 @@ function calculateResults() {
 
 
     /* =====================================
-       PLANNED RR
+       RR
     ===================================== */
 
     const rr =
@@ -1135,7 +1049,7 @@ function calculateResults() {
 
 
     /* =====================================
-       DISPLAY RESULTS
+       DISPLAY
     ===================================== */
 
     requiredLotSize.textContent =
@@ -1183,7 +1097,7 @@ function calculateResults() {
 
 
     /* =====================================
-       ROUNDING MESSAGE
+       ROUNDING INFO
     ===================================== */
 
     if (
@@ -1217,7 +1131,7 @@ function calculateResults() {
 
 
 /* =========================================
-   ROUND DOWN TO LOT STEP
+   ROUND DOWN LOT SIZE
 ========================================= */
 
 function roundDownToStep(
