@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,34 +10,65 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <link rel="manifest" href="manifest.json">
-
-    <meta name="theme-color" content="#161b22">
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <meta name="apple-mobile-web-app-title" content="Trading Journal">
-
     <title>Trading Accounts</title>
+
+
+    <!-- MAIN CSS -->
 
     <link
         rel="stylesheet"
         href="css/style.css"
     >
+
+
+    <!-- PWA -->
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <meta
+        name="theme-color"
+        content="#161b22"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Trading Journal"
+    >
+
     <link
         rel="apple-touch-icon"
         href="icons/icon-192.png"
     >
 
+
+    <!-- SUPABASE -->
+
     <script
         src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
     ></script>
-    
+
 </head>
 
+
 <body>
+
+
+<!-- =========================================
+     HEADER
+========================================= -->
 
 <header class="main-header">
 
@@ -53,8 +85,9 @@
 
         </a>
 
+
         <span class="subtitle">
-            Performance & Risk Dashboard
+            Trading Accounts
         </span>
 
     </div>
@@ -69,6 +102,7 @@
             + Add Trade
         </a>
 
+
         <button
             type="button"
             onclick="logout()"
@@ -81,6 +115,10 @@
 
 </header>
 
+
+<!-- =========================================
+     NAVIGATION
+========================================= -->
 
 <nav class="main-nav">
 
@@ -107,137 +145,302 @@
     <a href="accounts.html">
         Accounts
     </a>
+    <a href="risk-calculator.html">
+    Risk Calculator
+</a>
 
 </nav>
-<header>
 
 
 <main>
 
-    <!-- ADD ACCOUNT -->
+
+    <!-- =========================================
+         ADD / EDIT ACCOUNT
+    ========================================= -->
 
     <section class="dashboard-section">
 
-        <h2>Add Account</h2>
+        <div class="section-header">
+
+            <h2 id="accountFormTitle">
+                Add Trading Account
+            </h2>
+
+        </div>
+
 
         <form id="accountForm">
 
+
+            <!-- Hidden ID used when editing -->
+
+            <input
+                type="hidden"
+                id="accountId"
+            >
+
+
+            <!-- ACCOUNT NAME -->
+
             <label>
+
                 Account Name
 
                 <input
                     id="accountName"
-                    placeholder="100K Funded"
+                    type="text"
+                    placeholder="Example: 25K Funded"
                     required
                 >
+
             </label>
 
 
-            <label>
-                Prop Firm / Broker
-
-                <input
-                    id="firm"
-                    placeholder="FTMO"
-                >
-            </label>
-
+            <!-- STARTING BALANCE -->
 
             <label>
-                Account Type
 
-                <select id="accountType">
-
-                    <option>Funded</option>
-                    <option>Challenge</option>
-                    <option>Personal</option>
-                    <option>Demo</option>
-
-                </select>
-            </label>
-
-
-            <label>
-                Starting Balance
+                Initial Balance ($)
 
                 <input
                     id="startingBalance"
                     type="number"
                     step="0.01"
-                    placeholder="100000"
+                    min="0"
+                    placeholder="25000"
                     required
                 >
+
             </label>
 
 
+            <!-- PROFIT TARGET -->
+
             <label>
-                Profit Target %
+
+                Profit Target (%)
 
                 <input
                     id="profitTarget"
                     type="number"
                     step="0.01"
-                    value="10"
+                    min="0"
+                    placeholder="10"
                 >
+
             </label>
 
 
+            <!-- DAILY LOSS -->
+
             <label>
-                Daily Loss Limit %
+
+                Daily Loss Limit (%)
 
                 <input
                     id="dailyLossLimit"
                     type="number"
                     step="0.01"
-                    value="5"
+                    min="0"
+                    placeholder="3"
                 >
+
             </label>
 
 
+            <!-- MAX LOSS -->
+
             <label>
-                Maximum Loss %
+
+                Maximum Loss Limit (%)
 
                 <input
                     id="maxLossLimit"
                     type="number"
                     step="0.01"
-                    value="10"
+                    min="0"
+                    placeholder="6"
                 >
+
             </label>
 
 
+            <!-- CONSISTENCY -->
+
             <label>
-                Consistency Rule %
+
+                Consistency Rule (%)
 
                 <input
-                    id="consistencyRule"
+                    id="consistencyLimit"
                     type="number"
                     step="0.01"
-                    value="0"
+                    min="0"
+                    placeholder="20"
                 >
+
             </label>
 
 
+            <!-- STATUS -->
+
             <label>
+
                 Status
 
                 <select id="accountStatus">
 
-                    <option>Active</option>
-                    <option>Passed</option>
-                    <option>Failed</option>
-                    <option>Paused</option>
+                    <option value="Active">
+                        Active
+                    </option>
+
+                    <option value="Challenge">
+                        Challenge
+                    </option>
+
+                    <option value="Funded">
+                        Funded
+                    </option>
+
+                    <option value="Passed">
+                        Passed
+                    </option>
+
+                    <option value="Breached">
+                        Breached
+                    </option>
+
+                    <option value="Inactive">
+                        Inactive
+                    </option>
 
                 </select>
+
             </label>
 
 
-            <button
-                type="submit"
+            <!-- =========================================
+                 LEVERAGE
+            ========================================= -->
+
+            <div class="full">
+
+                <h3 style="margin-bottom: 5px;">
+                    Leverage
+                </h3>
+
+                <small style="color:#8b949e;">
+                    Enter only the leverage number.
+                    Example: enter 20 for 1:20.
+                </small>
+
+            </div>
+
+
+            <!-- METALS -->
+
+            <label>
+
+                Metals Leverage
+
+                <input
+                    id="leverageMetals"
+                    type="number"
+                    step="1"
+                    min="1"
+                    value="20"
+                    required
+                >
+
+            </label>
+
+
+            <!-- FOREX -->
+
+            <label>
+
+                Forex Leverage
+
+                <input
+                    id="leverageForex"
+                    type="number"
+                    step="1"
+                    min="1"
+                    value="30"
+                    required
+                >
+
+            </label>
+
+
+            <!-- INDICES -->
+
+            <label>
+
+                Indices Leverage
+
+                <input
+                    id="leverageIndices"
+                    type="number"
+                    step="1"
+                    min="1"
+                    value="20"
+                    required
+                >
+
+            </label>
+
+
+            <!-- CRYPTO -->
+
+            <label>
+
+                Crypto Leverage
+
+                <input
+                    id="leverageCrypto"
+                    type="number"
+                    step="1"
+                    min="1"
+                    value="2"
+                    required
+                >
+
+            </label>
+
+
+            <!-- BUTTONS -->
+
+            <div
                 class="full"
+                style="
+                    display:flex;
+                    gap:10px;
+                    flex-wrap:wrap;
+                "
             >
-                Add Account
-            </button>
+
+                <button
+                    type="submit"
+                    id="saveAccountButton"
+                >
+                    Save Account
+                </button>
+
+
+                <button
+                    type="button"
+                    id="cancelEditButton"
+                    style="
+                        background:#30363d;
+                        display:none;
+                    "
+                >
+                    Cancel Edit
+                </button>
+
+            </div>
 
 
             <p
@@ -245,49 +448,67 @@
                 class="full"
             ></p>
 
+
         </form>
 
     </section>
 
 
-    <br>
 
+    <!-- =========================================
+         ACCOUNT LIST
+    ========================================= -->
 
-    <!-- EXISTING ACCOUNTS -->
-
-    <section class="dashboard-section">
+    <section
+        class="dashboard-section"
+        style="margin-top:20px;"
+    >
 
         <div class="section-header">
 
-            <h2>My Accounts</h2>
-
-            <span id="accountCount">
-                0 accounts
-            </span>
+            <h2>
+                My Trading Accounts
+            </h2>
 
         </div>
 
 
         <div id="accountsList">
 
-            Loading accounts...
+            <p>
+                Loading accounts...
+            </p>
 
         </div>
 
     </section>
 
+
 </main>
 
 
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
+
 <script src="js/config.js"></script>
+
 <script src="js/auth.js"></script>
 
+
 <script>
+
     requireLogin();
+
 </script>
-<script src="js/accounts.js"></script>
+
+
 <script src="js/navigation.js"></script>
+
+<script src="js/accounts.js"></script>
+
 <script src="js/pwa.js"></script>
+
 
 </body>
 

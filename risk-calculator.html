@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Risk Calculator</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <meta
+        name="theme-color"
+        content="#161b22"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Trading Journal"
+    >
+
+    <link
+        rel="apple-touch-icon"
+        href="icons/icon-192.png"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+</head>
+
+
+<body>
+
+
+<header class="main-header">
+
+    <div class="brand">
+
+        <a
+            href="index.html"
+            class="brand-link"
+        >
+            <h1>
+                Trading Journal
+            </h1>
+        </a>
+
+        <span class="subtitle">
+            Risk Calculator
+        </span>
+
+    </div>
+
+
+    <div class="header-actions">
+
+        <a
+            href="add-trade.html"
+            class="add-trade-button"
+        >
+            + Add Trade
+        </a>
+
+        <button
+            type="button"
+            onclick="logout()"
+            class="logout-button"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<nav class="main-nav">
+
+    <a href="index.html">
+        Dashboard
+    </a>
+
+    <a href="add-trade.html">
+        Add Trade
+    </a>
+
+    <a href="trades.html">
+        History
+    </a>
+
+    <a href="analytics.html">
+        Analytics
+    </a>
+
+    <a href="calendar.html">
+        Calendar
+    </a>
+
+    <a href="accounts.html">
+        Accounts
+    </a>
+
+    <a href="risk-calculator.html">
+        Risk Calculator
+    </a>
+
+</nav>
+
+
+<main>
+
+
+    <!-- ACCOUNT -->
+
+    <section class="dashboard-account">
+
+        <label>
+
+            Trading Account
+
+            <select id="riskAccount">
+
+                <option>
+                    Loading...
+                </option>
+
+            </select>
+
+        </label>
+
+    </section>
+
+
+    <!-- ACCOUNT SUMMARY -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <span>
+                Initial Balance
+            </span>
+
+            <strong id="initialBalanceDisplay">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Leverage
+            </span>
+
+            <strong id="leverageDisplay">
+                1:0
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Risk Amount
+            </span>
+
+            <strong id="riskAmountDisplay">
+                $0.00
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- CALCULATOR -->
+
+    <form id="riskCalculatorForm">
+
+
+        <label>
+
+            Asset Class
+
+            <select id="assetClass">
+
+                <option value="metals">
+                    Metals
+                </option>
+
+                <option value="forex">
+                    Forex
+                </option>
+
+                <option value="indices">
+                    Indices
+                </option>
+
+                <option value="crypto">
+                    Crypto
+                </option>
+
+            </select>
+
+        </label>
+
+
+        <label>
+
+            Symbol
+
+            <input
+                id="riskSymbol"
+                type="text"
+                value="XAUUSD"
+                required
+            >
+
+        </label>
+
+
+        <label>
+
+            Direction
+
+            <select id="riskDirection">
+
+                <option value="BUY">
+                    BUY
+                </option>
+
+                <option value="SELL">
+                    SELL
+                </option>
+
+            </select>
+
+        </label>
+
+
+        <label>
+
+            Leverage
+
+            <input
+                id="riskLeverage"
+                type="number"
+                readonly
+            >
+
+        </label>
+
+
+        <!-- RISK -->
+
+        <label>
+
+            Risk %
+
+            <input
+                id="riskPercent"
+                type="number"
+                min="0"
+                step="0.01"
+                value="1"
+            >
+
+        </label>
+
+
+        <label>
+
+            Risk $
+
+            <input
+                id="riskDollars"
+                type="number"
+                min="0"
+                step="0.01"
+            >
+
+        </label>
+
+
+        <!-- PRICES -->
+
+        <label>
+
+            Entry Price
+
+            <input
+                id="entryPrice"
+                type="number"
+                step="any"
+                required
+            >
+
+        </label>
+
+
+        <label>
+
+            Stop Loss
+
+            <input
+                id="stopLossPrice"
+                type="number"
+                step="any"
+                required
+            >
+
+        </label>
+
+
+        <label>
+
+            Take Profit
+
+            <input
+                id="takeProfitPrice"
+                type="number"
+                step="any"
+            >
+
+        </label>
+
+
+        <button
+            type="button"
+            id="calculateRiskButton"
+            class="full"
+        >
+            Calculate
+        </button>
+
+    </form>
+
+
+    <!-- RESULTS -->
+
+    <section
+        class="stats-grid"
+        style="margin-top:20px;"
+    >
+
+
+        <div class="stat-card">
+
+            <span>
+                Lot Size
+            </span>
+
+            <strong id="requiredLotSize">
+                0.00
+            </strong>
+
+            <small>
+                Based on selected risk
+            </small>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Margin Required
+            </span>
+
+            <strong id="marginRequired">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Risk / Loss at SL
+            </span>
+
+            <strong id="lossAtStop">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Profit at TP
+            </span>
+
+            <strong id="profitAtTp">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Planned RR
+            </span>
+
+            <strong id="plannedRR">
+                0.00R
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>
+                Position Value
+            </span>
+
+            <strong id="positionNotional">
+                $0.00
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <p
+        id="riskMessage"
+        style="
+            margin-top:15px;
+            color:#8b949e;
+        "
+    ></p>
+
+
+</main>
+
+
+<script src="js/config.js"></script>
+
+<script src="js/auth.js"></script>
+
+<script>
+
+    requireLogin();
+
+</script>
+
+<script src="js/navigation.js"></script>
+
+<script src="js/risk-calculator.js"></script>
+
+<script src="js/pwa.js"></script>
+
+
+</body>
+
+</html>
