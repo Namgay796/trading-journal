@@ -4,9 +4,75 @@ const accountForm =
     );
 
 
-const accountMessage =
+const accountId =
     document.getElementById(
-        "accountMessage"
+        "accountId"
+    );
+
+
+const accountName =
+    document.getElementById(
+        "accountName"
+    );
+
+
+const startingBalance =
+    document.getElementById(
+        "startingBalance"
+    );
+
+
+const profitTarget =
+    document.getElementById(
+        "profitTarget"
+    );
+
+
+const dailyLossLimit =
+    document.getElementById(
+        "dailyLossLimit"
+    );
+
+
+const maxLossLimit =
+    document.getElementById(
+        "maxLossLimit"
+    );
+
+
+const consistencyLimit =
+    document.getElementById(
+        "consistencyLimit"
+    );
+
+
+const accountStatus =
+    document.getElementById(
+        "accountStatus"
+    );
+
+
+const leverageMetals =
+    document.getElementById(
+        "leverageMetals"
+    );
+
+
+const leverageForex =
+    document.getElementById(
+        "leverageForex"
+    );
+
+
+const leverageIndices =
+    document.getElementById(
+        "leverageIndices"
+    );
+
+
+const leverageCrypto =
+    document.getElementById(
+        "leverageCrypto"
     );
 
 
@@ -16,19 +82,51 @@ const accountsList =
     );
 
 
+const accountMessage =
+    document.getElementById(
+        "accountMessage"
+    );
+
+
+const accountFormTitle =
+    document.getElementById(
+        "accountFormTitle"
+    );
+
+
+const saveAccountButton =
+    document.getElementById(
+        "saveAccountButton"
+    );
+
+
+const cancelEditButton =
+    document.getElementById(
+        "cancelEditButton"
+    );
+
+
+let accounts = [];
+
 
 /* =========================================
    LOAD ACCOUNTS
 ========================================= */
 
-async function loadAccountList() {
+async function loadAccounts() {
+
+    accountsList.innerHTML =
+        "<p>Loading accounts...</p>";
+
 
     const {
         data,
         error
     } =
         await db
-            .from("accounts")
+            .from(
+                "accounts"
+            )
             .select("*")
             .order(
                 "id",
@@ -39,452 +137,843 @@ async function loadAccountList() {
             );
 
 
-    if (error) {
-
-        console.error(error);
-
-        accountsList.innerHTML =
-            "ERROR: " +
-            error.message;
-
-        return;
-
-    }
-
-
-    document
-        .getElementById(
-            "accountCount"
-        )
-        .textContent =
-        `${data.length} account${data.length === 1 ? "" : "s"}`;
-
-
     if (
-        data.length === 0
+        error
     ) {
 
-        accountsList.innerHTML =
-            '<p class="empty">No accounts yet.</p>';
-
-        return;
-
-    }
-
-
-    accountsList.innerHTML =
-        data
-            .map(
-                account =>
-                    createAccountCard(
-                        account
-                    )
-            )
-            .join("");
-
-}
-
-
-
-/* =========================================
-   ACCOUNT CARD
-========================================= */
-
-function createAccountCard(
-    account
-) {
-
-    const startingBalance =
-        Number(
-            account.starting_balance ||
-            0
+        console.error(
+            error
         );
 
 
-    return `
-
-        <div class="account-card">
-
-            <div class="account-card-top">
-
-                <div>
-
-                    <h3>
-                        ${escapeHtml(
-                            account.name
-                        )}
-                    </h3>
-
-                    <span>
-
-                        ${escapeHtml(
-                            account.firm ||
-                            "Personal"
-                        )}
-
-                        •
-
-                        ${escapeHtml(
-                            account.account_type ||
-                            "Personal"
-                        )}
-
-                    </span>
-
-                </div>
+        accountsList.innerHTML =
+            "<p>Unable to load accounts.</p>";
 
 
-                <span class="account-status">
-
-                    ${escapeHtml(
-                        account.status ||
-                        "Active"
-                    )}
-
-                </span>
-
-            </div>
+        accountMessage.textContent =
+            "ERROR: " +
+            error.message;
 
 
-            <div class="account-balance">
+        return;
 
-                <small>
-                    Starting Balance
-                </small>
-
-                <strong>
-                    ${money(
-                        startingBalance
-                    )}
-                </strong>
-
-            </div>
+    }
 
 
-            <div class="account-rules">
-
-                <div>
-
-                    <small>
-                        Profit Target
-                    </small>
-
-                    <strong>
-
-                        ${Number(
-                            account.profit_target ||
-                            0
-                        ).toFixed(2)}%
-
-                    </strong>
-
-                </div>
+    accounts =
+        data || [];
 
 
-                <div>
-
-                    <small>
-                        Daily Loss
-                    </small>
-
-                    <strong>
-
-                        ${Number(
-                            account.daily_loss_limit ||
-                            0
-                        ).toFixed(2)}%
-
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <small>
-                        Max Loss
-                    </small>
-
-                    <strong>
-
-                        ${Number(
-                            account.max_loss_limit ||
-                            0
-                        ).toFixed(2)}%
-
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <small>
-                        Consistency
-                    </small>
-
-                    <strong>
-
-                        ${Number(
-                            account.consistency_rule ||
-                            0
-                        ).toFixed(2)}%
-
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="account-actions">
-
-                <button
-                    type="button"
-                    class="small-button"
-                    onclick="viewAccount(${account.id})"
-                >
-                    View
-                </button>
-
-
-                <button
-                    type="button"
-                    class="small-button danger-button"
-                    onclick="deleteAccount(${account.id})"
-                >
-                    Delete
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
+    renderAccounts();
 
 }
 
 
+/* =========================================
+   RENDER ACCOUNTS
+========================================= */
+
+function renderAccounts() {
+
+    accountsList.innerHTML =
+        "";
+
+
+    if (
+        accounts.length ===
+        0
+    ) {
+
+        accountsList.innerHTML =
+            `
+            <p style="color:#8b949e;">
+                No trading accounts yet.
+                Add your first account above.
+            </p>
+            `;
+
+
+        return;
+
+    }
+
+
+    accounts.forEach(
+        account => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "account-card";
+
+
+            card.innerHTML =
+                `
+
+                <div class="account-card-top">
+
+                    <div>
+
+                        <h3>
+                            ${escapeHtml(
+                                account.name ||
+                                "Trading Account"
+                            )}
+                        </h3>
+
+                        <small>
+                            Status:
+                            ${escapeHtml(
+                                account.status ||
+                                "Active"
+                            )}
+                        </small>
+
+                    </div>
+
+
+                    <div>
+
+                        <button
+                            type="button"
+                            class="small-button edit-account-button"
+                            data-id="${account.id}"
+                        >
+                            Edit
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="small-button danger-button delete-account-button"
+                            data-id="${account.id}"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+
+                <div
+                    class="account-leverage-grid"
+                    style="margin-top:16px;"
+                >
+
+                    <div>
+
+                        <span>
+                            Initial Balance
+                        </span>
+
+                        <strong>
+                            ${money(
+                                account.starting_balance
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Profit Target
+                        </span>
+
+                        <strong>
+                            ${percentage(
+                                account.profit_target
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Daily Loss
+                        </span>
+
+                        <strong>
+                            ${percentage(
+                                account.daily_loss_limit
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Max Loss
+                        </span>
+
+                        <strong>
+                            ${percentage(
+                                account.max_loss_limit
+                            )}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <h4
+                    style="
+                        margin-top:18px;
+                        margin-bottom:10px;
+                    "
+                >
+                    Leverage
+                </h4>
+
+
+                <div class="account-leverage-grid">
+
+
+                    <div>
+
+                        <span>
+                            Metals
+                        </span>
+
+                        <strong>
+                            1:${numberOrDefault(
+                                account.leverage_metals,
+                                20
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Forex
+                        </span>
+
+                        <strong>
+                            1:${numberOrDefault(
+                                account.leverage_forex,
+                                30
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Indices
+                        </span>
+
+                        <strong>
+                            1:${numberOrDefault(
+                                account.leverage_indices,
+                                20
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Crypto
+                        </span>
+
+                        <strong>
+                            1:${numberOrDefault(
+                                account.leverage_crypto,
+                                2
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <div
+                    style="
+                        margin-top:14px;
+                        color:#8b949e;
+                        font-size:13px;
+                    "
+                >
+
+                    Consistency:
+                    ${percentage(
+                        account.consistency_limit
+                    )}
+
+                </div>
+
+            `;
+
+
+            accountsList.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    attachAccountButtons();
+
+}
+
 
 /* =========================================
-   ADD ACCOUNT
+   SAVE ACCOUNT
 ========================================= */
 
 accountForm.addEventListener(
     "submit",
-    async function(event) {
+    async function(
+        event
+    ) {
 
         event.preventDefault();
 
 
         accountMessage.textContent =
-            "Checking login...";
+            "Saving account...";
 
 
-        /* ---------------------------------
-           GET CURRENT USER
-        --------------------------------- */
+        try {
 
-        const {
-            data: {
-                user
-            },
-            error: userError
-        } =
-            await db.auth
-                .getUser();
-
-
-        if (
-            userError ||
-            !user
-        ) {
-
-            console.error(
-                userError
-            );
+            const {
+                data: {
+                    user
+                },
+                error:
+                    userError
+            } =
+                await db.auth
+                    .getUser();
 
 
-            accountMessage.textContent =
-                "You are not logged in.";
+            if (
+                userError ||
+                !user
+            ) {
 
-            return;
+                throw new Error(
+                    "You are not logged in."
+                );
+
+            }
+
+
+            const payload = {
+
+                user_id:
+                    user.id,
+
+
+                name:
+                    accountName
+                        .value
+                        .trim(),
+
+
+                starting_balance:
+                    Number(
+                        startingBalance
+                            .value
+                    ),
+
+
+                profit_target:
+                    numberOrNull(
+                        profitTarget
+                            .value
+                    ),
+
+
+                daily_loss_limit:
+                    numberOrNull(
+                        dailyLossLimit
+                            .value
+                    ),
+
+
+                max_loss_limit:
+                    numberOrNull(
+                        maxLossLimit
+                            .value
+                    ),
+
+
+                consistency_limit:
+                    numberOrNull(
+                        consistencyLimit
+                            .value
+                    ),
+
+
+                status:
+                    accountStatus
+                        .value,
+
+
+                leverage_metals:
+                    Number(
+                        leverageMetals
+                            .value
+                    ),
+
+
+                leverage_forex:
+                    Number(
+                        leverageForex
+                            .value
+                    ),
+
+
+                leverage_indices:
+                    Number(
+                        leverageIndices
+                            .value
+                    ),
+
+
+                leverage_crypto:
+                    Number(
+                        leverageCrypto
+                            .value
+                    )
+
+            };
+
+
+            /* =====================================
+               BASIC VALIDATION
+            ===================================== */
+
+            if (
+                !payload.name
+            ) {
+
+                throw new Error(
+                    "Account name is required."
+                );
+
+            }
+
+
+            if (
+                payload.starting_balance <=
+                0
+            ) {
+
+                throw new Error(
+                    "Initial balance must be greater than zero."
+                );
+
+            }
+
+
+            if (
+                payload.leverage_metals <
+                1 ||
+                payload.leverage_forex <
+                1 ||
+                payload.leverage_indices <
+                1 ||
+                payload.leverage_crypto <
+                1
+            ) {
+
+                throw new Error(
+                    "Leverage must be at least 1."
+                );
+
+            }
+
+
+            const editingId =
+                Number(
+                    accountId.value
+                );
+
+
+            /* =====================================
+               EDIT ACCOUNT
+            ===================================== */
+
+            if (
+                editingId
+            ) {
+
+                const {
+                    error
+                } =
+                    await db
+                        .from(
+                            "accounts"
+                        )
+                        .update(
+                            payload
+                        )
+                        .eq(
+                            "id",
+                            editingId
+                        );
+
+
+                if (
+                    error
+                ) {
+
+                    throw error;
+
+                }
+
+
+                accountMessage.textContent =
+                    "Account updated successfully!";
+
+            }
+
+
+            /* =====================================
+               CREATE ACCOUNT
+            ===================================== */
+
+            else {
+
+                const {
+                    error
+                } =
+                    await db
+                        .from(
+                            "accounts"
+                        )
+                        .insert(
+                            [
+                                payload
+                            ]
+                        );
+
+
+                if (
+                    error
+                ) {
+
+                    throw error;
+
+                }
+
+
+                accountMessage.textContent =
+                    "Account added successfully!";
+
+            }
+
+
+            resetAccountForm();
+
+
+            await loadAccounts();
 
         }
 
 
+        catch (
+            error
+        ) {
 
-        accountMessage.textContent =
-            "Creating account...";
+            console.error(
+                error
+            );
 
-
-
-        /* ---------------------------------
-           ACCOUNT OBJECT
-        --------------------------------- */
-
-        const account = {
-
-            user_id:
-                user.id,
-
-
-            name:
-                document
-                    .getElementById(
-                        "accountName"
-                    )
-                    .value
-                    .trim(),
-
-
-            firm:
-                document
-                    .getElementById(
-                        "firm"
-                    )
-                    .value
-                    .trim(),
-
-
-            account_type:
-                document
-                    .getElementById(
-                        "accountType"
-                    )
-                    .value,
-
-
-            starting_balance:
-                Number(
-                    document
-                        .getElementById(
-                            "startingBalance"
-                        )
-                        .value
-                ),
-
-
-            profit_target:
-                Number(
-                    document
-                        .getElementById(
-                            "profitTarget"
-                        )
-                        .value || 0
-                ),
-
-
-            daily_loss_limit:
-                Number(
-                    document
-                        .getElementById(
-                            "dailyLossLimit"
-                        )
-                        .value || 0
-                ),
-
-
-            max_loss_limit:
-                Number(
-                    document
-                        .getElementById(
-                            "maxLossLimit"
-                        )
-                        .value || 0
-                ),
-
-
-            consistency_rule:
-                Number(
-                    document
-                        .getElementById(
-                            "consistencyRule"
-                        )
-                        .value || 0
-                ),
-
-
-            status:
-                document
-                    .getElementById(
-                        "accountStatus"
-                    )
-                    .value
-
-        };
-
-
-
-        /* ---------------------------------
-           SAVE ACCOUNT
-        --------------------------------- */
-
-        const { error } =
-            await db
-                .from("accounts")
-                .insert([
-                    account
-                ]);
-
-
-        if (error) {
-
-            console.error(error);
 
             accountMessage.textContent =
                 "ERROR: " +
                 error.message;
 
-            return;
-
         }
-
-
-        accountMessage.textContent =
-            "Account created successfully!";
-
-
-        accountForm.reset();
-
-
-        document
-            .getElementById(
-                "profitTarget"
-            )
-            .value =
-            10;
-
-
-        document
-            .getElementById(
-                "dailyLossLimit"
-            )
-            .value =
-            5;
-
-
-        document
-            .getElementById(
-                "maxLossLimit"
-            )
-            .value =
-            10;
-
-
-        document
-            .getElementById(
-                "consistencyRule"
-            )
-            .value =
-            0;
-
-
-        loadAccountList();
 
     }
 );
 
+
+/* =========================================
+   ACCOUNT BUTTONS
+========================================= */
+
+function attachAccountButtons() {
+
+    /* EDIT */
+
+    document
+        .querySelectorAll(
+            ".edit-account-button"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function() {
+
+                        const id =
+                            Number(
+                                button
+                                    .dataset
+                                    .id
+                            );
+
+
+                        editAccount(
+                            id
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+    /* DELETE */
+
+    document
+        .querySelectorAll(
+            ".delete-account-button"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function() {
+
+                        const id =
+                            Number(
+                                button
+                                    .dataset
+                                    .id
+                            );
+
+
+                        deleteAccount(
+                            id
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================
+   EDIT ACCOUNT
+========================================= */
+
+function editAccount(
+    id
+) {
+
+    const account =
+        accounts.find(
+            item =>
+                Number(
+                    item.id
+                ) ===
+                Number(
+                    id
+                )
+        );
+
+
+    if (
+        !account
+    ) {
+
+        return;
+
+    }
+
+
+    accountId.value =
+        account.id;
+
+
+    accountName.value =
+        account.name ||
+        "";
+
+
+    startingBalance.value =
+        account.starting_balance ??
+        "";
+
+
+    profitTarget.value =
+        account.profit_target ??
+        "";
+
+
+    dailyLossLimit.value =
+        account.daily_loss_limit ??
+        "";
+
+
+    maxLossLimit.value =
+        account.max_loss_limit ??
+        "";
+
+
+    consistencyLimit.value =
+        account.consistency_limit ??
+        "";
+
+
+    accountStatus.value =
+        account.status ||
+        "Active";
+
+
+    leverageMetals.value =
+        numberOrDefault(
+            account.leverage_metals,
+            20
+        );
+
+
+    leverageForex.value =
+        numberOrDefault(
+            account.leverage_forex,
+            30
+        );
+
+
+    leverageIndices.value =
+        numberOrDefault(
+            account.leverage_indices,
+            20
+        );
+
+
+    leverageCrypto.value =
+        numberOrDefault(
+            account.leverage_crypto,
+            2
+        );
+
+
+    accountFormTitle.textContent =
+        "Edit Trading Account";
+
+
+    saveAccountButton.textContent =
+        "Update Account";
+
+
+    cancelEditButton.style.display =
+        "inline-block";
+
+
+    window.scrollTo(
+        {
+            top:
+                0,
+
+            behavior:
+                "smooth"
+        }
+    );
+
+}
+
+
+/* =========================================
+   CANCEL EDIT
+========================================= */
+
+cancelEditButton.addEventListener(
+    "click",
+    function() {
+
+        resetAccountForm();
+
+
+        accountMessage.textContent =
+            "";
+
+    }
+);
+
+
+/* =========================================
+   RESET FORM
+========================================= */
+
+function resetAccountForm() {
+
+    accountForm.reset();
+
+
+    accountId.value =
+        "";
+
+
+    accountFormTitle.textContent =
+        "Add Trading Account";
+
+
+    saveAccountButton.textContent =
+        "Save Account";
+
+
+    cancelEditButton.style.display =
+        "none";
+
+
+    /* DEFAULT LEVERAGE */
+
+    leverageMetals.value =
+        20;
+
+
+    leverageForex.value =
+        30;
+
+
+    leverageIndices.value =
+        20;
+
+
+    leverageCrypto.value =
+        2;
+
+
+    accountStatus.value =
+        "Active";
+
+}
 
 
 /* =========================================
@@ -495,62 +984,56 @@ async function deleteAccount(
     id
 ) {
 
-    const confirmed =
-        confirm(
-            "Delete this account?\n\n" +
-            "Only delete an account if it has no trades."
+    const account =
+        accounts.find(
+            item =>
+                Number(
+                    item.id
+                ) ===
+                Number(
+                    id
+                )
         );
-
-
-    if (!confirmed) {
-
-        return;
-
-    }
-
-
-    const {
-        data: trades,
-        error: tradeError
-    } =
-        await db
-            .from("trades")
-            .select("id")
-            .eq(
-                "account_id",
-                id
-            )
-            .limit(1);
-
-
-    if (tradeError) {
-
-        alert(
-            tradeError.message
-        );
-
-        return;
-
-    }
 
 
     if (
-        trades &&
-        trades.length > 0
+        !account
     ) {
-
-        alert(
-            "This account contains trades and cannot be deleted."
-        );
 
         return;
 
     }
 
 
-    const { error } =
+    const confirmed =
+        confirm(
+            "Delete account \"" +
+            account.name +
+            "\"?\n\n" +
+            "Do not delete an account that already has trades unless you intend to remove it."
+        );
+
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+
+    accountMessage.textContent =
+        "Deleting account...";
+
+
+    const {
+        error
+    } =
         await db
-            .from("accounts")
+            .from(
+                "accounts"
+            )
             .delete()
             .eq(
                 "id",
@@ -558,42 +1041,105 @@ async function deleteAccount(
             );
 
 
-    if (error) {
+    if (
+        error
+    ) {
 
-        alert(
-            "Delete failed: " +
-            error.message
+        console.error(
+            error
         );
+
+
+        accountMessage.textContent =
+            "ERROR: " +
+            error.message;
+
 
         return;
 
     }
 
 
-    loadAccountList();
+    accountMessage.textContent =
+        "Account deleted.";
+
+
+    await loadAccounts();
 
 }
-
-
-
-/* =========================================
-   VIEW ACCOUNT
-========================================= */
-
-function viewAccount(
-    id
-) {
-
-    window.location.href =
-        "index.html?account=" +
-        id;
-
-}
-
 
 
 /* =========================================
    HELPERS
+========================================= */
+
+function numberOrNull(
+    value
+) {
+
+    if (
+        value === "" ||
+        value === null ||
+        value === undefined
+    ) {
+
+        return null;
+
+    }
+
+
+    const number =
+        Number(
+            value
+        );
+
+
+    return Number.isFinite(
+        number
+    )
+        ?
+        number
+        :
+        null;
+
+}
+
+
+/* =========================================
+   NUMBER DEFAULT
+========================================= */
+
+function numberOrDefault(
+    value,
+    fallback
+) {
+
+    const number =
+        Number(
+            value
+        );
+
+
+    if (
+        !Number.isFinite(
+            number
+        ) ||
+        number <=
+        0
+    ) {
+
+        return fallback;
+
+    }
+
+
+    return number;
+
+}
+
+
+/* =========================================
+   MONEY FORMAT
 ========================================= */
 
 function money(
@@ -601,54 +1147,103 @@ function money(
 ) {
 
     return "$" +
-        Number(value)
-            .toLocaleString(
-                "en-AU",
-                {
-                    minimumFractionDigits:
-                        2,
+        Number(
+            value ||
+            0
+        )
+        .toLocaleString(
+            "en-AU",
+            {
 
-                    maximumFractionDigits:
-                        2
-                }
-            );
+                minimumFractionDigits:
+                    2,
+
+                maximumFractionDigits:
+                    2
+
+            }
+        );
 
 }
 
 
+/* =========================================
+   PERCENT FORMAT
+========================================= */
+
+function percentage(
+    value
+) {
+
+    if (
+        value ===
+        null ||
+        value ===
+        undefined ||
+        value ===
+        ""
+    ) {
+
+        return "-";
+
+    }
+
+
+    return (
+        Number(
+            value
+        )
+        .toFixed(
+            2
+        )
+        .replace(
+            /\.00$/,
+            ""
+        ) +
+        "%"
+    );
+
+}
+
+
+/* =========================================
+   SAFE HTML
+========================================= */
 
 function escapeHtml(
     value
 ) {
 
-    return String(value)
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+    return String(
+        value ||
+        ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
 
 }
-
 
 
 /* =========================================
    START
 ========================================= */
 
-loadAccountList();
+loadAccounts();

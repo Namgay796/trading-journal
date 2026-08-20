@@ -1,15 +1,34 @@
+/* =========================================
+   ACTIVE NAVIGATION
+========================================= */
+
 document.addEventListener(
     "DOMContentLoaded",
-    function() {
+    function () {
+
+        const navLinks =
+            document.querySelectorAll(
+                ".main-nav a"
+            );
+
+
+        /* =================================
+           GET CURRENT PAGE
+        ================================= */
 
         let currentPage =
             window.location.pathname
                 .split("/")
-                .pop()
-                .toLowerCase();
+                .pop();
 
+
+        /*
+           If URL ends with /
+           treat it as index.html
+        */
 
         if (
+            !currentPage ||
             currentPage === ""
         ) {
 
@@ -19,48 +38,36 @@ document.addEventListener(
         }
 
 
-        /*
-           Edit Trade belongs to History
-        */
-
-        if (
-            currentPage ===
-            "edit-trade.html"
-        ) {
-
-            currentPage =
-                "trades.html";
-
-        }
-
-
-        const navLinks =
-            document.querySelectorAll(
-                ".main-nav a"
-            );
-
+        /* =================================
+           CHECK EACH NAV LINK
+        ================================= */
 
         navLinks.forEach(
             link => {
 
-                const linkPage =
+                const href =
                     link
                         .getAttribute(
                             "href"
-                        )
-                        .split("/")
-                        .pop()
-                        .toLowerCase();
+                        );
 
+
+                /*
+                   Remove active class first
+                */
 
                 link.classList.remove(
                     "active"
                 );
 
 
+                /*
+                   Highlight current page
+                */
+
                 if (
-                    currentPage ===
-                    linkPage
+                    href ===
+                    currentPage
                 ) {
 
                     link.classList.add(
