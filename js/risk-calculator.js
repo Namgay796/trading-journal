@@ -58,6 +58,18 @@ const takeProfitPrice =
     );
 
 
+const slPips =
+    document.getElementById(
+        "slPips"
+    );
+
+
+const tpPips =
+    document.getElementById(
+        "tpPips"
+    );
+
+
 const calculateRiskButton =
     document.getElementById(
         "calculateRiskButton"
@@ -157,8 +169,7 @@ async function loadRiskAccounts() {
                 .order(
                     "id",
                     {
-                        ascending:
-                            true
+                        ascending: true
                     }
                 );
 
@@ -174,12 +185,6 @@ async function loadRiskAccounts() {
 
         accounts =
             data || [];
-
-
-        console.log(
-            "Risk calculator accounts:",
-            accounts
-        );
 
 
         riskAccount.innerHTML =
@@ -313,7 +318,7 @@ riskAccount.addEventListener(
 
 
 /* =========================================
-   UPDATE ACCOUNT INFO
+   ACCOUNT DETAILS
 ========================================= */
 
 function updateAccountDetails() {
@@ -340,6 +345,9 @@ function updateAccountDetails() {
     calculateRiskFromPercent();
 
 
+    updatePipDistances();
+
+
     calculateResults();
 
 }
@@ -357,6 +365,8 @@ assetClass.addEventListener(
 
         updateDefaultSymbol();
 
+        updatePipDistances();
+
         calculateResults();
 
     }
@@ -364,7 +374,7 @@ assetClass.addEventListener(
 
 
 /* =========================================
-   GET LEVERAGE FROM SELECTED ACCOUNT
+   LEVERAGE
 ========================================= */
 
 function updateLeverage() {
@@ -494,7 +504,302 @@ function updateDefaultSymbol() {
 
 
 /* =========================================
-   INTERNAL MULTIPLIER
+   PIP SIZE
+========================================= */
+
+function getPipSize() {
+
+    const symbol =
+        String(
+            riskSymbol.value ||
+            ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+    /* =====================================
+       FOREX JPY PAIRS
+
+       Example:
+       USDJPY
+       GBPJPY
+       EURJPY
+
+       1 pip = 0.01
+    ===================================== */
+
+    if (
+        assetClass.value ===
+        "forex" &&
+        symbol.includes(
+            "JPY"
+        )
+    ) {
+
+        return 0.01;
+
+    }
+
+
+    /* =====================================
+       NORMAL FOREX
+
+       1 pip = 0.0001
+    ===================================== */
+
+    if (
+        assetClass.value ===
+        "forex"
+    ) {
+
+        return 0.0001;
+
+    }
+
+
+    /* =====================================
+       METALS
+
+       XAUUSD:
+       0.01 = 1 pip
+    ===================================== */
+
+    if (
+        assetClass.value ===
+        "metals"
+    ) {
+
+        return 0.01;
+
+    }
+
+
+    /* =====================================
+       INDICES
+
+       Display as points
+    ===================================== */
+
+    if (
+        assetClass.value ===
+        "indices"
+    ) {
+
+        return 1;
+
+    }
+
+
+    /* =====================================
+       CRYPTO
+
+       Display as price points
+    ===================================== */
+
+    if (
+        assetClass.value ===
+        "crypto"
+    ) {
+
+        return 1;
+
+    }
+
+
+    return 0.01;
+
+}
+
+
+/* =========================================
+   UPDATE SL + TP PIPS
+========================================= */
+
+function updatePipDistances() {
+
+    const entry =
+        Number(
+            entryPrice.value
+        );
+
+
+    const stop =
+        Number(
+            stopLossPrice.value
+        );
+
+
+    const target =
+        Number(
+            takeProfitPrice.value
+        );
+
+
+    const pipSize =
+        getPipSize();
+
+
+    /* =====================================
+       STOP LOSS DISTANCE
+    ===================================== */
+
+    if (
+        entry &&
+        stop &&
+        pipSize >
+        0
+    ) {
+
+        const pips =
+            Math.abs(
+                entry -
+                stop
+            ) /
+            pipSize;
+
+
+        if (
+            assetClass.value ===
+            "indices" ||
+            assetClass.value ===
+            "crypto"
+        ) {
+
+            slPips.textContent =
+                formatPips(
+                    pips
+                ) +
+                " points";
+
+        }
+
+
+        else {
+
+            slPips.textContent =
+                formatPips(
+                    pips
+                ) +
+                " pips";
+
+        }
+
+    }
+
+
+    else {
+
+        slPips.textContent =
+            assetClass.value ===
+                "indices" ||
+            assetClass.value ===
+                "crypto"
+                ?
+                "0 points"
+                :
+                "0 pips";
+
+    }
+
+
+    /* =====================================
+       TAKE PROFIT DISTANCE
+    ===================================== */
+
+    if (
+        entry &&
+        target &&
+        pipSize >
+        0
+    ) {
+
+        const pips =
+            Math.abs(
+                target -
+                entry
+            ) /
+            pipSize;
+
+
+        if (
+            assetClass.value ===
+            "indices" ||
+            assetClass.value ===
+            "crypto"
+        ) {
+
+            tpPips.textContent =
+                formatPips(
+                    pips
+                ) +
+                " points";
+
+        }
+
+
+        else {
+
+            tpPips.textContent =
+                formatPips(
+                    pips
+                ) +
+                " pips";
+
+        }
+
+    }
+
+
+    else {
+
+        tpPips.textContent =
+            assetClass.value ===
+                "indices" ||
+            assetClass.value ===
+                "crypto"
+                ?
+                "0 points"
+                :
+                "0 pips";
+
+    }
+
+}
+
+
+/* =========================================
+   FORMAT PIPS
+========================================= */
+
+function formatPips(
+    value
+) {
+
+    if (
+        Number.isInteger(
+            value
+        )
+    ) {
+
+        return value
+            .toLocaleString(
+                "en-AU"
+            );
+
+    }
+
+
+    return value
+        .toFixed(
+            1
+        );
+
+}
+
+
+/* =========================================
+   INTERNAL CONTRACT MULTIPLIER
 ========================================= */
 
 function getContractMultiplier() {
@@ -587,7 +892,7 @@ function getLotStep() {
 
 
 /* =========================================
-   RISK % -> RISK $
+   RISK % -> $
 ========================================= */
 
 riskPercent.addEventListener(
@@ -651,7 +956,7 @@ function calculateRiskFromPercent() {
 
 
 /* =========================================
-   RISK $ -> RISK %
+   RISK $ -> %
 ========================================= */
 
 riskDollars.addEventListener(
@@ -726,12 +1031,14 @@ function calculateRiskFromDollars() {
 
 
 /* =========================================
-   CALCULATE BUTTON
+   BUTTON
 ========================================= */
 
 calculateRiskButton.addEventListener(
     "click",
     function() {
+
+        updatePipDistances();
 
         calculateResults();
 
@@ -740,7 +1047,7 @@ calculateRiskButton.addEventListener(
 
 
 /* =========================================
-   LIVE CALCULATION
+   LIVE UPDATES
 ========================================= */
 
 [
@@ -755,13 +1062,25 @@ calculateRiskButton.addEventListener(
 
         field.addEventListener(
             "input",
-            calculateResults
+            function() {
+
+                updatePipDistances();
+
+                calculateResults();
+
+            }
         );
 
 
         field.addEventListener(
             "change",
-            calculateResults
+            function() {
+
+                updatePipDistances();
+
+                calculateResults();
+
+            }
         );
 
     }
@@ -776,6 +1095,9 @@ function calculateResults() {
 
     riskMessage.textContent =
         "";
+
+
+    updatePipDistances();
 
 
     if (
@@ -842,7 +1164,7 @@ function calculateResults() {
 
 
     /* =====================================
-       VALIDATE STOP LOSS
+       BUY VALIDATION
     ===================================== */
 
     if (
@@ -863,6 +1185,10 @@ function calculateResults() {
 
     }
 
+
+    /* =====================================
+       SELL VALIDATION
+    ===================================== */
 
     if (
         riskDirection.value ===
@@ -907,7 +1233,7 @@ function calculateResults() {
 
 
     /* =====================================
-       LOT SIZE FROM RISK AMOUNT
+       LOT SIZE FROM RISK
     ===================================== */
 
     let lots =
@@ -963,7 +1289,7 @@ function calculateResults() {
 
 
     /* =====================================
-       MARGIN REQUIRED
+       MARGIN
     ===================================== */
 
     const margin =
@@ -977,7 +1303,7 @@ function calculateResults() {
 
 
     /* =====================================
-       TAKE PROFIT DISTANCE
+       REWARD DISTANCE
     ===================================== */
 
     let rewardDistance =
@@ -1049,7 +1375,7 @@ function calculateResults() {
 
 
     /* =====================================
-       DISPLAY
+       RESULTS
     ===================================== */
 
     requiredLotSize.textContent =
@@ -1097,7 +1423,7 @@ function calculateResults() {
 
 
     /* =====================================
-       ROUNDING INFO
+       ROUNDING INFORMATION
     ===================================== */
 
     if (
@@ -1202,7 +1528,7 @@ function resetResults() {
 
 
 /* =========================================
-   MONEY FORMAT
+   MONEY
 ========================================= */
 
 function money(
