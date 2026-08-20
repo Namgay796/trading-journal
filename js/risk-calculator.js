@@ -1,105 +1,122 @@
 const riskAccount =
     document.getElementById(
         "riskAccount"
-    );const riskAccount =
-    document.getElementById(
-        "riskAccount"
     );
+
 
 const assetClass =
     document.getElementById(
         "assetClass"
     );
 
+
 const riskSymbol =
     document.getElementById(
         "riskSymbol"
     );
+
 
 const riskDirection =
     document.getElementById(
         "riskDirection"
     );
 
+
 const riskLeverage =
     document.getElementById(
         "riskLeverage"
     );
+
 
 const riskPercent =
     document.getElementById(
         "riskPercent"
     );
 
+
 const riskDollars =
     document.getElementById(
         "riskDollars"
     );
+
 
 const entryPrice =
     document.getElementById(
         "entryPrice"
     );
 
+
 const stopLossPrice =
     document.getElementById(
         "stopLossPrice"
     );
+
 
 const takeProfitPrice =
     document.getElementById(
         "takeProfitPrice"
     );
 
+
 const calculateRiskButton =
     document.getElementById(
         "calculateRiskButton"
     );
+
 
 const initialBalanceDisplay =
     document.getElementById(
         "initialBalanceDisplay"
     );
 
+
 const leverageDisplay =
     document.getElementById(
         "leverageDisplay"
     );
+
 
 const riskAmountDisplay =
     document.getElementById(
         "riskAmountDisplay"
     );
 
+
 const requiredLotSize =
     document.getElementById(
         "requiredLotSize"
     );
+
 
 const marginRequired =
     document.getElementById(
         "marginRequired"
     );
 
+
 const lossAtStop =
     document.getElementById(
         "lossAtStop"
     );
+
 
 const profitAtTp =
     document.getElementById(
         "profitAtTp"
     );
 
+
 const plannedRR =
     document.getElementById(
         "plannedRR"
     );
 
+
 const positionNotional =
     document.getElementById(
         "positionNotional"
     );
+
 
 const riskMessage =
     document.getElementById(
@@ -118,72 +135,199 @@ let currentAccount = null;
 
 async function loadRiskAccounts() {
 
-    const {
-        data,
-        error
-    } =
-        await db
-            .from("accounts")
-            .select("*")
-            .order("id");
-
-
-    if (error) {
-
-        console.error(error);
-
-        riskMessage.textContent =
-            "ERROR: " +
-            error.message;
-
-        return;
-
-    }
-
-
-    accounts =
-        data || [];
-
-
-    riskAccount.innerHTML =
-        "";
-
-
-    accounts.forEach(
-        account => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                account.id;
-
-
-            option.textContent =
-                account.name;
-
-
-            riskAccount.appendChild(
-                option
-            );
-
-        }
+    console.log(
+        "Loading trading accounts..."
     );
 
 
-    if (
-        accounts.length >
-        0
-    ) {
+    riskAccount.innerHTML =
+        `
+        <option value="">
+            Loading...
+        </option>
+        `;
+
+
+    try {
+
+        /* =====================================
+           GET LOGGED-IN USER
+        ===================================== */
+
+        const {
+            data: {
+                user
+            },
+            error:
+                userError
+        } =
+            await db.auth
+                .getUser();
+
+
+        if (
+            userError
+        ) {
+
+            throw userError;
+
+        }
+
+
+        if (
+            !user
+        ) {
+
+            throw new Error(
+                "User is not logged in."
+            );
+
+        }
+
+
+        /* =====================================
+           LOAD USER ACCOUNTS
+        ===================================== */
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "accounts"
+                )
+                .select("*")
+                .eq(
+                    "user_id",
+                    user.id
+                )
+                .order(
+                    "id",
+                    {
+                        ascending:
+                            true
+                    }
+                );
+
+
+        if (
+            error
+        ) {
+
+            throw error;
+
+        }
+
+
+        accounts =
+            data || [];
+
+
+        riskAccount.innerHTML =
+            "";
+
+
+        /* =====================================
+           NO ACCOUNTS
+        ===================================== */
+
+        if (
+            accounts.length ===
+            0
+        ) {
+
+            riskAccount.innerHTML =
+                `
+                <option value="">
+                    No accounts found
+                </option>
+                `;
+
+
+            riskMessage.textContent =
+                "No trading accounts found. Add an account first.";
+
+
+            return;
+
+        }
+
+
+        /* =====================================
+           ADD ACCOUNTS TO SELECTOR
+        ===================================== */
+
+        accounts.forEach(
+            account => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    account.id;
+
+
+                option.textContent =
+                    account.name;
+
+
+                riskAccount.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        /* =====================================
+           SELECT FIRST ACCOUNT
+        ===================================== */
 
         currentAccount =
             accounts[0];
 
 
+        riskAccount.value =
+            currentAccount.id;
+
+
         updateAccountDetails();
+
+
+        riskMessage.textContent =
+            "";
+
+    }
+
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            "Risk calculator account error:",
+            error
+        );
+
+
+        riskAccount.innerHTML =
+            `
+            <option value="">
+                Unable to load accounts
+            </option>
+            `;
+
+
+        riskMessage.textContent =
+            "ERROR: " +
+            (
+                error.message ||
+                "Unable to load trading accounts."
+            );
 
     }
 
@@ -210,7 +354,13 @@ riskAccount.addEventListener(
             );
 
 
-        updateAccountDetails();
+        if (
+            currentAccount
+        ) {
+
+            updateAccountDetails();
+
+        }
 
     }
 );
@@ -335,7 +485,7 @@ function updateLeverage() {
 
 
 /* =========================================
-   ASSET CLASS
+   ASSET CLASS CHANGE
 ========================================= */
 
 assetClass.addEventListener(
@@ -401,7 +551,10 @@ function updateDefaultSymbol() {
 /* =========================================
    INTERNAL CONTRACT MULTIPLIER
 
-   USER DOES NOT NEED TO ENTER THIS.
+   The user only sees lot size.
+
+   This is used internally to convert
+   price movement into P&L per lot.
 ========================================= */
 
 function getContractMultiplier() {
@@ -453,12 +606,7 @@ function getContractMultiplier() {
     }
 
 
-    /*
-       INDEX CFD
-
-       1 lot = $1 per index point
-       by default.
-    */
+    /* INDICES */
 
     if (
         assetClass.value ===
@@ -470,12 +618,7 @@ function getContractMultiplier() {
     }
 
 
-    /*
-       CRYPTO CFD
-
-       1 lot = 1 underlying unit
-       by default.
-    */
+    /* CRYPTO */
 
     if (
         assetClass.value ===
@@ -504,7 +647,7 @@ function getLotStep() {
 
 
 /* =========================================
-   RISK % -> $
+   RISK % -> RISK $
 ========================================= */
 
 riskPercent.addEventListener(
@@ -568,7 +711,7 @@ function calculateRiskFromPercent() {
 
 
 /* =========================================
-   RISK $ -> %
+   RISK $ -> RISK %
 ========================================= */
 
 riskDollars.addEventListener(
@@ -648,12 +791,16 @@ function calculateRiskFromDollars() {
 
 calculateRiskButton.addEventListener(
     "click",
-    calculateResults
+    function() {
+
+        calculateResults();
+
+    }
 );
 
 
 /* =========================================
-   LIVE UPDATE
+   LIVE CALCULATION
 ========================================= */
 
 [
@@ -682,7 +829,7 @@ calculateRiskButton.addEventListener(
 
 
 /* =========================================
-   MAIN CALCULATION
+   MAIN RISK CALCULATION
 ========================================= */
 
 function calculateResults() {
@@ -740,6 +887,10 @@ function calculateResults() {
         getLotStep();
 
 
+    /* =====================================
+       WAIT UNTIL REQUIRED DATA EXISTS
+    ===================================== */
+
     if (
         !entry ||
         !stop ||
@@ -755,7 +906,7 @@ function calculateResults() {
 
 
     /* =====================================
-       VALIDATE SL
+       CHECK BUY / SELL STOP
     ===================================== */
 
     if (
@@ -820,12 +971,24 @@ function calculateResults() {
 
 
     /* =====================================
-       LOT SIZE FROM RISK
+       LOT SIZE
 
-       LOT =
-       RISK MONEY
-       ----------------------------
-       STOP DISTANCE × MULTIPLIER
+       Risk Amount
+       ---------------------------
+       Stop Distance × Multiplier
+
+       Example:
+
+       XAUUSD
+       Risk = $250
+       Entry = 3350
+       SL = 3345
+
+       Distance = $5
+
+       $5 × 100 = $500 per 1 lot
+
+       $250 / $500 = 0.50 lots
     ===================================== */
 
     let lots =
@@ -837,8 +1000,8 @@ function calculateResults() {
 
 
     /*
-       Round DOWN so risk never
-       exceeds selected risk amount.
+       Round DOWN so the trade
+       does not exceed selected risk.
     */
 
     lots =
@@ -866,7 +1029,7 @@ function calculateResults() {
 
 
     /* =====================================
-       ACTUAL RISK AFTER ROUNDING
+       ACTUAL RISK AFTER LOT ROUNDING
     ===================================== */
 
     const actualRisk =
@@ -879,7 +1042,7 @@ function calculateResults() {
        POSITION VALUE
     ===================================== */
 
-    const notional =
+    const positionValue =
         entry *
         multiplier *
         lots;
@@ -893,14 +1056,14 @@ function calculateResults() {
         leverage >
         0
             ?
-            notional /
+            positionValue /
             leverage
             :
             0;
 
 
     /* =====================================
-       TAKE PROFIT
+       TP DISTANCE
     ===================================== */
 
     let rewardDistance =
@@ -922,6 +1085,7 @@ function calculateResults() {
 
         }
 
+
         else {
 
             rewardDistance =
@@ -932,6 +1096,10 @@ function calculateResults() {
 
     }
 
+
+    /* =====================================
+       PROFIT AT TP
+    ===================================== */
 
     let profit =
         0;
@@ -951,11 +1119,13 @@ function calculateResults() {
 
 
     /* =====================================
-       RR
+       PLANNED RR
     ===================================== */
 
     const rr =
         actualRisk >
+        0 &&
+        profit >
         0
             ?
             profit /
@@ -965,7 +1135,7 @@ function calculateResults() {
 
 
     /* =====================================
-       OUTPUT
+       DISPLAY RESULTS
     ===================================== */
 
     requiredLotSize.textContent =
@@ -981,40 +1151,20 @@ function calculateResults() {
 
 
     lossAtStop.textContent =
-        "-$" +
-        actualRisk
-            .toLocaleString(
-                "en-AU",
-                {
-
-                    minimumFractionDigits:
-                        2,
-
-                    maximumFractionDigits:
-                        2
-
-                }
-            );
+        "-" +
+        money(
+            actualRisk
+        );
 
 
     profitAtTp.textContent =
         profit >
         0
             ?
-            "+$" +
-            profit
-                .toLocaleString(
-                    "en-AU",
-                    {
-
-                        minimumFractionDigits:
-                            2,
-
-                        maximumFractionDigits:
-                            2
-
-                    }
-                )
+            "+" +
+            money(
+                profit
+            )
             :
             "$0.00";
 
@@ -1028,1161 +1178,46 @@ function calculateResults() {
 
     positionNotional.textContent =
         money(
-            notional
+            positionValue
         );
 
 
-    /*
-       Show if rounding causes
-       actual risk to be slightly lower.
-    */
+    /* =====================================
+       ROUNDING MESSAGE
+    ===================================== */
 
     if (
         actualRisk <
         riskCash
     ) {
 
+        const difference =
+            riskCash -
+            actualRisk;
+
+
         riskMessage.textContent =
-            "Lot size rounded down to 0.01 so actual risk does not exceed your selected risk amount.";
-
-    }
-
-}
-
-
-/* =========================================
-   ROUND DOWN LOT SIZE
-========================================= */
-
-function roundDownToStep(
-    value,
-    step
-) {
-
-    return (
-        Math.floor(
-            value /
-            step +
-            1e-9
-        ) *
-        step
-    );
-
-}
-
-
-/* =========================================
-   RESET
-========================================= */
-
-function resetResults() {
-
-    requiredLotSize.textContent =
-        "0.00";
-
-
-    marginRequired.textContent =
-        "$0.00";
-
-
-    lossAtStop.textContent =
-        "$0.00";
-
-
-    profitAtTp.textContent =
-        "$0.00";
-
-
-    plannedRR.textContent =
-        "0.00R";
-
-
-    positionNotional.textContent =
-        "$0.00";
-
-}
-
-
-/* =========================================
-   MONEY
-========================================= */
-
-function money(
-    value
-) {
-
-    return "$" +
-        Number(
-            value ||
-            0
-        )
-        .toLocaleString(
-            "en-AU",
-            {
-
-                minimumFractionDigits:
-                    2,
-
-                maximumFractionDigits:
-                    2
-
-            }
-        );
-
-}
-
-
-/* =========================================
-   START
-========================================= */
-
-loadRiskAccounts();
-
-
-const assetClass =
-    document.getElementById(
-        "assetClass"
-    );
-
-
-const riskSymbol =
-    document.getElementById(
-        "riskSymbol"
-    );
-
-
-const riskDirection =
-    document.getElementById(
-        "riskDirection"
-    );
-
-
-const riskLeverage =
-    document.getElementById(
-        "riskLeverage"
-    );
-
-
-const riskPercent =
-    document.getElementById(
-        "riskPercent"
-    );
-
-
-const riskDollars =
-    document.getElementById(
-        "riskDollars"
-    );
-
-
-const entryPrice =
-    document.getElementById(
-        "entryPrice"
-    );
-
-
-const stopLossPrice =
-    document.getElementById(
-        "stopLossPrice"
-    );
-
-
-const takeProfitPrice =
-    document.getElementById(
-        "takeProfitPrice"
-    );
-
-
-const contractSize =
-    document.getElementById(
-        "contractSize"
-    );
-
-
-const lotStep =
-    document.getElementById(
-        "lotStep"
-    );
-
-
-const calculateRiskButton =
-    document.getElementById(
-        "calculateRiskButton"
-    );
-
-
-const initialBalanceDisplay =
-    document.getElementById(
-        "initialBalanceDisplay"
-    );
-
-
-const leverageDisplay =
-    document.getElementById(
-        "leverageDisplay"
-    );
-
-
-const riskAmountDisplay =
-    document.getElementById(
-        "riskAmountDisplay"
-    );
-
-
-const requiredLotSize =
-    document.getElementById(
-        "requiredLotSize"
-    );
-
-
-const marginRequired =
-    document.getElementById(
-        "marginRequired"
-    );
-
-
-const lossAtStop =
-    document.getElementById(
-        "lossAtStop"
-    );
-
-
-const profitAtTp =
-    document.getElementById(
-        "profitAtTp"
-    );
-
-
-const plannedRR =
-    document.getElementById(
-        "plannedRR"
-    );
-
-
-const positionNotional =
-    document.getElementById(
-        "positionNotional"
-    );
-
-
-const riskMessage =
-    document.getElementById(
-        "riskMessage"
-    );
-
-
-let accounts = [];
-
-let currentAccount = null;
-
-
-
-/* =========================================
-   LOAD ACCOUNTS
-========================================= */
-
-async function loadRiskAccounts() {
-
-    const {
-        data,
-        error
-    } =
-        await db
-            .from(
-                "accounts"
-            )
-            .select("*")
-            .order(
-                "id",
-                {
-                    ascending:
-                        true
-                }
+            "Lot size rounded down to 0.01. " +
+            "Selected risk: " +
+            money(
+                riskCash
+            ) +
+            " | Actual risk: " +
+            money(
+                actualRisk
+            ) +
+            " | Unused risk: " +
+            money(
+                difference
             );
 
-
-    if (
-        error
-    ) {
-
-        console.error(
-            error
-        );
-
-
-        riskMessage.textContent =
-            "ERROR: " +
-            error.message;
-
-
-        return;
-
-    }
-
-
-    accounts =
-        data || [];
-
-
-    riskAccount.innerHTML =
-        "";
-
-
-    accounts.forEach(
-        account => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                account.id;
-
-
-            option.textContent =
-                account.name;
-
-
-            riskAccount.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    if (
-        accounts.length >
-        0
-    ) {
-
-        currentAccount =
-            accounts[0];
-
-
-        updateAccountDetails();
-
-    }
-
-
-    else {
-
-        riskAccount.innerHTML =
-            `
-            <option>
-                No accounts found
-            </option>
-            `;
-
-
-        riskMessage.textContent =
-            "Add a trading account first.";
-
     }
 
 }
 
 
-
 /* =========================================
-   ACCOUNT CHANGE
-========================================= */
-
-riskAccount.addEventListener(
-    "change",
-    function() {
-
-        currentAccount =
-            accounts.find(
-                account =>
-                    Number(
-                        account.id
-                    ) ===
-                    Number(
-                        riskAccount.value
-                    )
-            );
-
-
-        updateAccountDetails();
-
-    }
-);
-
-
-
-/* =========================================
-   UPDATE ACCOUNT DETAILS
-========================================= */
-
-function updateAccountDetails() {
-
-    if (
-        !currentAccount
-    ) {
-
-        return;
-
-    }
-
-
-    initialBalanceDisplay.textContent =
-        money(
-            currentAccount
-                .starting_balance
-        );
-
-
-    updateLeverage();
-
-
-    calculateRiskFromPercent();
-
-}
-
-
-
-/* =========================================
-   ASSET CLASS CHANGE
-========================================= */
-
-assetClass.addEventListener(
-    "change",
-    function() {
-
-        updateLeverage();
-
-        updateContractDefaults();
-
-        calculateResults();
-
-    }
-);
-
-
-
-/* =========================================
-   LEVERAGE FROM ACCOUNT
-========================================= */
-
-function updateLeverage() {
-
-    if (
-        !currentAccount
-    ) {
-
-        return;
-
-    }
-
-
-    let leverage =
-        1;
-
-
-    switch (
-        assetClass.value
-    ) {
-
-        case "metals":
-
-            leverage =
-                Number(
-                    currentAccount
-                        .leverage_metals ||
-                    20
-                );
-
-            break;
-
-
-        case "forex":
-
-            leverage =
-                Number(
-                    currentAccount
-                        .leverage_forex ||
-                    30
-                );
-
-            break;
-
-
-        case "indices":
-
-            leverage =
-                Number(
-                    currentAccount
-                        .leverage_indices ||
-                    20
-                );
-
-            break;
-
-
-        case "crypto":
-
-            leverage =
-                Number(
-                    currentAccount
-                        .leverage_crypto ||
-                    2
-                );
-
-            break;
-
-    }
-
-
-    riskLeverage.value =
-        leverage;
-
-
-    leverageDisplay.textContent =
-        "1:" +
-        leverage;
-
-}
-
-
-
-/* =========================================
-   DEFAULT CONTRACT SETTINGS
-========================================= */
-
-function updateContractDefaults() {
-
-    switch (
-        assetClass.value
-    ) {
-
-        case "metals":
-
-            contractSize.value =
-                100;
-
-            lotStep.value =
-                0.01;
-
-            break;
-
-
-        case "forex":
-
-            contractSize.value =
-                100000;
-
-            lotStep.value =
-                0.01;
-
-            break;
-
-
-        case "indices":
-
-            contractSize.value =
-                1;
-
-            lotStep.value =
-                0.01;
-
-            break;
-
-
-        case "crypto":
-
-            contractSize.value =
-                1;
-
-            lotStep.value =
-                0.01;
-
-            break;
-
-    }
-
-}
-
-
-
-/* =========================================
-   RISK % -> RISK $
-========================================= */
-
-riskPercent.addEventListener(
-    "input",
-    function() {
-
-        calculateRiskFromPercent();
-
-        calculateResults();
-
-    }
-);
-
-
-function calculateRiskFromPercent() {
-
-    if (
-        !currentAccount
-    ) {
-
-        return;
-
-    }
-
-
-    const balance =
-        Number(
-            currentAccount
-                .starting_balance ||
-            0
-        );
-
-
-    const percent =
-        Number(
-            riskPercent.value ||
-            0
-        );
-
-
-    const dollars =
-        balance *
-        (
-            percent /
-            100
-        );
-
-
-    riskDollars.value =
-        dollars.toFixed(
-            2
-        );
-
-
-    riskAmountDisplay.textContent =
-        money(
-            dollars
-        );
-
-}
-
-
-
-/* =========================================
-   RISK $ -> RISK %
-========================================= */
-
-riskDollars.addEventListener(
-    "input",
-    function() {
-
-        calculateRiskFromDollars();
-
-        calculateResults();
-
-    }
-);
-
-
-function calculateRiskFromDollars() {
-
-    if (
-        !currentAccount
-    ) {
-
-        return;
-
-    }
-
-
-    const balance =
-        Number(
-            currentAccount
-                .starting_balance ||
-            0
-        );
-
-
-    const dollars =
-        Number(
-            riskDollars.value ||
-            0
-        );
-
-
-    let percent =
-        0;
-
-
-    if (
-        balance >
-        0
-    ) {
-
-        percent =
-            (
-                dollars /
-                balance
-            ) *
-            100;
-
-    }
-
-
-    riskPercent.value =
-        percent.toFixed(
-            2
-        );
-
-
-    riskAmountDisplay.textContent =
-        money(
-            dollars
-        );
-
-}
-
-
-
-/* =========================================
-   CALCULATE
-========================================= */
-
-calculateRiskButton.addEventListener(
-    "click",
-    function() {
-
-        calculateResults();
-
-    }
-);
-
-
-
-/* =========================================
-   LIVE CALCULATION
-========================================= */
-
-[
-    entryPrice,
-    stopLossPrice,
-    takeProfitPrice,
-    contractSize,
-    lotStep,
-    riskDirection
-
-].forEach(
-    field => {
-
-        field.addEventListener(
-            "input",
-            calculateResults
-        );
-
-
-        field.addEventListener(
-            "change",
-            calculateResults
-        );
-
-    }
-);
-
-
-
-/* =========================================
-   MAIN CALCULATION
-========================================= */
-
-function calculateResults() {
-
-    riskMessage.textContent =
-        "";
-
-
-    if (
-        !currentAccount
-    ) {
-
-        return;
-
-    }
-
-
-    const entry =
-        Number(
-            entryPrice.value
-        );
-
-
-    const stop =
-        Number(
-            stopLossPrice.value
-        );
-
-
-    const target =
-        Number(
-            takeProfitPrice.value
-        );
-
-
-    const riskCash =
-        Number(
-            riskDollars.value ||
-            0
-        );
-
-
-    const multiplier =
-        Number(
-            contractSize.value ||
-            0
-        );
-
-
-    const leverage =
-        Number(
-            riskLeverage.value ||
-            1
-        );
-
-
-    const step =
-        Number(
-            lotStep.value ||
-            0.01
-        );
-
-
-    if (
-        !entry ||
-        !stop ||
-        riskCash <=
-        0 ||
-        multiplier <=
-        0
-    ) {
-
-        resetResults();
-
-        return;
-
-    }
-
-
-    /* =====================================
-       CHECK DIRECTION
-    ===================================== */
-
-    if (
-        riskDirection.value ===
-        "BUY" &&
-        stop >=
-        entry
-    ) {
-
-        riskMessage.textContent =
-            "For a BUY trade, Stop Loss should be below Entry.";
-
-
-        resetResults();
-
-        return;
-
-    }
-
-
-    if (
-        riskDirection.value ===
-        "SELL" &&
-        stop <=
-        entry
-    ) {
-
-        riskMessage.textContent =
-            "For a SELL trade, Stop Loss should be above Entry.";
-
-
-        resetResults();
-
-        return;
-
-    }
-
-
-    /* =====================================
-       STOP DISTANCE
-    ===================================== */
-
-    const stopDistance =
-        Math.abs(
-            entry -
-            stop
-        );
-
-
-    if (
-        stopDistance <=
-        0
-    ) {
-
-        resetResults();
-
-        return;
-
-    }
-
-
-    /* =====================================
-       REQUIRED LOT SIZE
-
-       Risk =
-       stop distance
-       × contract size
-       × lots
-    ===================================== */
-
-    let lots =
-        riskCash /
-        (
-            stopDistance *
-            multiplier
-        );
-
-
-    lots =
-        roundDownToStep(
-            lots,
-            step
-        );
-
-
-    if (
-        lots <=
-        0
-    ) {
-
-        resetResults();
-
-        riskMessage.textContent =
-            "The calculated lot size is below your lot-size step.";
-
-        return;
-
-    }
-
-
-    /* =====================================
-       ACTUAL LOSS AFTER LOT ROUNDING
-    ===================================== */
-
-    const actualLoss =
-        stopDistance *
-        multiplier *
-        lots;
-
-
-    /* =====================================
-       POSITION NOTIONAL
-
-       Entry × Contract Size × Lots
-    ===================================== */
-
-    const notional =
-        entry *
-        multiplier *
-        lots;
-
-
-    /* =====================================
-       MARGIN
-    ===================================== */
-
-    const margin =
-        leverage >
-        0
-            ?
-            notional /
-            leverage
-            :
-            0;
-
-
-    /* =====================================
-       TP PROFIT
-    ===================================== */
-
-    let profit =
-        0;
-
-
-    let rewardDistance =
-        0;
-
-
-    if (
-        target
-    ) {
-
-        if (
-            riskDirection.value ===
-            "BUY"
-        ) {
-
-            rewardDistance =
-                target -
-                entry;
-
-        }
-
-
-        else {
-
-            rewardDistance =
-                entry -
-                target;
-
-        }
-
-
-        profit =
-            rewardDistance *
-            multiplier *
-            lots;
-
-    }
-
-
-    /* =====================================
-       RR
-    ===================================== */
-
-    let rr =
-        0;
-
-
-    if (
-        actualLoss >
-        0 &&
-        profit >
-        0
-    ) {
-
-        rr =
-            profit /
-            actualLoss;
-
-    }
-
-
-    /* =====================================
-       DISPLAY
-    ===================================== */
-
-    requiredLotSize.textContent =
-        formatLots(
-            lots,
-            step
-        );
-
-
-    marginRequired.textContent =
-        money(
-            margin
-        );
-
-
-    lossAtStop.textContent =
-        "-$" +
-        actualLoss
-            .toLocaleString(
-                "en-AU",
-                {
-                    minimumFractionDigits:
-                        2,
-
-                    maximumFractionDigits:
-                        2
-                }
-            );
-
-
-    profitAtTp.textContent =
-        profit >
-        0
-            ?
-            "+$" +
-            profit
-                .toLocaleString(
-                    "en-AU",
-                    {
-                        minimumFractionDigits:
-                            2,
-
-                        maximumFractionDigits:
-                            2
-                    }
-                )
-            :
-            "$0.00";
-
-
-    plannedRR.textContent =
-        rr.toFixed(
-            2
-        ) +
-        "R";
-
-
-    positionNotional.textContent =
-        money(
-            notional
-        );
-
-}
-
-
-
-/* =========================================
-   RESET RESULTS
-========================================= */
-
-function resetResults() {
-
-    requiredLotSize.textContent =
-        "0.00";
-
-
-    marginRequired.textContent =
-        "$0.00";
-
-
-    lossAtStop.textContent =
-        "$0.00";
-
-
-    profitAtTp.textContent =
-        "$0.00";
-
-
-    plannedRR.textContent =
-        "0.00R";
-
-
-    positionNotional.textContent =
-        "$0.00";
-
-}
-
-
-
-/* =========================================
-   ROUND LOT SIZE DOWN
+   ROUND DOWN TO LOT STEP
 ========================================= */
 
 function roundDownToStep(
@@ -2220,54 +1255,40 @@ function roundDownToStep(
 }
 
 
-
 /* =========================================
-   FORMAT LOT SIZE
+   RESET RESULTS
 ========================================= */
 
-function formatLots(
-    value,
-    step
-) {
+function resetResults() {
 
-    let decimals =
-        2;
+    requiredLotSize.textContent =
+        "0.00";
 
 
-    if (
-        step <
-        0.01
-    ) {
-
-        decimals =
-            3;
-
-    }
+    marginRequired.textContent =
+        "$0.00";
 
 
-    if (
-        step <
-        0.001
-    ) {
-
-        decimals =
-            4;
-
-    }
+    lossAtStop.textContent =
+        "$0.00";
 
 
-    return Number(
-        value
-    ).toFixed(
-        decimals
-    );
+    profitAtTp.textContent =
+        "$0.00";
+
+
+    plannedRR.textContent =
+        "0.00R";
+
+
+    positionNotional.textContent =
+        "$0.00";
 
 }
 
 
-
 /* =========================================
-   MONEY
+   MONEY FORMAT
 ========================================= */
 
 function money(
@@ -2282,16 +1303,17 @@ function money(
         .toLocaleString(
             "en-AU",
             {
+
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
+
             }
         );
 
 }
-
 
 
 /* =========================================
