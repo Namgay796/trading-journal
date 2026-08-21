@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -10,22 +9,41 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-    <link rel="manifest" href="manifest.json">
 
-    <meta name="theme-color" content="#161b22">
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta
+        name="theme-color"
+        content="#161b22"
+    >
 
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
 
-    <meta name="apple-mobile-web-app-title" content="Trading Journal">
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
 
-    <title>Trade History</title>
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Trading Journal"
+    >
+
+    <title>
+        Trade History
+    </title>
 
     <link
         rel="stylesheet"
         href="css/style.css"
     >
+
     <link
         rel="apple-touch-icon"
         href="icons/icon-192.png"
@@ -57,7 +75,7 @@
         </a>
 
         <span class="subtitle">
-            Performance & Risk Dashboard
+            Trade History
         </span>
 
     </div>
@@ -110,116 +128,538 @@
     <a href="accounts.html">
         Accounts
     </a>
+
     <a href="risk-calculator.html">
-    Risk Calculator
-</a>
+        Risk Calculator
+    </a>
+
 </nav>
-<header>
 
 
 <main>
 
 
-<section class="history-filters">
+    <!-- =========================================
+         FILTERS
+    ========================================= -->
 
-    <select id="sessionFilter">
+    <section class="history-filters">
 
-        <option value="">
-            All Sessions
-        </option>
+        <select id="sessionFilter">
 
-        <option>
-            Asian
-        </option>
+            <option value="">
+                All Sessions
+            </option>
 
-        <option>
-            London
-        </option>
+            <option value="Asian">
+                Asian
+            </option>
 
-        <option>
-            New York
-        </option>
+            <option value="London">
+                London
+            </option>
 
-    </select>
+            <option value="London/NY Overlap">
+                London/NY Overlap
+            </option>
 
+            <option value="New York">
+                New York
+            </option>
 
-    <select id="resultFilter">
-
-        <option value="">
-            All Results
-        </option>
-
-        <option>
-            Win
-        </option>
-
-        <option>
-            Loss
-        </option>
-
-        <option>
-            BE
-        </option>
-
-    </select>
+        </select>
 
 
-    <input
-        id="symbolFilter"
-        placeholder="Search symbol..."
+        <select id="resultFilter">
+
+            <option value="">
+                All Results
+            </option>
+
+            <option value="Win">
+                Win
+            </option>
+
+            <option value="Loss">
+                Loss
+            </option>
+
+            <option value="BE">
+                BE
+            </option>
+
+        </select>
+
+
+        <input
+            id="symbolFilter"
+            placeholder="Search symbol..."
+        >
+
+    </section>
+
+
+    <p
+        id="historyMessage"
+        class="form-message"
+    ></p>
+
+
+    <!-- =========================================
+         HISTORY TABLE
+    ========================================= -->
+
+    <section class="history-container">
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+
+                        <th>Symbol</th>
+
+                        <th>Side</th>
+
+                        <th>Session</th>
+
+                        <th>Setup</th>
+
+                        <th>Result</th>
+
+                        <th>Commission</th>
+
+                        <th>Swap</th>
+
+                        <th>Net P&amp;L</th>
+
+                        <th>R</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="tradeTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================
+         EDIT TRADE
+    ========================================= -->
+
+    <section
+        id="editTradePanel"
+        class="edit-trade-panel"
+        hidden
     >
 
-</section>
+        <div class="edit-trade-card">
+
+
+            <div class="edit-trade-header">
+
+                <div>
+
+                    <h2>
+                        Edit Trade
+                    </h2>
+
+                    <small id="editTradeTitle">
+                        -
+                    </small>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="closeEditTrade"
+                    class="small-button"
+                >
+                    Close
+                </button>
+
+            </div>
+
+
+            <form
+                id="editTradeForm"
+                novalidate
+            >
+
+
+                <input
+                    id="editTradeId"
+                    type="hidden"
+                >
+
+
+                <label>
+
+                    Date
+
+                    <input
+                        id="editTradeDate"
+                        type="date"
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Symbol
+
+                    <input
+                        id="editSymbol"
+                        type="text"
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Direction
+
+                    <select id="editDirection">
+
+                        <option value="BUY">
+                            BUY
+                        </option>
+
+                        <option value="SELL">
+                            SELL
+                        </option>
+
+                    </select>
+
+                </label>
+
+
+                <label>
+
+                    Session
+
+                    <select id="editSession">
+
+                        <option value="Asian">
+                            Asian
+                        </option>
+
+                        <option value="London">
+                            London
+                        </option>
+
+                        <option value="London/NY Overlap">
+                            London/NY Overlap
+                        </option>
+
+                        <option value="New York">
+                            New York
+                        </option>
+
+                    </select>
+
+                </label>
+
+
+                <label>
+
+                    Setup
+
+                    <select id="editSetup">
+
+                        <option value="A++">
+                            A++
+                        </option>
+
+                        <option value="A+">
+                            A+
+                        </option>
+
+                        <option value="A">
+                            A
+                        </option>
+
+                    </select>
+
+                </label>
+
+
+                <label>
+
+                    Rules Followed?
+
+                    <select id="editRulesFollowed">
+
+                        <option value="true">
+                            Yes
+                        </option>
+
+                        <option value="false">
+                            No
+                        </option>
+
+                    </select>
+
+                </label>
 
 
 
-<section class="history-container">
+                <!-- =====================================
+                     P&L / FEES
+                ===================================== -->
 
-    <div class="table-wrapper">
+                <label>
 
-        <table>
+                    Gross P&amp;L ($)
 
-            <thead>
+                    <input
+                        id="editGrossPnL"
+                        type="number"
+                        step="0.01"
+                        readonly
+                    >
 
-                <tr>
-
-                    <th>Date</th>
-
-                    <th>Symbol</th>
-
-                    <th>Side</th>
-
-                    <th>Session</th>
-
-                    <th>Setup</th>
-
-                    <th>Result</th>
-
-                    <th>P&L</th>
-
-                    <th>R</th>
-
-                    <th>Actions</th>
-
-                </tr>
-
-            </thead>
+                </label>
 
 
-            <tbody id="tradeTable">
+                <label>
 
-            </tbody>
+                    Commission Fee ($)
 
-        </table>
+                    <input
+                        id="editCommissionFee"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                    >
 
-    </div>
+                </label>
 
-</section>
+
+                <label>
+
+                    Swap Fee ($)
+
+                    <input
+                        id="editSwapFee"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Net P&amp;L ($)
+
+                    <input
+                        id="editProfitLoss"
+                        type="number"
+                        step="0.01"
+                        readonly
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Planned Risk ($)
+
+                    <input
+                        id="editPlannedRisk"
+                        type="number"
+                        step="0.01"
+                        readonly
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Actual RR
+
+                    <input
+                        id="editActualRR"
+                        type="number"
+                        step="0.01"
+                        readonly
+                    >
+
+                </label>
+
+
+
+                <!-- =====================================
+                     MISTAKES / NOTES
+                ===================================== -->
+
+                <label class="full">
+
+                    Mistakes
+
+                    <input
+                        id="editMistakes"
+                        type="text"
+                    >
+
+                </label>
+
+
+                <label class="full">
+
+                    Notes
+
+                    <textarea
+                        id="editNotes"
+                        rows="4"
+                    ></textarea>
+
+                </label>
+
+
+
+                <!-- =====================================
+                     SCREENSHOTS
+                ===================================== -->
+
+                <div class="full">
+
+                    <h3>
+                        Screenshots
+                    </h3>
+
+                </div>
+
+
+                <div class="screenshot-box">
+
+                    <strong>
+                        Before Trade
+                    </strong>
+
+                    <div
+                        id="currentBeforeScreenshot"
+                        class="history-screenshot-preview"
+                    >
+                        No screenshot
+                    </div>
+
+                </div>
+
+
+                <div class="screenshot-box">
+
+                    <strong>
+                        After Trade
+                    </strong>
+
+                    <div
+                        id="currentAfterScreenshot"
+                        class="history-screenshot-preview"
+                    >
+                        No screenshot
+                    </div>
+
+                </div>
+
+
+                <label class="full">
+
+                    Replace Before Screenshot
+
+                    <input
+                        id="editBeforeScreenshot"
+                        type="file"
+                        accept="image/*"
+                    >
+
+                    <small>
+                        Leave empty to keep the current screenshot.
+                    </small>
+
+                </label>
+
+
+                <label class="full">
+
+                    Replace After Screenshot
+
+                    <input
+                        id="editAfterScreenshot"
+                        type="file"
+                        accept="image/*"
+                    >
+
+                    <small>
+                        Leave empty to keep the current screenshot.
+                    </small>
+
+                </label>
+
+
+                <p
+                    id="editTradeMessage"
+                    class="form-message full"
+                ></p>
+
+
+                <div class="full edit-trade-actions">
+
+                    <button
+                        type="submit"
+                        id="saveEditTrade"
+                    >
+                        Save Changes
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="cancelEditTrade"
+                        class="small-button"
+                    >
+                        Cancel
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+    </section>
 
 
 </main>
 
+
 <script src="js/config.js"></script>
+
 <script src="js/auth.js"></script>
 
 <script>
@@ -227,8 +667,11 @@
 </script>
 
 <script src="js/trades.js"></script>
+
 <script src="js/navigation.js"></script>
+
 <script src="js/pwa.js"></script>
+
 
 </body>
 

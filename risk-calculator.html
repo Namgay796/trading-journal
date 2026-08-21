@@ -57,6 +57,10 @@
 <body>
 
 
+<!-- =========================================
+     HEADER
+========================================= -->
+
 <header class="main-header">
 
     <div class="brand">
@@ -88,6 +92,7 @@
             + Add Trade
         </a>
 
+
         <button
             type="button"
             onclick="logout()"
@@ -100,6 +105,10 @@
 
 </header>
 
+
+<!-- =========================================
+     NAVIGATION
+========================================= -->
 
 <nav class="main-nav">
 
@@ -137,7 +146,9 @@
 <main>
 
 
-    <!-- ACCOUNT -->
+    <!-- =========================================
+         ACCOUNT
+    ========================================= -->
 
     <section class="dashboard-account">
 
@@ -147,7 +158,7 @@
 
             <select id="riskAccount">
 
-                <option>
+                <option value="">
                     Loading...
                 </option>
 
@@ -158,7 +169,9 @@
     </section>
 
 
-    <!-- SUMMARY -->
+    <!-- =========================================
+         SUMMARY
+    ========================================= -->
 
     <section class="stats-grid">
 
@@ -203,10 +216,14 @@
     </section>
 
 
-    <!-- CALCULATOR -->
+    <!-- =========================================
+         CALCULATOR FORM
+    ========================================= -->
 
     <form id="riskCalculatorForm">
 
+
+        <!-- ASSET CLASS -->
 
         <label>
 
@@ -235,6 +252,8 @@
         </label>
 
 
+        <!-- SYMBOL -->
+
         <label>
 
             Symbol
@@ -248,6 +267,8 @@
 
         </label>
 
+
+        <!-- DIRECTION -->
 
         <label>
 
@@ -268,6 +289,8 @@
         </label>
 
 
+        <!-- LEVERAGE -->
+
         <label>
 
             Leverage
@@ -280,6 +303,8 @@
 
         </label>
 
+
+        <!-- RISK % -->
 
         <label>
 
@@ -296,6 +321,8 @@
         </label>
 
 
+        <!-- RISK $ -->
+
         <label>
 
             Risk $
@@ -310,6 +337,8 @@
         </label>
 
 
+        <!-- ENTRY -->
+
         <label>
 
             Entry Price
@@ -323,6 +352,8 @@
 
         </label>
 
+
+        <!-- STOP LOSS -->
 
         <label>
 
@@ -342,6 +373,8 @@
         </label>
 
 
+        <!-- TAKE PROFIT -->
+
         <label>
 
             Take Profit
@@ -359,6 +392,8 @@
         </label>
 
 
+        <!-- CALCULATE BUTTON -->
+
         <button
             type="button"
             id="calculateRiskButton"
@@ -367,15 +402,28 @@
             Calculate
         </button>
 
+
+        <!-- WARNING / SUCCESS MESSAGE -->
+
+        <p
+            id="riskMessage"
+            class="form-message full"
+        ></p>
+
     </form>
 
 
-    <!-- RESULTS -->
+    <!-- =========================================
+         RESULTS
+    ========================================= -->
 
     <section
         class="stats-grid"
         style="margin-top:20px;"
     >
+
+
+        <!-- LOT SIZE -->
 
         <div class="stat-card">
 
@@ -394,6 +442,8 @@
         </div>
 
 
+        <!-- MARGIN -->
+
         <div class="stat-card">
 
             <span>
@@ -406,6 +456,8 @@
 
         </div>
 
+
+        <!-- SL RISK -->
 
         <div class="stat-card">
 
@@ -420,6 +472,8 @@
         </div>
 
 
+        <!-- TP PROFIT -->
+
         <div class="stat-card">
 
             <span>
@@ -433,6 +487,8 @@
         </div>
 
 
+        <!-- RR -->
+
         <div class="stat-card">
 
             <span>
@@ -445,6 +501,8 @@
 
         </div>
 
+
+        <!-- POSITION VALUE -->
 
         <div class="stat-card">
 
@@ -461,25 +519,22 @@
     </section>
 
 
-    <p
-        id="riskMessage"
-        style="
-            margin-top:15px;
-            color:#8b949e;
-        "
-    ></p>
-
-
 </main>
 
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
 
 <script src="js/config.js"></script>
 
 <script src="js/auth.js"></script>
 
+
 <script>
     requireLogin();
 </script>
+
 
 <script src="js/navigation.js"></script>
 
