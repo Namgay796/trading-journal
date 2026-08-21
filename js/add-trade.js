@@ -1,8 +1,29 @@
+/* =========================================
+   ELEMENTS
+========================================= */
+
 const accountBox =
-    document.getElementById("account");
+    document.getElementById(
+        "account"
+    );
+
 
 const message =
-    document.getElementById("message");
+    document.getElementById(
+        "message"
+    );
+
+
+const tradeForm =
+    document.getElementById(
+        "tradeForm"
+    );
+
+
+const saveTradeButton =
+    document.getElementById(
+        "saveTradeButton"
+    );
 
 
 let accounts = [];
@@ -12,26 +33,113 @@ let currentAccount = null;
 let currentCapital = 0;
 
 
+
 /* =========================================
-   CONTRACT MULTIPLIER
-
-   XAUUSD commonly uses:
-   1.00 lot = 100 oz
-
-   Later we can expand this for
-   forex, NAS100, BTC, etc.
+   MESSAGE SYSTEM
 ========================================= */
 
-function getContractMultiplier(symbol) {
+function showTradeMessage(
+    text,
+    type = "error"
+) {
+
+    message.textContent =
+        text;
+
+
+    message.className =
+        "form-message full show " +
+        type;
+
+
+    message.scrollIntoView(
+        {
+            behavior:
+                "smooth",
+
+            block:
+                "nearest"
+        }
+    );
+
+}
+
+
+function clearTradeMessage() {
+
+    message.textContent =
+        "";
+
+
+    message.className =
+        "form-message full";
+
+}
+
+
+
+/* =========================================
+   INPUT ERRORS
+========================================= */
+
+function markError(
+    element
+) {
+
+    if (
+        element
+    ) {
+
+        element.classList.add(
+            "input-error"
+        );
+
+    }
+
+}
+
+
+function clearInputErrors() {
+
+    document
+        .querySelectorAll(
+            ".input-error"
+        )
+        .forEach(
+            element => {
+
+                element.classList.remove(
+                    "input-error"
+                );
+
+            }
+        );
+
+}
+
+
+
+/* =========================================
+   CONTRACT MULTIPLIER
+========================================= */
+
+function getContractMultiplier(
+    symbol
+) {
 
     symbol =
-        String(symbol)
-            .trim()
-            .toUpperCase();
+        String(
+            symbol ||
+            ""
+        )
+        .trim()
+        .toUpperCase();
 
 
     if (
-        symbol.includes("XAUUSD")
+        symbol.includes(
+            "XAU"
+        )
     ) {
 
         return 100;
@@ -39,8 +147,21 @@ function getContractMultiplier(symbol) {
     }
 
 
+    if (
+        symbol.includes(
+            "XAG"
+        )
+    ) {
+
+        return 5000;
+
+    }
+
+
     return 1;
+
 }
+
 
 
 /* =========================================
@@ -49,95 +170,136 @@ function getContractMultiplier(symbol) {
 
 async function loadAccounts() {
 
-    message.textContent =
-        "Loading accounts...";
-
-
-    const {
-        data,
-        error
-    } =
-        await db
-            .from("accounts")
-            .select("*")
-            .order("id");
-
-
-    if (error) {
-
-        console.error(error);
-
-        message.textContent =
-            "ERROR: " +
-            error.message;
-
-        return;
-
-    }
-
-
-    accounts =
-        data || [];
-
-
     accountBox.innerHTML =
-        "";
+        `
+        <option value="">
+            Loading...
+        </option>
+        `;
 
 
-    if (
-        accounts.length === 0
-    ) {
+    try {
 
-        message.textContent =
-            "No trading accounts found.";
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "accounts"
+                )
+                .select("*")
+                .order(
+                    "id"
+                );
 
-        return;
 
-    }
+        if (
+            error
+        ) {
+
+            throw error;
+
+        }
 
 
-    accounts.forEach(account => {
+        accounts =
+            data ||
+            [];
 
-        const option =
-            document.createElement(
-                "option"
+
+        accountBox.innerHTML =
+            "";
+
+
+        if (
+            accounts.length ===
+            0
+        ) {
+
+            accountBox.innerHTML =
+                `
+                <option value="">
+                    No accounts found
+                </option>
+                `;
+
+
+            showTradeMessage(
+                "No trading accounts found. Add an account first.",
+                "warning"
             );
 
 
-        option.value =
-            account.id;
+            return;
+
+        }
 
 
-        option.textContent =
-            account.name;
+        accounts.forEach(
+            account => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
 
-        accountBox.appendChild(
-            option
+                option.value =
+                    account.id;
+
+
+                option.textContent =
+                    account.name;
+
+
+                accountBox.appendChild(
+                    option
+                );
+
+            }
         );
 
-    });
+
+        currentAccount =
+            accounts[0];
 
 
-    currentAccount =
-        accounts[0];
+        accountBox.value =
+            currentAccount.id;
 
 
-    await loadCurrentCapital();
+        await loadCurrentCapital();
 
 
-    message.textContent =
-        "Ready.";
+        clearTradeMessage();
+
+    }
+
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            error
+        );
+
+
+        showTradeMessage(
+            "Unable to load accounts: " +
+            error.message,
+            "error"
+        );
+
+    }
 
 }
 
 
+
 /* =========================================
    CURRENT CAPITAL
-
-   Starting balance
-   +
-   all saved P&L for selected account
 ========================================= */
 
 async function loadCurrentCapital() {
@@ -151,33 +313,39 @@ async function loadCurrentCapital() {
     }
 
 
-    const {
-        data,
-        error
-    } =
-        await db
-            .from("trades")
-            .select("profit_loss")
-            .eq(
-                "account_id",
-                currentAccount.id
-            );
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "trades"
+                )
+                .select(
+                    "profit_loss"
+                )
+                .eq(
+                    "account_id",
+                    currentAccount.id
+                );
 
 
-    if (error) {
+        if (
+            error
+        ) {
 
-        console.error(error);
+            throw error;
 
-        message.textContent =
-            "Unable to calculate current capital.";
-
-        return;
-
-    }
+        }
 
 
-    const totalPnL =
-        (data || [])
+        const totalPnL =
+            (
+                data ||
+                []
+            )
             .reduce(
                 (
                     total,
@@ -197,28 +365,50 @@ async function loadCurrentCapital() {
             );
 
 
-    currentCapital =
-        Number(
-            currentAccount.starting_balance ||
-            0
-        )
-        +
-        totalPnL;
+        currentCapital =
+            Number(
+                currentAccount
+                    .starting_balance ||
+                0
+            )
+            +
+            totalPnL;
 
 
-    document
-        .getElementById(
-            "currentCapital"
-        )
-        .textContent =
-        money(
-            currentCapital
+        document
+            .getElementById(
+                "currentCapital"
+            )
+            .textContent =
+            money(
+                currentCapital
+            );
+
+
+        calculateTrade();
+
+    }
+
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            error
         );
 
 
-    calculateTrade();
+        showTradeMessage(
+            "Unable to calculate current capital: " +
+            error.message,
+            "error"
+        );
+
+    }
 
 }
+
 
 
 /* =========================================
@@ -229,6 +419,11 @@ accountBox.addEventListener(
     "change",
     async function() {
 
+        clearTradeMessage();
+
+        clearInputErrors();
+
+
         currentAccount =
             accounts.find(
                 account =>
@@ -238,7 +433,28 @@ accountBox.addEventListener(
                     Number(
                         accountBox.value
                     )
-            ) || null;
+            ) ||
+            null;
+
+
+        if (
+            !currentAccount
+        ) {
+
+            markError(
+                accountBox
+            );
+
+
+            showTradeMessage(
+                "Please select a valid trading account.",
+                "error"
+            );
+
+
+            return;
+
+        }
 
 
         await loadCurrentCapital();
@@ -247,13 +463,9 @@ accountBox.addEventListener(
 );
 
 
-/* =========================================
-   ADD NEW ENTRY LAYER
 
-   ORDER:
-   Lot Size
-   Entry Price
-   Exit Price
+/* =========================================
+   ADD ENTRY LAYER
 ========================================= */
 
 document
@@ -263,6 +475,9 @@ document
     .addEventListener(
         "click",
         function() {
+
+            clearTradeMessage();
+
 
             const container =
                 document.getElementById(
@@ -280,7 +495,8 @@ document
                 "layer-row trade-layer";
 
 
-            row.innerHTML = `
+            row.innerHTML =
+                `
 
                 <label>
 
@@ -289,6 +505,7 @@ document
                     <input
                         class="layer-lot-size"
                         type="number"
+                        min="0.01"
                         step="0.01"
                         required
                     >
@@ -332,7 +549,7 @@ document
                     ×
                 </button>
 
-            `;
+                `;
 
 
             container.appendChild(
@@ -346,8 +563,9 @@ document
     );
 
 
+
 /* =========================================
-   ATTACH LAYER EVENTS
+   LAYER EVENTS
 ========================================= */
 
 function attachLayerEvents() {
@@ -356,51 +574,52 @@ function attachLayerEvents() {
         .querySelectorAll(
             ".remove-layer"
         )
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.onclick =
-                function() {
+                button.onclick =
+                    function() {
 
-                    const row =
-                        button.closest(
-                            ".trade-layer"
-                        );
-
-
-                    const container =
-                        document.getElementById(
-                            "tradeLayers"
-                        );
-
-
-                    const rows =
-                        container
-                            .querySelectorAll(
+                        const row =
+                            button.closest(
                                 ".trade-layer"
                             );
 
 
-                    /*
-                       Keep at least one layer
-                    */
-
-                    if (
-                        rows.length <= 1
-                    ) {
-
-                        return;
-
-                    }
+                        const rows =
+                            document
+                                .querySelectorAll(
+                                    ".trade-layer"
+                                );
 
 
-                    row.remove();
+                        if (
+                            rows.length <=
+                            1
+                        ) {
+
+                            showTradeMessage(
+                                "At least one trade layer is required.",
+                                "warning"
+                            );
 
 
-                    calculateTrade();
+                            return;
 
-                };
+                        }
 
-        });
+
+                        row.remove();
+
+
+                        clearTradeMessage();
+
+                        calculateTrade();
+
+                    };
+
+            }
+        );
 
 
     document
@@ -409,18 +628,30 @@ function attachLayerEvents() {
             ".layer-entry-price, " +
             ".layer-exit-price"
         )
-        .forEach(input => {
+        .forEach(
+            input => {
 
-            input.oninput =
-                calculateTrade;
+                input.oninput =
+                    function() {
 
-        });
+                        input.classList.remove(
+                            "input-error"
+                        );
+
+
+                        calculateTrade();
+
+                    };
+
+            }
+        );
 
 }
 
 
+
 /* =========================================
-   READ TRADE LAYERS
+   GET LAYERS
 ========================================= */
 
 function getLayers() {
@@ -431,70 +662,236 @@ function getLayers() {
         );
 
 
-    const layers = [];
+    const layers =
+        [];
 
 
-    rows.forEach(row => {
+    rows.forEach(
+        row => {
+
+            const lot =
+                Number(
+                    row
+                        .querySelector(
+                            ".layer-lot-size"
+                        )
+                        .value
+                );
+
+
+            const entry =
+                Number(
+                    row
+                        .querySelector(
+                            ".layer-entry-price"
+                        )
+                        .value
+                );
+
+
+            const exit =
+                Number(
+                    row
+                        .querySelector(
+                            ".layer-exit-price"
+                        )
+                        .value
+                );
+
+
+            if (
+                lot >
+                0 &&
+                entry >
+                0
+            ) {
+
+                layers.push(
+                    {
+
+                        lot:
+                            lot,
+
+                        entry:
+                            entry,
+
+                        exit:
+                            exit >
+                            0
+                                ?
+                                exit
+                                :
+                                null
+
+                    }
+                );
+
+            }
+
+        }
+    );
+
+
+    return layers;
+
+}
+
+
+
+/* =========================================
+   VALIDATE LAYERS
+========================================= */
+
+function validateLayers() {
+
+    const rows =
+        [
+            ...document.querySelectorAll(
+                ".trade-layer"
+            )
+        ];
+
+
+    for (
+        let i = 0;
+        i < rows.length;
+        i++
+    ) {
+
+        const row =
+            rows[i];
+
+
+        const lotInput =
+            row.querySelector(
+                ".layer-lot-size"
+            );
+
+
+        const entryInput =
+            row.querySelector(
+                ".layer-entry-price"
+            );
+
+
+        const exitInput =
+            row.querySelector(
+                ".layer-exit-price"
+            );
+
 
         const lot =
             Number(
-                row
-                    .querySelector(
-                        ".layer-lot-size"
-                    )
-                    .value
+                lotInput.value
             );
 
 
         const entry =
             Number(
-                row
-                    .querySelector(
-                        ".layer-entry-price"
-                    )
-                    .value
+                entryInput.value
             );
 
 
         const exit =
             Number(
-                row
-                    .querySelector(
-                        ".layer-exit-price"
-                    )
-                    .value
+                exitInput.value
             );
 
 
+        const layerNumber =
+            i +
+            1;
+
+
         if (
-            lot > 0 &&
-            entry > 0
+            !Number.isFinite(lot) ||
+            lot <=
+            0
         ) {
 
-            layers.push({
+            markError(
+                lotInput
+            );
 
-                lot:
-                    lot,
 
-                entry:
-                    entry,
+            return {
 
-                exit:
-                    exit > 0
-                        ?
-                        exit
-                        :
-                        null
+                valid:
+                    false,
 
-            });
+                message:
+                    "Layer " +
+                    layerNumber +
+                    ": Enter a valid Lot Size."
+
+            };
 
         }
 
-    });
+
+        if (
+            !Number.isFinite(entry) ||
+            entry <=
+            0
+        ) {
+
+            markError(
+                entryInput
+            );
 
 
-    return layers;
+            return {
+
+                valid:
+                    false,
+
+                message:
+                    "Layer " +
+                    layerNumber +
+                    ": Enter a valid Entry Price."
+
+            };
+
+        }
+
+
+        if (
+            !Number.isFinite(exit) ||
+            exit <=
+            0
+        ) {
+
+            markError(
+                exitInput
+            );
+
+
+            return {
+
+                valid:
+                    false,
+
+                message:
+                    "Layer " +
+                    layerNumber +
+                    ": Enter an Exit Price."
+
+            };
+
+        }
+
+    }
+
+
+    return {
+
+        valid:
+            true
+
+    };
+
 }
+
 
 
 /* =========================================
@@ -510,8 +907,11 @@ function weightedAverage(
         layers.filter(
             layer =>
                 Number(
-                    layer[priceField]
-                ) > 0
+                    layer[
+                        priceField
+                    ]
+                ) >
+                0
         );
 
 
@@ -528,7 +928,8 @@ function weightedAverage(
 
 
     if (
-        totalLots <= 0
+        totalLots <=
+        0
     ) {
 
         return 0;
@@ -565,7 +966,9 @@ function weightedAverage(
         weightedTotal /
         totalLots
     );
+
 }
+
 
 
 /* =========================================
@@ -586,18 +989,18 @@ function calculateTrade() {
             .value;
 
 
-    const multiplier =
-        getContractMultiplier(
-            symbol
-        );
-
-
     const direction =
         document
             .getElementById(
                 "direction"
             )
             .value;
+
+
+    const multiplier =
+        getContractMultiplier(
+            symbol
+        );
 
 
     const stopLoss =
@@ -620,6 +1023,33 @@ function calculateTrade() {
         );
 
 
+    const commissionFee =
+        Number(
+            document
+                .getElementById(
+                    "commissionFee"
+                )
+                .value ||
+            0
+        );
+
+
+    const swapFee =
+        Number(
+            document
+                .getElementById(
+                    "swapFee"
+                )
+                .value ||
+            0
+        );
+
+
+    const totalFees =
+        commissionFee +
+        swapFee;
+
+
     const averageEntry =
         weightedAverage(
             layers,
@@ -634,15 +1064,17 @@ function calculateTrade() {
         );
 
 
-    /* =================================
+    /* =====================================
        PLANNED RISK
-    ================================= */
+    ===================================== */
 
-    let plannedRisk = 0;
+    let plannedRisk =
+        0;
 
 
     if (
-        stopLoss > 0
+        stopLoss >
+        0
     ) {
 
         layers.forEach(
@@ -656,10 +1088,8 @@ function calculateTrade() {
 
 
                 plannedRisk +=
-                    distance
-                    *
-                    layer.lot
-                    *
+                    distance *
+                    layer.lot *
                     multiplier;
 
             }
@@ -668,30 +1098,34 @@ function calculateTrade() {
     }
 
 
-    /* =================================
+    /* =====================================
        RISK %
-    ================================= */
+    ===================================== */
 
     const riskPercent =
-        currentCapital > 0
+        currentCapital >
+        0
             ?
             (
                 plannedRisk /
                 currentCapital
-            ) * 100
+            ) *
+            100
             :
             0;
 
 
-    /* =================================
+    /* =====================================
        PLANNED REWARD
-    ================================= */
+    ===================================== */
 
-    let plannedReward = 0;
+    let plannedReward =
+        0;
 
 
     if (
-        takeProfit > 0
+        takeProfit >
+        0
     ) {
 
         layers.forEach(
@@ -705,10 +1139,8 @@ function calculateTrade() {
 
 
                 plannedReward +=
-                    distance
-                    *
-                    layer.lot
-                    *
+                    distance *
+                    layer.lot *
                     multiplier;
 
             }
@@ -717,12 +1149,13 @@ function calculateTrade() {
     }
 
 
-    /* =================================
+    /* =====================================
        PLANNED RR
-    ================================= */
+    ===================================== */
 
     const plannedRR =
-        plannedRisk > 0
+        plannedRisk >
+        0
             ?
             plannedReward /
             plannedRisk
@@ -730,14 +1163,12 @@ function calculateTrade() {
             0;
 
 
-    /* =================================
-       ACTUAL P&L
+    /* =====================================
+       GROSS P&L
+    ===================================== */
 
-       Each exit is paired with its
-       corresponding entry and lot size.
-    ================================= */
-
-    let actualPnL = 0;
+    let grossPnL =
+        0;
 
 
     layers.forEach(
@@ -752,11 +1183,13 @@ function calculateTrade() {
             }
 
 
-            let movement = 0;
+            let movement =
+                0;
 
 
             if (
-                direction === "BUY"
+                direction ===
+                "BUY"
             ) {
 
                 movement =
@@ -767,7 +1200,8 @@ function calculateTrade() {
 
 
             if (
-                direction === "SELL"
+                direction ===
+                "SELL"
             ) {
 
                 movement =
@@ -777,23 +1211,31 @@ function calculateTrade() {
             }
 
 
-            actualPnL +=
-                movement
-                *
-                layer.lot
-                *
+            grossPnL +=
+                movement *
+                layer.lot *
                 multiplier;
 
         }
     );
 
 
-    /* =================================
+    /* =====================================
+       NET P&L AFTER FEES
+    ===================================== */
+
+    const actualPnL =
+        grossPnL -
+        totalFees;
+
+
+    /* =====================================
        ACTUAL RR
-    ================================= */
+    ===================================== */
 
     const actualRR =
-        plannedRisk > 0
+        plannedRisk >
+        0
             ?
             actualPnL /
             plannedRisk
@@ -801,9 +1243,9 @@ function calculateTrade() {
             0;
 
 
-    /* =================================
+    /* =====================================
        DISPLAY
-    ================================= */
+    ===================================== */
 
     document
         .getElementById(
@@ -821,7 +1263,9 @@ function calculateTrade() {
         )
         .textContent =
         riskPercent
-            .toFixed(2) +
+            .toFixed(
+                2
+            ) +
         "%";
 
 
@@ -831,7 +1275,9 @@ function calculateTrade() {
         )
         .textContent =
         plannedRR
-            .toFixed(2) +
+            .toFixed(
+                2
+            ) +
         "R";
 
 
@@ -840,10 +1286,13 @@ function calculateTrade() {
             "averageEntry"
         )
         .textContent =
-        averageEntry > 0
+        averageEntry >
+        0
             ?
             averageEntry
-                .toFixed(3)
+                .toFixed(
+                    3
+                )
             :
             "-";
 
@@ -853,12 +1302,36 @@ function calculateTrade() {
             "averageExit"
         )
         .textContent =
-        averageExit > 0
+        averageExit >
+        0
             ?
             averageExit
-                .toFixed(3)
+                .toFixed(
+                    3
+                )
             :
             "-";
+
+
+    document
+        .getElementById(
+            "grossPnLDisplay"
+        )
+        .textContent =
+        signedMoney(
+            grossPnL
+        );
+
+
+    document
+        .getElementById(
+            "totalFeesDisplay"
+        )
+        .textContent =
+        "-" +
+        money(
+            totalFees
+        );
 
 
     document
@@ -877,7 +1350,9 @@ function calculateTrade() {
         )
         .textContent =
         actualRR
-            .toFixed(2) +
+            .toFixed(
+                2
+            ) +
         "R";
 
 
@@ -904,6 +1379,18 @@ function calculateTrade() {
         plannedRR:
             plannedRR,
 
+        grossPnL:
+            grossPnL,
+
+        commissionFee:
+            commissionFee,
+
+        swapFee:
+            swapFee,
+
+        totalFees:
+            totalFees,
+
         actualPnL:
             actualPnL,
 
@@ -911,31 +1398,431 @@ function calculateTrade() {
             actualRR
 
     };
+
 }
 
 
+
 /* =========================================
-   GENERAL CALCULATION EVENTS
+   CALCULATION EVENTS
 ========================================= */
 
 [
     "symbol",
     "direction",
     "stopLoss",
-    "takeProfit"
+    "takeProfit",
+    "commissionFee",
+    "swapFee"
 ]
-.forEach(id => {
+.forEach(
+    id => {
 
-    document
-        .getElementById(
-            id
-        )
-        .addEventListener(
+        const element =
+            document.getElementById(
+                id
+            );
+
+
+        element.addEventListener(
             "input",
-            calculateTrade
+            function() {
+
+                element.classList.remove(
+                    "input-error"
+                );
+
+
+                calculateTrade();
+
+            }
         );
 
-});
+
+        element.addEventListener(
+            "change",
+            function() {
+
+                element.classList.remove(
+                    "input-error"
+                );
+
+
+                calculateTrade();
+
+            }
+        );
+
+    }
+);
+
+
+
+/* =========================================
+   FORM VALIDATION
+========================================= */
+
+function validateTradeForm() {
+
+    clearTradeMessage();
+
+    clearInputErrors();
+
+
+    if (
+        !currentAccount ||
+        !accountBox.value
+    ) {
+
+        markError(
+            accountBox
+        );
+
+
+        showTradeMessage(
+            "Please select a trading account.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    const tradeDate =
+        document.getElementById(
+            "tradeDate"
+        );
+
+
+    if (
+        !tradeDate.value
+    ) {
+
+        markError(
+            tradeDate
+        );
+
+
+        showTradeMessage(
+            "Please select the trade date.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    const symbolInput =
+        document.getElementById(
+            "symbol"
+        );
+
+
+    if (
+        !symbolInput
+            .value
+            .trim()
+    ) {
+
+        markError(
+            symbolInput
+        );
+
+
+        showTradeMessage(
+            "Please enter the traded symbol.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    const layerCheck =
+        validateLayers();
+
+
+    if (
+        !layerCheck.valid
+    ) {
+
+        showTradeMessage(
+            layerCheck.message,
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    const layers =
+        getLayers();
+
+
+    const stopLossInput =
+        document.getElementById(
+            "stopLoss"
+        );
+
+
+    const takeProfitInput =
+        document.getElementById(
+            "takeProfit"
+        );
+
+
+    const stopLoss =
+        Number(
+            stopLossInput.value
+        );
+
+
+    const takeProfit =
+        Number(
+            takeProfitInput.value
+        );
+
+
+    if (
+        stopLoss <=
+        0
+    ) {
+
+        markError(
+            stopLossInput
+        );
+
+
+        showTradeMessage(
+            "Please enter a valid Stop Loss.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    if (
+        takeProfit <=
+        0
+    ) {
+
+        markError(
+            takeProfitInput
+        );
+
+
+        showTradeMessage(
+            "Please enter a valid Take Profit.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    const direction =
+        document
+            .getElementById(
+                "direction"
+            )
+            .value;
+
+
+    if (
+        direction ===
+        "BUY"
+    ) {
+
+        if (
+            layers.some(
+                layer =>
+                    stopLoss >=
+                    layer.entry
+            )
+        ) {
+
+            markError(
+                stopLossInput
+            );
+
+
+            showTradeMessage(
+                "Invalid BUY trade: Stop Loss must be below every Entry Price.",
+                "error"
+            );
+
+
+            return false;
+
+        }
+
+
+        if (
+            layers.some(
+                layer =>
+                    takeProfit <=
+                    layer.entry
+            )
+        ) {
+
+            markError(
+                takeProfitInput
+            );
+
+
+            showTradeMessage(
+                "Invalid BUY trade: Take Profit must be above every Entry Price.",
+                "error"
+            );
+
+
+            return false;
+
+        }
+
+    }
+
+
+    if (
+        direction ===
+        "SELL"
+    ) {
+
+        if (
+            layers.some(
+                layer =>
+                    stopLoss <=
+                    layer.entry
+            )
+        ) {
+
+            markError(
+                stopLossInput
+            );
+
+
+            showTradeMessage(
+                "Invalid SELL trade: Stop Loss must be above every Entry Price.",
+                "error"
+            );
+
+
+            return false;
+
+        }
+
+
+        if (
+            layers.some(
+                layer =>
+                    takeProfit >=
+                    layer.entry
+            )
+        ) {
+
+            markError(
+                takeProfitInput
+            );
+
+
+            showTradeMessage(
+                "Invalid SELL trade: Take Profit must be below every Entry Price.",
+                "error"
+            );
+
+
+            return false;
+
+        }
+
+    }
+
+
+    const commissionInput =
+        document.getElementById(
+            "commissionFee"
+        );
+
+
+    const swapInput =
+        document.getElementById(
+            "swapFee"
+        );
+
+
+    const commission =
+        Number(
+            commissionInput.value ||
+            0
+        );
+
+
+    const swap =
+        Number(
+            swapInput.value ||
+            0
+        );
+
+
+    if (
+        commission <
+        0
+    ) {
+
+        markError(
+            commissionInput
+        );
+
+
+        showTradeMessage(
+            "Commission Fee cannot be negative.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    if (
+        swap <
+        0
+    ) {
+
+        markError(
+            swapInput
+        );
+
+
+        showTradeMessage(
+            "Swap Fee cannot be negative.",
+            "error"
+        );
+
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
 
 
 /* =========================================
@@ -953,6 +1840,20 @@ async function uploadScreenshot(
     ) {
 
         return null;
+
+    }
+
+
+    if (
+        !file.type.startsWith(
+            "image/"
+        )
+    ) {
+
+        throw new Error(
+            type +
+            " screenshot must be an image."
+        );
 
     }
 
@@ -1000,394 +1901,391 @@ async function uploadScreenshot(
 
 
     return filePath;
+
 }
+
 
 
 /* =========================================
    SAVE TRADE
 ========================================= */
 
-document
-    .getElementById(
-        "tradeForm"
-    )
-    .addEventListener(
-        "submit",
-        async function(event) {
+tradeForm.addEventListener(
+    "submit",
+    async function(
+        event
+    ) {
 
-            event.preventDefault();
+        event.preventDefault();
 
 
-            try {
+        if (
+            !validateTradeForm()
+        ) {
 
-                message.textContent =
-                    "Saving trade...";
+            return;
 
-
-                /* =================================
-                   LOGGED-IN USER
-                ================================= */
-
-                const {
-                    data: {
-                        user
-                    },
-                    error:
-                        userError
-                } =
-                    await db.auth
-                        .getUser();
+        }
 
 
-                if (
-                    userError ||
-                    !user
-                ) {
-
-                    message.textContent =
-                        "You are not logged in.";
-
-                    return;
-
-                }
+        saveTradeButton.disabled =
+            true;
 
 
-                /* =================================
-                   CALCULATE TRADE
-                ================================= */
-
-                const calculations =
-                    calculateTrade();
+        saveTradeButton.textContent =
+            "Saving...";
 
 
-                if (
-                    calculations.layers.length ===
-                    0
-                ) {
-
-                    message.textContent =
-                        "Add at least one trade layer.";
-
-                    return;
-
-                }
+        showTradeMessage(
+            "Saving trade...",
+            "warning"
+        );
 
 
-                /*
-                   Since journal entry is made
-                   only after trade is closed,
-                   require exit for every entry.
-                */
+        try {
 
-                const missingExit =
-                    calculations.layers.some(
-                        layer =>
-                            !layer.exit
+            const {
+                data: {
+                    user
+                },
+                error:
+                    userError
+            } =
+                await db.auth
+                    .getUser();
+
+
+            if (
+                userError ||
+                !user
+            ) {
+
+                throw new Error(
+                    "You are not logged in."
+                );
+
+            }
+
+
+            const calculations =
+                calculateTrade();
+
+
+            const beforeFile =
+                document
+                    .getElementById(
+                        "beforeScreenshot"
+                    )
+                    .files[0];
+
+
+            const afterFile =
+                document
+                    .getElementById(
+                        "afterScreenshot"
+                    )
+                    .files[0];
+
+
+            const beforePath =
+                await uploadScreenshot(
+                    beforeFile,
+                    "before",
+                    user.id
+                );
+
+
+            const afterPath =
+                await uploadScreenshot(
+                    afterFile,
+                    "after",
+                    user.id
+                );
+
+
+            /* =====================================
+               RESULT IS BASED ON NET P&L
+            ===================================== */
+
+            let result =
+                "BE";
+
+
+            if (
+                calculations.actualPnL >
+                0
+            ) {
+
+                result =
+                    "Win";
+
+            }
+
+
+            if (
+                calculations.actualPnL <
+                0
+            ) {
+
+                result =
+                    "Loss";
+
+            }
+
+
+            const totalLots =
+                calculations.layers
+                    .reduce(
+                        (
+                            total,
+                            layer
+                        ) =>
+                            total +
+                            layer.lot,
+                        0
                     );
 
 
-                if (
-                    missingExit
-                ) {
+            const trade = {
 
-                    message.textContent =
-                        "Please enter an exit price for every entry.";
-
-                    return;
-
-                }
+                user_id:
+                    user.id,
 
 
-                /* =================================
-                   SCREENSHOTS
-                ================================= */
+                account_id:
+                    Number(
+                        accountBox.value
+                    ),
 
-                const beforeFile =
+
+                trade_date:
                     document
                         .getElementById(
-                            "beforeScreenshot"
+                            "tradeDate"
                         )
-                        .files[0];
+                        .value,
 
 
-                const afterFile =
+                symbol:
                     document
                         .getElementById(
-                            "afterScreenshot"
+                            "symbol"
                         )
-                        .files[0];
-
-
-                const beforePath =
-                    await uploadScreenshot(
-                        beforeFile,
-                        "before",
-                        user.id
-                    );
-
-
-                const afterPath =
-                    await uploadScreenshot(
-                        afterFile,
-                        "after",
-                        user.id
-                    );
-
-
-                /* =================================
-                   RESULT
-                ================================= */
-
-                let result =
-                    "BE";
-
-
-                if (
-                    calculations.actualPnL >
-                    0
-                ) {
-
-                    result =
-                        "Win";
-
-                }
-
-
-                if (
-                    calculations.actualPnL <
-                    0
-                ) {
-
-                    result =
-                        "Loss";
-
-                }
-
-
-                /* =================================
-                   TOTAL LOT SIZE
-                ================================= */
-
-                const totalLots =
-                    calculations.layers
-                        .reduce(
-                            (
-                                total,
-                                layer
-                            ) =>
-                                total +
-                                layer.lot,
-                            0
-                        );
-
-
-                /* =================================
-                   MAIN TRADE ROW
-                ================================= */
-
-                const trade = {
-
-                    user_id:
-                        user.id,
-
-
-                    account_id:
-                        Number(
-                            accountBox.value
-                        ),
-
-
-                    trade_date:
-                        document
-                            .getElementById(
-                                "tradeDate"
-                            )
-                            .value,
-
-
-                    symbol:
-                        document
-                            .getElementById(
-                                "symbol"
-                            )
-                            .value
-                            .trim()
-                            .toUpperCase(),
-
-
-                    direction:
-                        document
-                            .getElementById(
-                                "direction"
-                            )
-                            .value,
-
-
-                    entry_price:
-                        calculations.averageEntry,
-
-
-                    stop_loss:
-                        Number(
-                            document
-                                .getElementById(
-                                    "stopLoss"
-                                )
-                                .value
-                        ),
-
-
-                    take_profit:
-                        Number(
-                            document
-                                .getElementById(
-                                    "takeProfit"
-                                )
-                                .value
-                        ),
-
-
-                    exit_price:
-                        calculations.averageExit,
-
-
-                    lot_size:
-                        totalLots,
-
-
-                    risk_percent:
-                        calculations.riskPercent,
-
-
-                    profit_loss:
-                        calculations.actualPnL,
-
-
-                    r_multiple:
-                        calculations.actualRR,
-
-
-                    session:
-                        document
-                            .getElementById(
-                                "session"
-                            )
-                            .value,
-
-
-                    setup:
-                        document
-                            .getElementById(
-                                "setup"
-                            )
-                            .value,
-
-
-                    result:
-                        result,
-
-
-                    rules_followed:
-                        document
-                            .getElementById(
-                                "rulesFollowed"
-                            )
-                            .value ===
-                        "true",
-
-
-                    mistakes:
-                        document
-                            .getElementById(
-                                "mistakes"
-                            )
-                            .value
-                            .trim(),
-
-
-                    notes:
-                        document
-                            .getElementById(
-                                "notes"
-                            )
-                            .value
-                            .trim(),
-
-
-                    before_screenshot:
-                        beforePath,
-
-
-                    after_screenshot:
-                        afterPath,
-
-
-                    contract_size:
-                        calculations.multiplier,
-
-
-                    average_entry:
-                        calculations.averageEntry,
-
-
-                    average_exit:
-                        calculations.averageExit,
-
-
-                    planned_rr:
-                        calculations.plannedRR,
-
-
-                    actual_rr:
-                        calculations.actualRR,
-
-
-                    planned_risk:
-                        calculations.plannedRisk
-
-                };
-
-
-                /* =================================
-                   SAVE MAIN TRADE
-                ================================= */
-
-                const {
-                    data:
-                        insertedTrade,
-                    error:
-                        tradeError
-                } =
-                    await db
-                        .from(
-                            "trades"
+                        .value
+                        .trim()
+                        .toUpperCase(),
+
+
+                direction:
+                    document
+                        .getElementById(
+                            "direction"
                         )
-                        .insert([
-                            trade
-                        ])
-                        .select()
-                        .single();
+                        .value,
 
 
-                if (
+                entry_price:
+                    calculations
+                        .averageEntry,
+
+
+                stop_loss:
+                    Number(
+                        document
+                            .getElementById(
+                                "stopLoss"
+                            )
+                            .value
+                    ),
+
+
+                take_profit:
+                    Number(
+                        document
+                            .getElementById(
+                                "takeProfit"
+                            )
+                            .value
+                    ),
+
+
+                exit_price:
+                    calculations
+                        .averageExit,
+
+
+                lot_size:
+                    totalLots,
+
+
+                risk_percent:
+                    calculations
+                        .riskPercent,
+
+
+                /* =====================================
+                GROSS P&L BEFORE FEES
+                ===================================== */
+
+                gross_pnl:
+                    calculations
+                        .grossPnL,
+
+
+                /* =====================================
+                NET P&L AFTER FEES
+                ===================================== */
+
+                profit_loss:
+                    calculations
+                        .actualPnL,
+
+
+                commission_fee:
+                    calculations
+                        .commissionFee,
+
+
+                swap_fee:
+                    calculations
+                        .swapFee,
+
+
+                r_multiple:
+                    calculations
+                        .actualRR,
+
+
+                session:
+                    document
+                        .getElementById(
+                            "session"
+                        )
+                        .value,
+
+
+                setup:
+                    document
+                        .getElementById(
+                            "setup"
+                        )
+                        .value,
+
+
+                result:
+                    result,
+
+
+                rules_followed:
+                    document
+                        .getElementById(
+                            "rulesFollowed"
+                        )
+                        .value ===
+                    "true",
+
+
+                mistakes:
+                    document
+                        .getElementById(
+                            "mistakes"
+                        )
+                        .value
+                        .trim(),
+
+
+                notes:
+                    document
+                        .getElementById(
+                            "notes"
+                        )
+                        .value
+                        .trim(),
+
+
+                before_screenshot:
+                    beforePath,
+
+
+                after_screenshot:
+                    afterPath,
+
+
+                contract_size:
+                    calculations
+                        .multiplier,
+
+
+                average_entry:
+                    calculations
+                        .averageEntry,
+
+
+                average_exit:
+                    calculations
+                        .averageExit,
+
+
+                planned_rr:
+                    calculations
+                        .plannedRR,
+
+
+                actual_rr:
+                    calculations
+                        .actualRR,
+
+
+                planned_risk:
+                    calculations
+                        .plannedRisk
+
+            };
+
+
+            /* =====================================
+               SAVE TRADE
+            ===================================== */
+
+            const {
+                data:
+                    insertedTrade,
+                error:
                     tradeError
-                ) {
+            } =
+                await db
+                    .from(
+                        "trades"
+                    )
+                    .insert(
+                        [
+                            trade
+                        ]
+                    )
+                    .select()
+                    .single();
 
-                    throw new Error(
-                        tradeError.message
-                    );
 
-                }
+            if (
+                tradeError
+            ) {
+
+                throw new Error(
+                    tradeError.message
+                );
+
+            }
 
 
-                /* =================================
-                   SAVE ENTRY LAYERS
-                ================================= */
+            /* =====================================
+               ENTRY LAYERS
+            ===================================== */
 
-                const entryRows =
-                    calculations.layers
-                        .map(
-                            layer => ({
+            const entryRows =
+                calculations.layers
+                    .map(
+                        layer => (
+                            {
 
                                 trade_id:
                                     insertedTrade.id,
@@ -1401,43 +2299,45 @@ document
                                 lot_size:
                                     layer.lot
 
-                            })
-                        );
-
-
-                const {
-                    error:
-                        entryError
-                } =
-                    await db
-                        .from(
-                            "trade_entries"
+                            }
                         )
-                        .insert(
-                            entryRows
-                        );
-
-
-                if (
-                    entryError
-                ) {
-
-                    throw new Error(
-                        "Entry layer error: " +
-                        entryError.message
                     );
 
-                }
+
+            const {
+                error:
+                    entryError
+            } =
+                await db
+                    .from(
+                        "trade_entries"
+                    )
+                    .insert(
+                        entryRows
+                    );
 
 
-                /* =================================
-                   SAVE EXIT LAYERS
-                ================================= */
+            if (
+                entryError
+            ) {
 
-                const exitRows =
-                    calculations.layers
-                        .map(
-                            layer => ({
+                throw new Error(
+                    "Entry layer error: " +
+                    entryError.message
+                );
+
+            }
+
+
+            /* =====================================
+               EXIT LAYERS
+            ===================================== */
+
+            const exitRows =
+                calculations.layers
+                    .map(
+                        layer => (
+                            {
 
                                 trade_id:
                                     insertedTrade.id,
@@ -1451,77 +2351,91 @@ document
                                 lot_size:
                                     layer.lot
 
-                            })
-                        );
-
-
-                const {
-                    error:
-                        exitError
-                } =
-                    await db
-                        .from(
-                            "trade_exits"
+                            }
                         )
-                        .insert(
-                            exitRows
-                        );
-
-
-                if (
-                    exitError
-                ) {
-
-                    throw new Error(
-                        "Exit layer error: " +
-                        exitError.message
                     );
 
-                }
+
+            const {
+                error:
+                    exitError
+            } =
+                await db
+                    .from(
+                        "trade_exits"
+                    )
+                    .insert(
+                        exitRows
+                    );
 
 
-                /* =================================
-                   SUCCESS
-                ================================= */
-
-                message.textContent =
-                    "Trade saved successfully!";
-
-
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            "index.html";
-
-                    },
-                    700
-                );
-
-            }
-
-
-            catch (
-                error
+            if (
+                exitError
             ) {
 
-                console.error(
-                    error
+                throw new Error(
+                    "Exit layer error: " +
+                    exitError.message
                 );
-
-
-                message.textContent =
-                    "ERROR: " +
-                    error.message;
 
             }
 
+
+            showTradeMessage(
+                "Trade saved successfully! Redirecting to Dashboard...",
+                "success"
+            );
+
+
+            saveTradeButton.textContent =
+                "Saved ✓";
+
+
+            setTimeout(
+                function() {
+
+                    window.location.href =
+                        "index.html";
+
+                },
+                900
+            );
+
         }
-    );
+
+
+        catch (
+            error
+        ) {
+
+            console.error(
+                error
+            );
+
+
+            showTradeMessage(
+                "ERROR: " +
+                error.message,
+                "error"
+            );
+
+
+            saveTradeButton.disabled =
+                false;
+
+
+            saveTradeButton.textContent =
+                "Save Trade";
+
+        }
+
+    }
+);
+
 
 
 /* =========================================
-   MONEY HELPERS
+   MONEY
 ========================================= */
 
 function money(
@@ -1530,7 +2444,8 @@ function money(
 
     return "$" +
         Number(
-            value || 0
+            value ||
+            0
         )
         .toLocaleString(
             "en-AU",
@@ -1546,18 +2461,25 @@ function money(
 }
 
 
+
+/* =========================================
+   SIGNED MONEY
+========================================= */
+
 function signedMoney(
     value
 ) {
 
     value =
         Number(
-            value || 0
+            value ||
+            0
         );
 
 
     if (
-        value > 0
+        value >
+        0
     ) {
 
         return "+$" +
@@ -1577,7 +2499,8 @@ function signedMoney(
 
 
     if (
-        value < 0
+        value <
+        0
     ) {
 
         return "-$" +
@@ -1603,6 +2526,7 @@ function signedMoney(
 }
 
 
+
 /* =========================================
    DEFAULT DATE
 ========================================= */
@@ -1618,6 +2542,7 @@ document
             0,
             10
         );
+
 
 
 /* =========================================
