@@ -92,6 +92,7 @@
             Dashboard
         </a>
 
+
         <button
             type="button"
             onclick="logout()"
@@ -200,6 +201,7 @@
 
         <input
             id="symbol"
+            type="text"
             value="XAUUSD"
             required
         >
@@ -325,7 +327,7 @@
 
 
     <!-- =========================================
-         RULES
+         RULES FOLLOWED
     ========================================= -->
 
     <label>
@@ -354,7 +356,9 @@
 
     <div class="full layer-section">
 
+
         <div class="layer-heading">
+
 
             <div>
 
@@ -378,16 +382,19 @@
                 + Add Entry
             </button>
 
+
         </div>
 
 
         <div id="tradeLayers">
 
 
-            <!-- FIRST LAYER -->
+            <!-- FIRST TRADE LAYER -->
 
             <div class="layer-row trade-layer">
 
+
+                <!-- LOT -->
 
                 <label>
 
@@ -404,6 +411,8 @@
                 </label>
 
 
+                <!-- ENTRY -->
+
                 <label>
 
                     Entry Price
@@ -417,6 +426,8 @@
 
                 </label>
 
+
+                <!-- EXIT -->
 
                 <label>
 
@@ -432,6 +443,8 @@
                 </label>
 
 
+                <!-- REMOVE -->
+
                 <button
                     type="button"
                     class="remove-layer"
@@ -446,40 +459,45 @@
 
         </div>
 
+
     </div>
 
-<!-- =========================================
-     TRADING FEES
-========================================= -->
-
-<label>
-
-    Commission Fee ($)
-
-    <input
-        id="commissionFee"
-        type="number"
-        min="0"
-        step="0.01"
-        value="0"
-    >
-
-</label>
 
 
-<label>
+    <!-- =========================================
+         TRADING FEES
+    ========================================= -->
 
-    Swap Fee ($)
+    <label>
 
-    <input
-        id="swapFee"
-        type="number"
-        min="0"
-        step="0.01"
-        value="0"
-    >
+        Commission Fee ($)
 
-</label>
+        <input
+            id="commissionFee"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0"
+        >
+
+    </label>
+
+
+    <label>
+
+        Swap Fee ($)
+
+        <input
+            id="swapFee"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0"
+        >
+
+    </label>
+
+
 
     <!-- =========================================
          CALCULATIONS
@@ -487,6 +505,8 @@
 
     <div class="trade-calculations full">
 
+
+        <!-- CURRENT CAPITAL -->
 
         <div>
 
@@ -501,6 +521,8 @@
         </div>
 
 
+        <!-- PLANNED RISK -->
+
         <div>
 
             <span>
@@ -513,6 +535,8 @@
 
         </div>
 
+
+        <!-- RISK % -->
 
         <div>
 
@@ -527,6 +551,8 @@
         </div>
 
 
+        <!-- PLANNED RR -->
+
         <div>
 
             <span>
@@ -539,6 +565,8 @@
 
         </div>
 
+
+        <!-- AVERAGE ENTRY -->
 
         <div>
 
@@ -553,6 +581,8 @@
         </div>
 
 
+        <!-- AVERAGE EXIT -->
+
         <div>
 
             <span>
@@ -566,6 +596,38 @@
         </div>
 
 
+        <!-- GROSS P&L -->
+
+        <div>
+
+            <span>
+                Gross P&amp;L
+            </span>
+
+            <strong id="grossPnLDisplay">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <!-- TOTAL FEES -->
+
+        <div>
+
+            <span>
+                Total Fees
+            </span>
+
+            <strong id="totalFeesDisplay">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <!-- NET / ACTUAL P&L -->
+
         <div>
 
             <span>
@@ -576,8 +638,14 @@
                 $0.00
             </strong>
 
+            <small>
+                After commission &amp; swap
+            </small>
+
         </div>
 
+
+        <!-- ACTUAL RR -->
 
         <div>
 
@@ -606,10 +674,12 @@
 
         <input
             id="mistakes"
+            type="text"
             placeholder="FOMO, late entry, moved SL..."
         >
 
     </label>
+
 
 
     <!-- =========================================
@@ -630,7 +700,7 @@
 
 
     <!-- =========================================
-         SCREENSHOTS
+         BEFORE SCREENSHOT
     ========================================= -->
 
     <label class="full">
@@ -645,6 +715,11 @@
 
     </label>
 
+
+
+    <!-- =========================================
+         AFTER SCREENSHOT
+    ========================================= -->
 
     <label class="full">
 
@@ -672,7 +747,7 @@
 
 
     <!-- =========================================
-         SAVE
+         SAVE TRADE
     ========================================= -->
 
     <button
@@ -699,9 +774,13 @@
 
 <script src="js/auth.js"></script>
 
+
 <script>
+
     requireLogin();
+
 </script>
+
 
 <script src="js/navigation.js"></script>
 
