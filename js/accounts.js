@@ -1039,8 +1039,8 @@ async function deleteAccount(id) {
                 .select(
                     `
                     id,
-                    before_screenshot_url,
-                    after_screenshot_url
+                    before_screenshot,
+                    after_screenshot
                     `
                 )
                 .eq(
@@ -1069,22 +1069,22 @@ async function deleteAccount(id) {
             trade => {
 
                 if (
-                    trade.before_screenshot_url
+                    trade.before_screenshot
                 ) {
 
                     screenshotPaths.push(
-                        trade.before_screenshot_url
+                        trade.before_screenshot
                     );
 
                 }
 
 
                 if (
-                    trade.after_screenshot_url
+                    trade.after_screenshot
                 ) {
 
                     screenshotPaths.push(
-                        trade.after_screenshot_url
+                        trade.after_screenshot
                     );
 
                 }
