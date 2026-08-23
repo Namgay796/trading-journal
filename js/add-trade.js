@@ -136,6 +136,11 @@ function getContractMultiplier(
         .toUpperCase();
 
 
+    /* =====================================
+       GOLD
+       1 lot = 100 oz
+    ===================================== */
+
     if (
         symbol.includes(
             "XAU"
@@ -147,6 +152,11 @@ function getContractMultiplier(
     }
 
 
+    /* =====================================
+       SILVER
+       1 lot = 5000 oz
+    ===================================== */
+
     if (
         symbol.includes(
             "XAG"
@@ -157,6 +167,38 @@ function getContractMultiplier(
 
     }
 
+
+    /* =====================================
+       FOREX
+       
+       EURUSD
+       GBPUSD
+       AUDUSD
+       NZDUSD
+       USDJPY
+       EURJPY
+       GBPJPY
+       etc.
+
+       1 standard lot = 100,000 units
+    ===================================== */
+
+    if (
+        /^[A-Z]{6}$/.test(
+            symbol
+        )
+    ) {
+
+        return 100000;
+
+    }
+
+
+    /* =====================================
+       INDICES / CRYPTO / OTHER
+
+       Default = 1
+    ===================================== */
 
     return 1;
 
@@ -1281,37 +1323,44 @@ function calculateTrade() {
         "R";
 
 
-    document
-        .getElementById(
-            "averageEntry"
+    /* =========================================
+   AVERAGE ENTRY
+========================================= */
+
+document
+    .getElementById(
+        "averageEntry"
+    )
+    .textContent =
+    averageEntry >
+    0
+        ?
+        formatTradePrice(
+            averageEntry,
+            symbol
         )
-        .textContent =
-        averageEntry >
-        0
-            ?
-            averageEntry
-                .toFixed(
-                    3
-                )
-            :
-            "-";
+        :
+        "-";
 
 
-    document
-        .getElementById(
-            "averageExit"
+/* =========================================
+   AVERAGE EXIT
+========================================= */
+
+document
+    .getElementById(
+        "averageExit"
+    )
+    .textContent =
+    averageExit >
+    0
+        ?
+        formatTradePrice(
+            averageExit,
+            symbol
         )
-        .textContent =
-        averageExit >
-        0
-            ?
-            averageExit
-                .toFixed(
-                    3
-                )
-            :
-            "-";
-
+        :
+        "-";
 
     document
         .getElementById(
@@ -2432,7 +2481,129 @@ tradeForm.addEventListener(
     }
 );
 
+/* =========================================
+   FORMAT TRADE PRICE
+========================================= */
 
+function formatTradePrice(
+    value,
+    symbol
+) {
+
+    const price =
+        Number(
+            value
+        );
+
+
+    if (
+        !Number.isFinite(
+            price
+        )
+    ) {
+
+        return "-";
+
+    }
+
+
+    const pair =
+        String(
+            symbol ||
+            ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+    /*
+       JPY FOREX PAIRS
+
+       Examples:
+       USDJPY
+       GBPJPY
+       EURJPY
+
+       Show 3 decimal places.
+    */
+
+    if (
+        pair.includes(
+            "JPY"
+        )
+    ) {
+
+        return price.toFixed(
+            3
+        );
+
+    }
+
+
+    /*
+       STANDARD FOREX PAIRS
+
+       Examples:
+       EURUSD
+       GBPUSD
+       AUDUSD
+       NZDUSD
+       USDCAD
+       USDCHF
+
+       Show 5 decimal places.
+    */
+
+    if (
+        /^[A-Z]{6}$/.test(
+            pair
+        ) &&
+        !pair.startsWith(
+            "XAU"
+        ) &&
+        !pair.startsWith(
+            "XAG"
+        )
+    ) {
+
+        return price.toFixed(
+            5
+        );
+
+    }
+
+
+    /*
+       GOLD / SILVER
+
+       Keep 3 decimal places.
+    */
+
+    if (
+        pair.startsWith(
+            "XAU"
+        ) ||
+        pair.startsWith(
+            "XAG"
+        )
+    ) {
+
+        return price.toFixed(
+            3
+        );
+
+    }
+
+
+    /*
+       INDICES / CRYPTO / OTHER
+    */
+
+    return String(
+        price
+    );
+
+}
 
 /* =========================================
    MONEY
