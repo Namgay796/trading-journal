@@ -2786,3 +2786,91 @@ th {
     }
 
 }
+
+/* =========================================
+   HISTORY TABLE - KEEP CELLS IN SAME ROW
+========================================= */
+
+.history-container table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+
+.history-container tr {
+    display: table-row !important;
+}
+
+
+.history-container th,
+.history-container td {
+    display: table-cell !important;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   CHECKLIST COLUMN
+========================================= */
+
+.checklist-history-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+
+.checklist-history-score strong {
+    display: inline-block;
+    margin: 0;
+}
+
+
+.checklist-history-score small {
+    display: inline-block;
+    margin: 0;
+    color: #8b949e;
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+========================================= */
+
+.history-container td:last-child {
+    white-space: nowrap;
+}
+
+
+.history-container td:last-child .small-button {
+    display: inline-block;
+    width: auto;
+    margin: 2px;
+}
+
+
+/* =========================================
+   ALLOW TABLE TO SCROLL ON SMALL SCREENS
+   INSTEAD OF BREAKING THE ROW
+========================================= */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+
+.history-container table {
+    min-width: 1050px;
+}
+
+.checklist-history-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
