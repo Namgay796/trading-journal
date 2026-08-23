@@ -45,7 +45,6 @@ const accountFilter =
     );
 
 
-
 /* =========================================
    MESSAGE SYSTEM
 ========================================= */
@@ -55,12 +54,8 @@ function showHistoryMessage(
     type = "error"
 ) {
 
-    if (
-        !historyMessage
-    ) {
-
+    if (!historyMessage) {
         return;
-
     }
 
 
@@ -75,15 +70,10 @@ function showHistoryMessage(
 }
 
 
-
 function clearHistoryMessage() {
 
-    if (
-        !historyMessage
-    ) {
-
+    if (!historyMessage) {
         return;
-
     }
 
 
@@ -97,7 +87,6 @@ function clearHistoryMessage() {
 }
 
 
-
 function showEditMessage(
     text,
     type = "error"
@@ -109,12 +98,8 @@ function showEditMessage(
         );
 
 
-    if (
-        !box
-    ) {
-
+    if (!box) {
         return;
-
     }
 
 
@@ -129,7 +114,6 @@ function showEditMessage(
 }
 
 
-
 function clearEditMessage() {
 
     const box =
@@ -138,12 +122,8 @@ function clearEditMessage() {
         );
 
 
-    if (
-        !box
-    ) {
-
+    if (!box) {
         return;
-
     }
 
 
@@ -157,23 +137,29 @@ function clearEditMessage() {
 }
 
 
-
 /* =========================================
    LOAD ACCOUNTS
 ========================================= */
 
 async function loadAccounts() {
 
-    if (
-        !accountFilter
-    ) {
+    const selector =
+        document.getElementById(
+            "accountFilter"
+        );
+
+
+    if (!selector) {
+
+        console.error(
+            "accountFilter not found in trades.html"
+        );
 
         return;
-
     }
 
 
-    accountFilter.innerHTML =
+    selector.innerHTML =
         `
         <option value="">
             Loading accounts...
@@ -191,9 +177,7 @@ async function loadAccounts() {
                 .from(
                     "accounts"
                 )
-                .select(
-                    "id, name"
-                )
+                .select("*")
                 .order(
                     "id",
                     {
@@ -202,25 +186,43 @@ async function loadAccounts() {
                 );
 
 
-        if (
-            error
-        ) {
+        if (error) {
 
             throw error;
 
         }
 
 
+        console.log(
+            "Accounts loaded:",
+            data
+        );
+
+
         allAccounts =
             data || [];
 
 
-        accountFilter.innerHTML =
+        selector.innerHTML =
             `
             <option value="">
                 All Accounts
             </option>
             `;
+
+
+        if (
+            allAccounts.length === 0
+        ) {
+
+            showHistoryMessage(
+                "No trading accounts found.",
+                "warning"
+            );
+
+            return;
+
+        }
 
 
         allAccounts.forEach(
@@ -237,14 +239,24 @@ async function loadAccounts() {
 
 
                 option.textContent =
-                    account.name;
+                    account.name ||
+                    (
+                        "Account " +
+                        account.id
+                    );
 
 
-                accountFilter.appendChild(
+                selector.appendChild(
                     option
                 );
 
             }
+        );
+
+
+        console.log(
+            allAccounts.length +
+            " accounts added to History filter"
         );
 
     }
@@ -255,29 +267,31 @@ async function loadAccounts() {
     ) {
 
         console.error(
-            "Unable to load accounts:",
+            "History account load error:",
             error
         );
 
 
-        accountFilter.innerHTML =
+        selector.innerHTML =
             `
             <option value="">
-                All Accounts
+                Unable to load accounts
             </option>
             `;
 
 
         showHistoryMessage(
-            "Unable to load account filter: " +
-            error.message,
+            "Unable to load accounts: " +
+            (
+                error.message ||
+                "Unknown error"
+            ),
             "error"
         );
 
     }
 
 }
-
 
 
 /* =========================================
@@ -286,60 +300,69 @@ async function loadAccounts() {
 
 async function loadTrades() {
 
-    const {
-        data,
-        error
-    } =
-        await db
-            .from(
-                "trades"
-            )
-            .select("*")
-            .order(
-                "trade_date",
-                {
-                    ascending:
-                        false
-                }
-            )
-            .order(
-                "id",
-                {
-                    ascending:
-                        false
-                }
-            );
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "trades"
+                )
+                .select("*")
+                .order(
+                    "trade_date",
+                    {
+                        ascending: false
+                    }
+                )
+                .order(
+                    "id",
+                    {
+                        ascending: false
+                    }
+                );
 
 
-    if (
+        if (error) {
+
+            throw error;
+
+        }
+
+
+        allTrades =
+            data || [];
+
+
+        applyFilters();
+
+    }
+
+
+    catch (
         error
     ) {
 
         console.error(
+            "Trade load error:",
             error
         );
 
 
         showHistoryMessage(
             "Unable to load trades: " +
-            error.message,
+            (
+                error.message ||
+                "Unknown error"
+            ),
             "error"
         );
 
-
-        return;
-
     }
 
-
-    allTrades =
-        data || [];
-
-
-    applyFilters();
-
 }
-
 
 
 /* =========================================
@@ -350,9 +373,13 @@ function displayTrades(
     trades
 ) {
 
+    if (!tradeTable) {
+        return;
+    }
+
+
     if (
-        trades.length ===
-        0
+        trades.length === 0
     ) {
 
         tradeTable.innerHTML =
@@ -401,8 +428,7 @@ function displayTrades(
 
 
                     const pnlClass =
-                        pnl >=
-                        0
+                        pnl >= 0
                             ?
                             "profit"
                             :
@@ -476,22 +502,18 @@ function displayTrades(
 
 
                         <td class="${pnlClass}">
-
                             ${signedMoney(
                                 pnl
                             )}
-
                         </td>
 
 
                         <td>
-
                             ${Number(
                                 trade.actual_rr ??
                                 trade.r_multiple ??
                                 0
                             ).toFixed(2)}R
-
                         </td>
 
 
@@ -531,19 +553,19 @@ function displayTrades(
 }
 
 
-
 /* =========================================
-   FILTERS
+   APPLY FILTERS
 ========================================= */
 
 function applyFilters() {
 
     const accountId =
-        accountFilter
-            ?
-            accountFilter.value
-            :
-            "";
+        document
+            .getElementById(
+                "accountFilter"
+            )
+            ?.value ||
+        "";
 
 
     const session =
@@ -551,7 +573,8 @@ function applyFilters() {
             .getElementById(
                 "sessionFilter"
             )
-            .value;
+            ?.value ||
+        "";
 
 
     const result =
@@ -559,17 +582,21 @@ function applyFilters() {
             .getElementById(
                 "resultFilter"
             )
-            .value;
+            ?.value ||
+        "";
 
 
     const symbol =
-        document
-            .getElementById(
-                "symbolFilter"
-            )
-            .value
-            .trim()
-            .toUpperCase();
+        (
+            document
+                .getElementById(
+                    "symbolFilter"
+                )
+                ?.value ||
+            ""
+        )
+        .trim()
+        .toUpperCase();
 
 
     const filtered =
@@ -628,7 +655,6 @@ function applyFilters() {
 }
 
 
-
 /* =========================================
    FILTER EVENTS
 ========================================= */
@@ -645,35 +671,58 @@ if (
 }
 
 
-document
-    .getElementById(
+const sessionFilter =
+    document.getElementById(
         "sessionFilter"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    sessionFilter
+) {
+
+    sessionFilter.addEventListener(
         "change",
         applyFilters
     );
 
+}
 
-document
-    .getElementById(
+
+const resultFilter =
+    document.getElementById(
         "resultFilter"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    resultFilter
+) {
+
+    resultFilter.addEventListener(
         "change",
         applyFilters
     );
 
+}
 
-document
-    .getElementById(
+
+const symbolFilter =
+    document.getElementById(
         "symbolFilter"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    symbolFilter
+) {
+
+    symbolFilter.addEventListener(
         "input",
         applyFilters
     );
 
+}
 
 
 /* =========================================
@@ -708,7 +757,6 @@ function editTrade(
             "error"
         );
 
-
         return;
 
     }
@@ -728,33 +776,31 @@ function editTrade(
         );
 
 
-    /*
-       OLD TRADES:
-
-       If gross_pnl is missing,
-       reconstruct it from:
-
-       net P&L + commission + swap
-    */
-
     let grossPnL =
         Number(
             editingTrade.gross_pnl
         );
 
 
+    /*
+       OLDER TRADES:
+
+       If gross P&L was not stored,
+       reconstruct it from:
+
+       net P&L + commission + swap
+    */
+
     if (
         !Number.isFinite(
             grossPnL
         ) ||
         (
-            grossPnL ===
-            0 &&
+            grossPnL === 0 &&
             Number(
                 editingTrade.profit_loss ||
                 0
-            ) !==
-            0
+            ) !== 0
         )
     ) {
 
@@ -771,165 +817,163 @@ function editTrade(
     }
 
 
-    document
-        .getElementById(
-            "editTradeId"
-        )
-        .value =
-        editingTrade.id;
+    setElementValue(
+        "editTradeId",
+        editingTrade.id
+    );
 
 
-    document
-        .getElementById(
+    const title =
+        document.getElementById(
             "editTradeTitle"
-        )
-        .textContent =
-        (
-            editingTrade.symbol ||
-            "Trade"
-        )
-        +
-        " • "
-        +
-        (
-            editingTrade.trade_date ||
-            ""
         );
 
 
-    document
-        .getElementById(
-            "editTradeDate"
-        )
-        .value =
+    if (
+        title
+    ) {
+
+        title.textContent =
+            (
+                editingTrade.symbol ||
+                "Trade"
+            )
+            +
+            " • "
+            +
+            (
+                editingTrade.trade_date ||
+                ""
+            );
+
+    }
+
+
+    setElementValue(
+        "editTradeDate",
         editingTrade.trade_date ||
-        "";
+        ""
+    );
 
 
-    document
-        .getElementById(
-            "editSymbol"
-        )
-        .value =
+    setElementValue(
+        "editSymbol",
         editingTrade.symbol ||
-        "";
+        ""
+    );
 
 
-    document
-        .getElementById(
-            "editDirection"
-        )
-        .value =
+    setElementValue(
+        "editDirection",
         editingTrade.direction ||
-        "BUY";
+        "BUY"
+    );
 
 
-    document
-        .getElementById(
-            "editSession"
-        )
-        .value =
+    setElementValue(
+        "editSession",
         editingTrade.session ||
-        "Asian";
+        "Asian"
+    );
 
 
-    document
-        .getElementById(
-            "editSetup"
-        )
-        .value =
+    setElementValue(
+        "editSetup",
         normalizeSetup(
             editingTrade.setup
-        );
-
-
-    document
-        .getElementById(
-            "editRulesFollowed"
         )
-        .value =
+    );
+
+
+    setElementValue(
+        "editRulesFollowed",
         editingTrade.rules_followed
             ?
             "true"
             :
-            "false";
+            "false"
+    );
 
 
-    document
-        .getElementById(
-            "editGrossPnL"
-        )
-        .value =
+    setElementValue(
+        "editGrossPnL",
         grossPnL.toFixed(
             2
-        );
-
-
-    document
-        .getElementById(
-            "editCommissionFee"
         )
-        .value =
+    );
+
+
+    setElementValue(
+        "editCommissionFee",
         commission.toFixed(
             2
-        );
-
-
-    document
-        .getElementById(
-            "editSwapFee"
         )
-        .value =
+    );
+
+
+    setElementValue(
+        "editSwapFee",
         swap.toFixed(
             2
-        );
-
-
-    document
-        .getElementById(
-            "editPlannedRisk"
         )
-        .value =
+    );
+
+
+    setElementValue(
+        "editPlannedRisk",
         Number(
             editingTrade.planned_risk ||
             0
         ).toFixed(
             2
+        )
+    );
+
+
+    setElementValue(
+        "editMistakes",
+        editingTrade.mistakes ||
+        ""
+    );
+
+
+    setElementValue(
+        "editNotes",
+        editingTrade.notes ||
+        ""
+    );
+
+
+    const beforeInput =
+        document.getElementById(
+            "editBeforeScreenshot"
         );
 
 
-    document
-        .getElementById(
-            "editMistakes"
-        )
-        .value =
-        editingTrade.mistakes ||
-        "";
+    if (
+        beforeInput
+    ) {
+
+        beforeInput.value =
+            "";
+
+    }
 
 
-    document
-        .getElementById(
-            "editNotes"
-        )
-        .value =
-        editingTrade.notes ||
-        "";
-
-
-    document
-        .getElementById(
-            "editBeforeScreenshot"
-        )
-        .value =
-        "";
-
-
-    document
-        .getElementById(
+    const afterInput =
+        document.getElementById(
             "editAfterScreenshot"
-        )
-        .value =
-        "";
+        );
+
+
+    if (
+        afterInput
+    ) {
+
+        afterInput.value =
+            "";
+
+    }
 
 
     recalculateEditedPnL();
@@ -940,22 +984,54 @@ function editTrade(
     );
 
 
-    editTradePanel.hidden =
-        false;
+    if (
+        editTradePanel
+    ) {
+
+        editTradePanel.hidden =
+            false;
 
 
-    editTradePanel.scrollIntoView(
-        {
-            behavior:
-                "smooth",
+        editTradePanel.scrollIntoView(
+            {
+                behavior:
+                    "smooth",
 
-            block:
-                "start"
-        }
-    );
+                block:
+                    "start"
+            }
+        );
+
+    }
 
 }
 
+
+/* =========================================
+   SAFE FIELD VALUE SETTER
+========================================= */
+
+function setElementValue(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (
+        element
+    ) {
+
+        element.value =
+            value;
+
+    }
+
+}
 
 
 /* =========================================
@@ -990,7 +1066,6 @@ function normalizeSetup(
 }
 
 
-
 /* =========================================
    AUTOMATIC NET P&L
 ========================================= */
@@ -1006,35 +1081,59 @@ function recalculateEditedPnL() {
     }
 
 
+    const grossField =
+        document.getElementById(
+            "editGrossPnL"
+        );
+
+
+    const commissionField =
+        document.getElementById(
+            "editCommissionFee"
+        );
+
+
+    const swapField =
+        document.getElementById(
+            "editSwapFee"
+        );
+
+
+    const netField =
+        document.getElementById(
+            "editProfitLoss"
+        );
+
+
+    if (
+        !grossField ||
+        !commissionField ||
+        !swapField ||
+        !netField
+    ) {
+
+        return;
+
+    }
+
+
     const grossPnL =
         Number(
-            document
-                .getElementById(
-                    "editGrossPnL"
-                )
-                .value ||
+            grossField.value ||
             0
         );
 
 
     const commission =
         Number(
-            document
-                .getElementById(
-                    "editCommissionFee"
-                )
-                .value ||
+            commissionField.value ||
             0
         );
 
 
     const swap =
         Number(
-            document
-                .getElementById(
-                    "editSwapFee"
-                )
-                .value ||
+            swapField.value ||
             0
         );
 
@@ -1047,11 +1146,7 @@ function recalculateEditedPnL() {
         swap;
 
 
-    document
-        .getElementById(
-            "editProfitLoss"
-        )
-        .value =
+    netField.value =
         netPnL.toFixed(
             2
         );
@@ -1064,29 +1159,45 @@ function recalculateEditedPnL() {
 }
 
 
-
 /* =========================================
-   AUTOMATIC RR
+   AUTOMATIC ACTUAL RR
 ========================================= */
 
 function recalculateEditedRR(
     netPnL
 ) {
 
+    const plannedField =
+        document.getElementById(
+            "editPlannedRisk"
+        );
+
+
+    const rrField =
+        document.getElementById(
+            "editActualRR"
+        );
+
+
+    if (
+        !plannedField ||
+        !rrField
+    ) {
+
+        return;
+
+    }
+
+
     const plannedRisk =
         Number(
-            document
-                .getElementById(
-                    "editPlannedRisk"
-                )
-                .value ||
+            plannedField.value ||
             0
         );
 
 
     const actualRR =
-        plannedRisk >
-        0
+        plannedRisk > 0
             ?
             netPnL /
             plannedRisk
@@ -1094,11 +1205,7 @@ function recalculateEditedRR(
             0;
 
 
-    document
-        .getElementById(
-            "editActualRR"
-        )
-        .value =
+    rrField.value =
         actualRR.toFixed(
             2
         );
@@ -1106,30 +1213,44 @@ function recalculateEditedRR(
 }
 
 
-
 /* =========================================
    LIVE FEE RECALCULATION
 ========================================= */
 
-document
-    .getElementById(
+const editCommissionFee =
+    document.getElementById(
         "editCommissionFee"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    editCommissionFee
+) {
+
+    editCommissionFee.addEventListener(
         "input",
         recalculateEditedPnL
     );
 
+}
 
-document
-    .getElementById(
+
+const editSwapFee =
+    document.getElementById(
         "editSwapFee"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    editSwapFee
+) {
+
+    editSwapFee.addEventListener(
         "input",
         recalculateEditedPnL
     );
 
+}
 
 
 /* =========================================
@@ -1154,7 +1275,6 @@ async function showCurrentScreenshots(
 }
 
 
-
 async function showScreenshotPreview(
     elementId,
     path
@@ -1167,12 +1287,20 @@ async function showScreenshotPreview(
 
 
     if (
+        !box
+    ) {
+
+        return;
+
+    }
+
+
+    if (
         !path
     ) {
 
         box.innerHTML =
             "No screenshot";
-
 
         return;
 
@@ -1207,7 +1335,6 @@ async function showScreenshotPreview(
         box.innerHTML =
             "Unable to load screenshot.";
 
-
         return;
 
     }
@@ -1234,15 +1361,20 @@ async function showScreenshotPreview(
 }
 
 
-
 /* =========================================
    CLOSE EDIT PANEL
 ========================================= */
 
 function closeEditPanel() {
 
-    editTradePanel.hidden =
-        true;
+    if (
+        editTradePanel
+    ) {
+
+        editTradePanel.hidden =
+            true;
+
+    }
 
 
     editingTrade =
@@ -1254,25 +1386,40 @@ function closeEditPanel() {
 }
 
 
-document
-    .getElementById(
+const closeEditTrade =
+    document.getElementById(
         "closeEditTrade"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    closeEditTrade
+) {
+
+    closeEditTrade.addEventListener(
         "click",
         closeEditPanel
     );
 
+}
 
-document
-    .getElementById(
+
+const cancelEditTrade =
+    document.getElementById(
         "cancelEditTrade"
-    )
-    .addEventListener(
+    );
+
+
+if (
+    cancelEditTrade
+) {
+
+    cancelEditTrade.addEventListener(
         "click",
         closeEditPanel
     );
 
+}
 
 
 /* =========================================
@@ -1368,481 +1515,507 @@ async function uploadReplacementScreenshot(
 }
 
 
-
 /* =========================================
    SAVE EDIT
 ========================================= */
 
-editTradeForm.addEventListener(
-    "submit",
-    async function(
-        event
-    ) {
+if (
+    editTradeForm
+) {
 
-        event.preventDefault();
-
-
-        clearEditMessage();
-
-
-        if (
-            !editingTrade
+    editTradeForm.addEventListener(
+        "submit",
+        async function(
+            event
         ) {
 
-            showEditMessage(
-                "No trade selected.",
-                "error"
-            );
+            event.preventDefault();
 
 
-            return;
-
-        }
+            clearEditMessage();
 
 
-        const date =
-            document
-                .getElementById(
-                    "editTradeDate"
+            if (
+                !editingTrade
+            ) {
+
+                showEditMessage(
+                    "No trade selected.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            const date =
+                document
+                    .getElementById(
+                        "editTradeDate"
+                    )
+                    ?.value ||
+                "";
+
+
+            const symbol =
+                (
+                    document
+                        .getElementById(
+                            "editSymbol"
+                        )
+                        ?.value ||
+                    ""
                 )
-                .value;
-
-
-        const symbol =
-            document
-                .getElementById(
-                    "editSymbol"
-                )
-                .value
                 .trim()
                 .toUpperCase();
 
 
-        const commission =
-            Number(
-                document
-                    .getElementById(
-                        "editCommissionFee"
-                    )
-                    .value ||
-                0
-            );
+            const commission =
+                Number(
+                    document
+                        .getElementById(
+                            "editCommissionFee"
+                        )
+                        ?.value ||
+                    0
+                );
 
 
-        const swap =
-            Number(
-                document
-                    .getElementById(
-                        "editSwapFee"
-                    )
-                    .value ||
-                0
-            );
+            const swap =
+                Number(
+                    document
+                        .getElementById(
+                            "editSwapFee"
+                        )
+                        ?.value ||
+                    0
+                );
 
 
-        const grossPnL =
-            Number(
-                document
-                    .getElementById(
-                        "editGrossPnL"
-                    )
-                    .value ||
-                0
-            );
+            const grossPnL =
+                Number(
+                    document
+                        .getElementById(
+                            "editGrossPnL"
+                        )
+                        ?.value ||
+                    0
+                );
 
 
-        const plannedRisk =
-            Number(
-                document
-                    .getElementById(
-                        "editPlannedRisk"
-                    )
-                    .value ||
-                0
-            );
+            const plannedRisk =
+                Number(
+                    document
+                        .getElementById(
+                            "editPlannedRisk"
+                        )
+                        ?.value ||
+                    0
+                );
 
 
-        const netPnL =
-            grossPnL
-            -
-            commission
-            -
-            swap;
+            const netPnL =
+                grossPnL
+                -
+                commission
+                -
+                swap;
 
 
-        const actualRR =
-            plannedRisk >
-            0
-                ?
-                netPnL /
-                plannedRisk
-                :
-                0;
-
-
-        if (
-            !date
-        ) {
-
-            showEditMessage(
-                "Please select the trade date.",
-                "error"
-            );
-
-
-            return;
-
-        }
-
-
-        if (
-            !symbol
-        ) {
-
-            showEditMessage(
-                "Please enter a symbol.",
-                "error"
-            );
-
-
-            return;
-
-        }
-
-
-        if (
-            commission <
-            0
-        ) {
-
-            showEditMessage(
-                "Commission Fee cannot be negative.",
-                "error"
-            );
-
-
-            return;
-
-        }
-
-
-        if (
-            swap <
-            0
-        ) {
-
-            showEditMessage(
-                "Swap Fee cannot be negative.",
-                "error"
-            );
-
-
-            return;
-
-        }
-
-
-        saveEditTrade.disabled =
-            true;
-
-
-        saveEditTrade.textContent =
-            "Saving...";
-
-
-        showEditMessage(
-            "Saving changes...",
-            "warning"
-        );
-
-
-        try {
-
-            const {
-                data: {
-                    user
-                },
-                error:
-                    userError
-            } =
-                await db.auth
-                    .getUser();
+            const actualRR =
+                plannedRisk > 0
+                    ?
+                    netPnL /
+                    plannedRisk
+                    :
+                    0;
 
 
             if (
-                userError ||
-                !user
+                !date
             ) {
 
-                throw new Error(
-                    "You are not logged in."
+                showEditMessage(
+                    "Please select the trade date.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !symbol
+            ) {
+
+                showEditMessage(
+                    "Please enter a symbol.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                commission < 0
+            ) {
+
+                showEditMessage(
+                    "Commission Fee cannot be negative.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                swap < 0
+            ) {
+
+                showEditMessage(
+                    "Swap Fee cannot be negative.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                saveEditTrade
+            ) {
+
+                saveEditTrade.disabled =
+                    true;
+
+
+                saveEditTrade.textContent =
+                    "Saving...";
+
+            }
+
+
+            showEditMessage(
+                "Saving changes...",
+                "warning"
+            );
+
+
+            try {
+
+                const {
+                    data: {
+                        user
+                    },
+                    error:
+                        userError
+                } =
+                    await db.auth
+                        .getUser();
+
+
+                if (
+                    userError ||
+                    !user
+                ) {
+
+                    throw new Error(
+                        "You are not logged in."
+                    );
+
+                }
+
+
+                let beforePath =
+                    editingTrade
+                        .before_screenshot;
+
+
+                let afterPath =
+                    editingTrade
+                        .after_screenshot;
+
+
+                const newBefore =
+                    document
+                        .getElementById(
+                            "editBeforeScreenshot"
+                        )
+                        ?.files[0];
+
+
+                const newAfter =
+                    document
+                        .getElementById(
+                            "editAfterScreenshot"
+                        )
+                        ?.files[0];
+
+
+                if (
+                    newBefore
+                ) {
+
+                    beforePath =
+                        await uploadReplacementScreenshot(
+                            newBefore,
+                            "before",
+                            user.id
+                        );
+
+                }
+
+
+                if (
+                    newAfter
+                ) {
+
+                    afterPath =
+                        await uploadReplacementScreenshot(
+                            newAfter,
+                            "after",
+                            user.id
+                        );
+
+                }
+
+
+                let result =
+                    "BE";
+
+
+                if (
+                    netPnL > 0
+                ) {
+
+                    result =
+                        "Win";
+
+                }
+
+
+                if (
+                    netPnL < 0
+                ) {
+
+                    result =
+                        "Loss";
+
+                }
+
+
+                const updates = {
+
+                    trade_date:
+                        date,
+
+
+                    symbol:
+                        symbol,
+
+
+                    direction:
+                        document
+                            .getElementById(
+                                "editDirection"
+                            )
+                            ?.value ||
+                        "BUY",
+
+
+                    session:
+                        document
+                            .getElementById(
+                                "editSession"
+                            )
+                            ?.value ||
+                        "",
+
+
+                    setup:
+                        document
+                            .getElementById(
+                                "editSetup"
+                            )
+                            ?.value ||
+                        "A",
+
+
+                    rules_followed:
+                        (
+                            document
+                                .getElementById(
+                                    "editRulesFollowed"
+                                )
+                                ?.value ||
+                            "false"
+                        ) ===
+                        "true",
+
+
+                    gross_pnl:
+                        grossPnL,
+
+
+                    commission_fee:
+                        commission,
+
+
+                    swap_fee:
+                        swap,
+
+
+                    profit_loss:
+                        netPnL,
+
+
+                    actual_rr:
+                        actualRR,
+
+
+                    r_multiple:
+                        actualRR,
+
+
+                    result:
+                        result,
+
+
+                    mistakes:
+                        document
+                            .getElementById(
+                                "editMistakes"
+                            )
+                            ?.value
+                            .trim() ||
+                        "",
+
+
+                    notes:
+                        document
+                            .getElementById(
+                                "editNotes"
+                            )
+                            ?.value
+                            .trim() ||
+                        "",
+
+
+                    before_screenshot:
+                        beforePath,
+
+
+                    after_screenshot:
+                        afterPath
+
+                };
+
+
+                const {
+                    error
+                } =
+                    await db
+                        .from(
+                            "trades"
+                        )
+                        .update(
+                            updates
+                        )
+                        .eq(
+                            "id",
+                            editingTrade.id
+                        );
+
+
+                if (
+                    error
+                ) {
+
+                    throw error;
+
+                }
+
+
+                showEditMessage(
+                    "Trade updated successfully.",
+                    "success"
+                );
+
+
+                if (
+                    saveEditTrade
+                ) {
+
+                    saveEditTrade.textContent =
+                        "Saved ✓";
+
+                }
+
+
+                await loadTrades();
+
+
+                setTimeout(
+                    function() {
+
+                        closeEditPanel();
+
+                    },
+                    900
                 );
 
             }
 
 
-            let beforePath =
-                editingTrade.before_screenshot;
-
-
-            let afterPath =
-                editingTrade.after_screenshot;
-
-
-            const newBefore =
-                document
-                    .getElementById(
-                        "editBeforeScreenshot"
-                    )
-                    .files[0];
-
-
-            const newAfter =
-                document
-                    .getElementById(
-                        "editAfterScreenshot"
-                    )
-                    .files[0];
-
-
-            if (
-                newBefore
-            ) {
-
-                beforePath =
-                    await uploadReplacementScreenshot(
-                        newBefore,
-                        "before",
-                        user.id
-                    );
-
-            }
-
-
-            if (
-                newAfter
-            ) {
-
-                afterPath =
-                    await uploadReplacementScreenshot(
-                        newAfter,
-                        "after",
-                        user.id
-                    );
-
-            }
-
-
-            let result =
-                "BE";
-
-
-            if (
-                netPnL >
-                0
-            ) {
-
-                result =
-                    "Win";
-
-            }
-
-
-            if (
-                netPnL <
-                0
-            ) {
-
-                result =
-                    "Loss";
-
-            }
-
-
-            const updates = {
-
-                trade_date:
-                    date,
-
-
-                symbol:
-                    symbol,
-
-
-                direction:
-                    document
-                        .getElementById(
-                            "editDirection"
-                        )
-                        .value,
-
-
-                session:
-                    document
-                        .getElementById(
-                            "editSession"
-                        )
-                        .value,
-
-
-                setup:
-                    document
-                        .getElementById(
-                            "editSetup"
-                        )
-                        .value,
-
-
-                rules_followed:
-                    document
-                        .getElementById(
-                            "editRulesFollowed"
-                        )
-                        .value ===
-                    "true",
-
-
-                gross_pnl:
-                    grossPnL,
-
-
-                commission_fee:
-                    commission,
-
-
-                swap_fee:
-                    swap,
-
-
-                profit_loss:
-                    netPnL,
-
-
-                actual_rr:
-                    actualRR,
-
-
-                r_multiple:
-                    actualRR,
-
-
-                result:
-                    result,
-
-
-                mistakes:
-                    document
-                        .getElementById(
-                            "editMistakes"
-                        )
-                        .value
-                        .trim(),
-
-
-                notes:
-                    document
-                        .getElementById(
-                            "editNotes"
-                        )
-                        .value
-                        .trim(),
-
-
-                before_screenshot:
-                    beforePath,
-
-
-                after_screenshot:
-                    afterPath
-
-            };
-
-
-            const {
-                error
-            } =
-                await db
-                    .from(
-                        "trades"
-                    )
-                    .update(
-                        updates
-                    )
-                    .eq(
-                        "id",
-                        editingTrade.id
-                    );
-
-
-            if (
+            catch (
                 error
             ) {
 
-                throw error;
+                console.error(
+                    error
+                );
+
+
+                showEditMessage(
+                    "ERROR: " +
+                    (
+                        error.message ||
+                        "Unable to update trade."
+                    ),
+                    "error"
+                );
 
             }
 
 
-            showEditMessage(
-                "Trade updated successfully.",
-                "success"
-            );
+            finally {
+
+                if (
+                    saveEditTrade
+                ) {
+
+                    saveEditTrade.disabled =
+                        false;
 
 
-            saveEditTrade.textContent =
-                "Saved ✓";
+                    saveEditTrade.textContent =
+                        "Save Changes";
 
+                }
 
-            await loadTrades();
-
-
-            setTimeout(
-                function() {
-
-                    closeEditPanel();
-
-                },
-                900
-            );
+            }
 
         }
+    );
 
-
-        catch (
-            error
-        ) {
-
-            console.error(
-                error
-            );
-
-
-            showEditMessage(
-                "ERROR: " +
-                (
-                    error.message ||
-                    "Unable to update trade."
-                ),
-                "error"
-            );
-
-        }
-
-
-        finally {
-
-            saveEditTrade.disabled =
-                false;
-
-
-            saveEditTrade.textContent =
-                "Save Changes";
-
-        }
-
-    }
-);
-
+}
 
 
 /* =========================================
@@ -1929,7 +2102,6 @@ async function deleteTrade(
 }
 
 
-
 /* =========================================
    MONEY
 ========================================= */
@@ -1946,18 +2118,15 @@ function money(
         .toLocaleString(
             "en-AU",
             {
-
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
-
             }
         );
 
 }
-
 
 
 /* =========================================
@@ -1976,8 +2145,7 @@ function signedMoney(
 
 
     if (
-        value >
-        0
+        value > 0
     ) {
 
         return "+$" +
@@ -1985,13 +2153,11 @@ function signedMoney(
                 .toLocaleString(
                     "en-AU",
                     {
-
                         minimumFractionDigits:
                             2,
 
                         maximumFractionDigits:
                             2
-
                     }
                 );
 
@@ -1999,8 +2165,7 @@ function signedMoney(
 
 
     if (
-        value <
-        0
+        value < 0
     ) {
 
         return "-$" +
@@ -2010,13 +2175,11 @@ function signedMoney(
             .toLocaleString(
                 "en-AU",
                 {
-
                     minimumFractionDigits:
                         2,
 
                     maximumFractionDigits:
                         2
-
                 }
             );
 
@@ -2026,7 +2189,6 @@ function signedMoney(
     return "$0.00";
 
 }
-
 
 
 /* =========================================
@@ -2065,18 +2227,23 @@ function escapeHtml(
 }
 
 
-
 /* =========================================
-   START
+   START HISTORY PAGE
 ========================================= */
 
-async function startHistoryPage() {
+document.addEventListener(
+    "DOMContentLoaded",
+    async function() {
 
-    await loadAccounts();
-
-    await loadTrades();
-
-}
+        console.log(
+            "Starting History page..."
+        );
 
 
-startHistoryPage();
+        await loadAccounts();
+
+
+        await loadTrades();
+
+    }
+);
