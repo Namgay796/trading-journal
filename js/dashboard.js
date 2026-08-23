@@ -14,59 +14,79 @@ let accounts = [];
 
 async function loadAccounts() {
 
-    const { data, error } =
+    const {
+        data,
+        error
+    } =
         await db
-            .from("accounts")
+            .from(
+                "accounts"
+            )
             .select("*")
-            .order("id");
-
-
-    if (error) {
-
-        console.error(error);
-
-        return;
-
-    }
-
-
-    accounts = data || [];
-
-
-    dashboardAccount.innerHTML = "";
-
-
-    accounts.forEach(account => {
-
-        const option =
-            document.createElement(
-                "option"
+            .order(
+                "id"
             );
 
 
-        option.value =
-            account.id;
+    if (
+        error
+    ) {
 
-
-        option.textContent =
-            account.name;
-
-
-        dashboardAccount.appendChild(
-            option
+        console.error(
+            error
         );
-
-    });
-
-
-    if (accounts.length === 0) {
 
         return;
 
     }
 
 
-    /* Check if account came from accounts page */
+    accounts =
+        data || [];
+
+
+    dashboardAccount.innerHTML =
+        "";
+
+
+    accounts.forEach(
+        account => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                account.id;
+
+
+            option.textContent =
+                account.name;
+
+
+            dashboardAccount.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    if (
+        accounts.length ===
+        0
+    ) {
+
+        return;
+
+    }
+
+
+    /* =====================================
+       ACCOUNT FROM URL
+    ===================================== */
 
     const params =
         new URLSearchParams(
@@ -76,7 +96,9 @@ async function loadAccounts() {
 
     const requestedAccount =
         Number(
-            params.get("account")
+            params.get(
+                "account"
+            )
         );
 
 
@@ -84,17 +106,23 @@ async function loadAccounts() {
         accounts[0];
 
 
-    if (requestedAccount) {
+    if (
+        requestedAccount
+    ) {
 
         const found =
             accounts.find(
                 account =>
-                    Number(account.id) ===
+                    Number(
+                        account.id
+                    ) ===
                     requestedAccount
             );
 
 
-        if (found) {
+        if (
+            found
+        ) {
 
             selectedAccount =
                 found;
@@ -124,9 +152,14 @@ async function loadDashboard(
     account
 ) {
 
-    const { data, error } =
+    const {
+        data,
+        error
+    } =
         await db
-            .from("trades")
+            .from(
+                "trades"
+            )
             .select("*")
             .eq(
                 "account_id",
@@ -135,20 +168,26 @@ async function loadDashboard(
             .order(
                 "trade_date",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             )
             .order(
                 "id",
                 {
-                    ascending: false
+                    ascending:
+                        false
                 }
             );
 
 
-    if (error) {
+    if (
+        error
+    ) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
         return;
 
@@ -193,16 +232,21 @@ function calculateMainStats(
 
     const startingBalance =
         Number(
-            account.starting_balance || 0
+            account.starting_balance ||
+            0
         );
 
 
     const totalPnL =
         trades.reduce(
-            (total, trade) =>
+            (
+                total,
+                trade
+            ) =>
                 total +
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 ),
             0
         );
@@ -217,8 +261,10 @@ function calculateMainStats(
         trades.filter(
             trade =>
                 Number(
-                    trade.profit_loss || 0
-                ) > 0
+                    trade.profit_loss ||
+                    0
+                ) >
+                0
         );
 
 
@@ -227,29 +273,36 @@ function calculateMainStats(
 
 
     const winRate =
-        totalTrades > 0
+        totalTrades >
+        0
             ?
             (
                 wins.length /
                 totalTrades
-            ) * 100
+            ) *
+            100
             :
             0;
 
 
     const totalR =
         trades.reduce(
-            (total, trade) =>
+            (
+                total,
+                trade
+            ) =>
                 total +
                 Number(
-                    trade.r_multiple || 0
+                    trade.r_multiple ||
+                    0
                 ),
             0
         );
 
 
     const averageR =
-        totalTrades > 0
+        totalTrades >
+        0
             ?
             totalR /
             totalTrades
@@ -259,17 +312,23 @@ function calculateMainStats(
 
     const grossProfit =
         trades.reduce(
-            (total, trade) => {
+            (
+                total,
+                trade
+            ) => {
 
                 const pnl =
                     Number(
-                        trade.profit_loss || 0
+                        trade.profit_loss ||
+                        0
                     );
 
 
-                return pnl > 0
+                return pnl >
+                    0
                     ?
-                    total + pnl
+                    total +
+                    pnl
                     :
                     total;
 
@@ -280,18 +339,25 @@ function calculateMainStats(
 
     const grossLoss =
         trades.reduce(
-            (total, trade) => {
+            (
+                total,
+                trade
+            ) => {
 
                 const pnl =
                     Number(
-                        trade.profit_loss || 0
+                        trade.profit_loss ||
+                        0
                     );
 
 
-                return pnl < 0
+                return pnl <
+                    0
                     ?
                     total +
-                    Math.abs(pnl)
+                    Math.abs(
+                        pnl
+                    )
                     :
                     total;
 
@@ -300,10 +366,14 @@ function calculateMainStats(
         );
 
 
-    let profitFactor = 0;
+    let profitFactor =
+        0;
 
 
-    if (grossLoss > 0) {
+    if (
+        grossLoss >
+        0
+    ) {
 
         profitFactor =
             grossProfit /
@@ -313,45 +383,71 @@ function calculateMainStats(
 
 
     document
-        .getElementById("balance")
+        .getElementById(
+            "balance"
+        )
         .textContent =
-        money(currentBalance);
+        money(
+            currentBalance
+        );
 
 
     document
-        .getElementById("balanceChange")
+        .getElementById(
+            "balanceChange"
+        )
         .textContent =
-        signedMoney(totalPnL);
+        signedMoney(
+            totalPnL
+        );
 
 
     document
-        .getElementById("totalPnL")
+        .getElementById(
+            "totalPnL"
+        )
         .textContent =
-        signedMoney(totalPnL);
+        signedMoney(
+            totalPnL
+        );
 
 
     document
-        .getElementById("winRate")
+        .getElementById(
+            "winRate"
+        )
         .textContent =
-        winRate.toFixed(1) +
+        winRate.toFixed(
+            1
+        ) +
         "%";
 
 
     document
-        .getElementById("averageR")
+        .getElementById(
+            "averageR"
+        )
         .textContent =
-        averageR.toFixed(2) +
+        averageR.toFixed(
+            2
+        ) +
         "R";
 
 
     document
-        .getElementById("profitFactor")
+        .getElementById(
+            "profitFactor"
+        )
         .textContent =
-        grossLoss > 0
+        grossLoss >
+        0
             ?
-            profitFactor.toFixed(2)
+            profitFactor.toFixed(
+                2
+            )
             :
-            grossProfit > 0
+            grossProfit >
+            0
                 ?
                 "∞"
                 :
@@ -359,7 +455,9 @@ function calculateMainStats(
 
 
     document
-        .getElementById("totalTrades")
+        .getElementById(
+            "totalTrades"
+        )
         .textContent =
         totalTrades;
 
@@ -368,7 +466,7 @@ function calculateMainStats(
 
 
 /* =====================================
-   PROP FIRM RISK
+   RISK MANAGEMENT
 ===================================== */
 
 function calculatePropRisk(
@@ -378,16 +476,21 @@ function calculatePropRisk(
 
     const startingBalance =
         Number(
-            account.starting_balance || 0
+            account.starting_balance ||
+            0
         );
 
 
     const totalPnL =
         trades.reduce(
-            (sum, trade) =>
+            (
+                sum,
+                trade
+            ) =>
                 sum +
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 ),
             0
         );
@@ -400,25 +503,29 @@ function calculatePropRisk(
 
     const profitTargetPercent =
         Number(
-            account.profit_target || 0
+            account.profit_target ||
+            0
         );
 
 
     const dailyLimitPercent =
         Number(
-            account.daily_loss_limit || 0
+            account.daily_loss_limit ||
+            0
         );
 
 
     const maxLimitPercent =
         Number(
-            account.max_loss_limit || 0
+            account.max_loss_limit ||
+            0
         );
 
 
     const consistencyRule =
         Number(
-            account.consistency_rule || 0
+            account.consistency_rule ||
+            0
         );
 
 
@@ -459,19 +566,23 @@ function calculatePropRisk(
         );
 
 
-    let targetProgress = 0;
+    let targetProgress =
+        0;
 
 
     if (
-        targetAmount > 0 &&
-        totalPnL > 0
+        targetAmount >
+        0 &&
+        totalPnL >
+        0
     ) {
 
         targetProgress =
             (
                 totalPnL /
                 targetAmount
-            ) * 100;
+            ) *
+            100;
 
     }
 
@@ -492,7 +603,9 @@ function calculatePropRisk(
             "profitTargetPercent"
         )
         .textContent =
-        targetProgress.toFixed(1) +
+        targetProgress.toFixed(
+            1
+        ) +
         "%";
 
 
@@ -523,7 +636,7 @@ function calculatePropRisk(
 
 
     /* =================================
-       TODAY'S P&L
+       DAILY LOSS LIMIT
     ================================= */
 
     const today =
@@ -540,10 +653,14 @@ function calculatePropRisk(
 
     const todayPnL =
         todayTrades.reduce(
-            (sum, trade) =>
+            (
+                sum,
+                trade
+            ) =>
                 sum +
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 ),
             0
         );
@@ -557,23 +674,20 @@ function calculatePropRisk(
         );
 
 
+    /*
+       Only losses consume the allowance.
+
+       Positive P&L does not increase
+       the configured limit.
+    */
+
     const dailyLossUsed =
-        todayPnL < 0
+        todayPnL <
+        0
             ?
             Math.abs(
                 todayPnL
             )
-            :
-            0;
-
-
-    const dailyLossUsedPercent =
-        dailyLossLimitAmount > 0
-            ?
-            (
-                dailyLossUsed /
-                dailyLossLimitAmount
-            ) * 100
             :
             0;
 
@@ -586,13 +700,59 @@ function calculatePropRisk(
         );
 
 
+    /*
+       DISPLAYED %:
+
+       If limit = 3%
+       unused = 3%
+       $250 used on $25k = 2%
+       fully used = 0%
+    */
+
+    const dailyLossRemainingPercent =
+        startingBalance >
+        0
+            ?
+            (
+                dailyRemaining /
+                startingBalance
+            ) *
+            100
+            :
+            0;
+
+
+    /*
+       PROGRESS BAR:
+
+       100% full when complete
+       allowance remains.
+
+       0% when allowance is gone.
+    */
+
+    const dailyBarPercent =
+        dailyLossLimitAmount >
+        0
+            ?
+            (
+                dailyRemaining /
+                dailyLossLimitAmount
+            ) *
+            100
+            :
+            0;
+
+
     document
         .getElementById(
             "dailyLossPercent"
         )
         .textContent =
-        dailyLossUsedPercent
-            .toFixed(1) +
+        dailyLossRemainingPercent
+            .toFixed(
+                2
+            ) +
         "%";
 
 
@@ -601,8 +761,9 @@ function calculatePropRisk(
             "todayPnL"
         )
         .textContent =
-        signedMoney(
-            todayPnL
+        "Used today: " +
+        money(
+            dailyLossUsed
         );
 
 
@@ -611,7 +772,7 @@ function calculatePropRisk(
             "dailyLossRemaining"
         )
         .textContent =
-        "Daily limit remaining: " +
+        "Remaining: " +
         money(
             dailyRemaining
         );
@@ -619,7 +780,7 @@ function calculatePropRisk(
 
     setProgress(
         "dailyLossBar",
-        dailyLossUsedPercent
+        dailyBarPercent
     );
 
 
@@ -637,13 +798,7 @@ function calculatePropRisk(
 
 
     /*
-       Static drawdown:
-
-       Example:
-       100K account
-       10% max loss
-
-       Breach level = $90,000
+       STATIC DRAWDOWN
     */
 
     let breachLevel =
@@ -652,51 +807,60 @@ function calculatePropRisk(
 
 
     /*
-       Balance trailing:
-
-       We find the highest CLOSED
-       account balance reached.
+       BALANCE TRAILING DRAWDOWN
     */
 
     if (
         String(
             account.drawdown_type
-        ).toLowerCase() ===
+        )
+        .toLowerCase() ===
         "balance trailing"
     ) {
 
         const chronological =
-            [...trades]
-                .sort(
-                    (a, b) => {
+            [
+                ...trades
+            ]
+            .sort(
+                (
+                    a,
+                    b
+                ) => {
 
-                        const dateCompare =
+                    const dateCompare =
+                        String(
+                            a.trade_date
+                        )
+                        .localeCompare(
                             String(
-                                a.trade_date
+                                b.trade_date
                             )
-                            .localeCompare(
-                                String(
-                                    b.trade_date
-                                )
-                            );
-
-
-                        if (
-                            dateCompare !== 0
-                        ) {
-
-                            return dateCompare;
-
-                        }
-
-
-                        return (
-                            Number(a.id) -
-                            Number(b.id)
                         );
 
+
+                    if (
+                        dateCompare !==
+                        0
+                    ) {
+
+                        return dateCompare;
+
                     }
-                );
+
+
+                    return (
+                        Number(
+                            a.id
+                        )
+                        -
+                        Number(
+                            b.id
+                        )
+                    );
+
+                }
+            );
 
 
         let runningBalance =
@@ -712,7 +876,8 @@ function calculatePropRisk(
 
                 runningBalance +=
                     Number(
-                        trade.profit_loss || 0
+                        trade.profit_loss ||
+                        0
                     );
 
 
@@ -749,13 +914,41 @@ function calculatePropRisk(
         );
 
 
-    const maxLossUsedPercent =
-        maxLossAmount > 0
+    /*
+       DISPLAY %
+
+       Example:
+       limit = 6%
+       used = 2%
+       display = 4%
+    */
+
+    const maxLossRemainingPercent =
+        startingBalance >
+        0
             ?
             (
-                maxLossUsed /
+                remainingToBreach /
+                startingBalance
+            ) *
+            100
+            :
+            0;
+
+
+    /*
+       BAR REMAINING
+    */
+
+    const maxLossBarPercent =
+        maxLossAmount >
+        0
+            ?
+            (
+                remainingToBreach /
                 maxLossAmount
-            ) * 100
+            ) *
+            100
             :
             0;
 
@@ -765,8 +958,10 @@ function calculatePropRisk(
             "maxLossPercent"
         )
         .textContent =
-        maxLossUsedPercent
-            .toFixed(1) +
+        maxLossRemainingPercent
+            .toFixed(
+                2
+            ) +
         "%";
 
 
@@ -794,16 +989,18 @@ function calculatePropRisk(
 
     setProgress(
         "maxLossBar",
-        maxLossUsedPercent
+        maxLossBarPercent
     );
 
 
 
     /* =================================
        CONSISTENCY
+       KEEP CURRENT LOGIC
     ================================= */
 
-    const dailyTotals = {};
+    const dailyTotals =
+        {};
 
 
     trades.forEach(
@@ -814,18 +1011,25 @@ function calculatePropRisk(
 
 
             if (
-                !dailyTotals[date]
+                !dailyTotals[
+                    date
+                ]
             ) {
 
-                dailyTotals[date] =
-                    0;
+                dailyTotals[
+                    date
+                ] =
+                0;
 
             }
 
 
-            dailyTotals[date] +=
+            dailyTotals[
+                date
+            ] +=
                 Number(
-                    trade.profit_loss || 0
+                    trade.profit_loss ||
+                    0
                 );
 
         }
@@ -838,7 +1042,8 @@ function calculatePropRisk(
         )
         .filter(
             pnl =>
-                pnl > 0
+                pnl >
+                0
         );
 
 
@@ -852,27 +1057,21 @@ function calculatePropRisk(
             0;
 
 
-    let consistency = 0;
-
-
-    /*
-       Common consistency calculation:
-
-       Highest profitable day
-       ----------------------
-       Total net profit
-    */
+    let consistency =
+        0;
 
 
     if (
-        totalPnL > 0
+        totalPnL >
+        0
     ) {
 
         consistency =
             (
                 highestDay /
                 totalPnL
-            ) * 100;
+            ) *
+            100;
 
     }
 
@@ -882,7 +1081,9 @@ function calculatePropRisk(
             "consistencyPercent"
         )
         .textContent =
-        consistency.toFixed(1) +
+        consistency.toFixed(
+            1
+        ) +
         "%";
 
 
@@ -902,11 +1103,14 @@ function calculatePropRisk(
             "consistencyLimit"
         )
         .textContent =
-        consistencyRule > 0
+        consistencyRule >
+        0
             ?
             "Limit: " +
             consistencyRule
-                .toFixed(1) +
+                .toFixed(
+                    1
+                ) +
             "%"
             :
             "No consistency rule";
@@ -914,12 +1118,14 @@ function calculatePropRisk(
 
     setProgress(
         "consistencyBar",
-        consistencyRule > 0
+        consistencyRule >
+        0
             ?
             (
                 consistency /
                 consistencyRule
-            ) * 100
+            ) *
+            100
             :
             0
     );
@@ -930,12 +1136,23 @@ function calculatePropRisk(
        WARNINGS
     ================================= */
 
-    const warnings = [];
+    const warnings =
+        [];
 
+
+    /*
+       DAILY LOSS CLOSE
+
+       20% or less remaining
+    */
 
     if (
-        dailyLimitPercent > 0 &&
-        dailyLossUsedPercent >= 80
+        dailyLimitPercent >
+        0 &&
+        dailyBarPercent <=
+        20 &&
+        dailyRemaining >
+        0
     ) {
 
         warnings.push(
@@ -945,9 +1162,35 @@ function calculatePropRisk(
     }
 
 
+    /*
+       DAILY LOSS BREACHED
+    */
+
     if (
-        maxLimitPercent > 0 &&
-        maxLossUsedPercent >= 80
+        dailyLossLimitAmount >
+        0 &&
+        dailyLossUsed >=
+        dailyLossLimitAmount
+    ) {
+
+        warnings.push(
+            "⚠ Daily loss limit breached."
+        );
+
+    }
+
+
+    /*
+       MAX LOSS CLOSE
+    */
+
+    if (
+        maxLimitPercent >
+        0 &&
+        maxLossBarPercent <=
+        20 &&
+        remainingToBreach >
+        0
     ) {
 
         warnings.push(
@@ -957,8 +1200,31 @@ function calculatePropRisk(
     }
 
 
+    /*
+       MAX LOSS BREACHED
+    */
+
     if (
-        consistencyRule > 0 &&
+        currentBalance <=
+        breachLevel &&
+        maxLimitPercent >
+        0
+    ) {
+
+        warnings.push(
+            "⚠ Maximum loss level breached."
+        );
+
+    }
+
+
+    /*
+       CONSISTENCY
+    */
+
+    if (
+        consistencyRule >
+        0 &&
         consistency >
         consistencyRule
     ) {
@@ -971,27 +1237,19 @@ function calculatePropRisk(
     }
 
 
+    /*
+       PROFIT TARGET
+    */
+
     if (
-        targetAmount > 0 &&
+        targetAmount >
+        0 &&
         totalPnL >=
         targetAmount
     ) {
 
         warnings.push(
             "✓ Profit target reached."
-        );
-
-    }
-
-
-    if (
-        currentBalance <=
-        breachLevel &&
-        maxLimitPercent > 0
-    ) {
-
-        warnings.push(
-            "⚠ Maximum loss level breached."
         );
 
     }
@@ -1020,10 +1278,12 @@ function showWarnings(
 
 
     if (
-        warnings.length === 0
+        warnings.length ===
+        0
     ) {
 
-        box.innerHTML = `
+        box.innerHTML =
+            `
 
             <div class="risk-good">
 
@@ -1031,7 +1291,8 @@ function showWarnings(
 
             </div>
 
-        `;
+            `;
+
 
         return;
 
@@ -1041,7 +1302,8 @@ function showWarnings(
     box.innerHTML =
         warnings
             .map(
-                warning => `
+                warning =>
+                    `
 
                     <div class="risk-warning">
 
@@ -1049,7 +1311,7 @@ function showWarnings(
 
                     </div>
 
-                `
+                    `
             )
             .join("");
 
@@ -1072,12 +1334,22 @@ function setProgress(
         );
 
 
+    if (
+        !element
+    ) {
+
+        return;
+
+    }
+
+
     const safeValue =
         Math.max(
             0,
             Math.min(
                 Number(
-                    percentage || 0
+                    percentage ||
+                    0
                 ),
                 100
             )
@@ -1085,7 +1357,8 @@ function setProgress(
 
 
     element.style.width =
-        safeValue + "%";
+        safeValue +
+        "%";
 
 }
 
@@ -1106,10 +1379,12 @@ function showRecentTrades(
 
 
     if (
-        trades.length === 0
+        trades.length ===
+        0
     ) {
 
-        box.innerHTML = `
+        box.innerHTML =
+            `
 
             <p class="empty">
 
@@ -1117,7 +1392,8 @@ function showRecentTrades(
 
             </p>
 
-        `;
+            `;
+
 
         return;
 
@@ -1125,26 +1401,30 @@ function showRecentTrades(
 
 
     box.innerHTML =
-        trades.map(
-            trade => {
+        trades
+            .map(
+                trade => {
 
-                const pnl =
-                    Number(
-                        trade.profit_loss || 0
-                    );
-
-
-                const pnlClass =
-                    pnl >= 0
-                        ?
-                        "profit"
-                        :
-                        "loss";
+                    const pnl =
+                        Number(
+                            trade.profit_loss ||
+                            0
+                        );
 
 
-                return `
+                    const pnlClass =
+                        pnl >=
+                        0
+                            ?
+                            "profit"
+                            :
+                            "loss";
+
+
+                    return `
 
                     <div class="trade-card">
+
 
                         <div>
 
@@ -1188,27 +1468,29 @@ function showRecentTrades(
                             <small>
 
                                 ${Number(
-                                    trade.r_multiple || 0
+                                    trade.r_multiple ||
+                                    0
                                 ).toFixed(2)}R
 
                             </small>
 
                         </div>
 
+
                     </div>
 
-                `;
+                    `;
 
-            }
-        )
-        .join("");
+                }
+            )
+            .join("");
 
 }
 
 
 
 /* =====================================
-   HELPERS
+   MONEY
 ===================================== */
 
 function money(
@@ -1217,16 +1499,19 @@ function money(
 
     return "$" +
         Number(
-            value || 0
+            value ||
+            0
         )
         .toLocaleString(
             "en-AU",
             {
+
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
+
             }
         );
 
@@ -1234,18 +1519,24 @@ function money(
 
 
 
+/* =====================================
+   SIGNED MONEY
+===================================== */
+
 function signedMoney(
     value
 ) {
 
     value =
         Number(
-            value || 0
+            value ||
+            0
         );
 
 
     if (
-        value > 0
+        value >
+        0
     ) {
 
         return "+$" +
@@ -1253,11 +1544,13 @@ function signedMoney(
                 .toLocaleString(
                     "en-AU",
                     {
+
                         minimumFractionDigits:
                             2,
 
                         maximumFractionDigits:
                             2
+
                     }
                 );
 
@@ -1265,7 +1558,8 @@ function signedMoney(
 
 
     if (
-        value < 0
+        value <
+        0
     ) {
 
         return "-$" +
@@ -1275,11 +1569,13 @@ function signedMoney(
             .toLocaleString(
                 "en-AU",
                 {
+
                     minimumFractionDigits:
                         2,
 
                     maximumFractionDigits:
                         2
+
                 }
             );
 
@@ -1291,6 +1587,10 @@ function signedMoney(
 }
 
 
+
+/* =====================================
+   LOCAL DATE
+===================================== */
 
 function getLocalDateString() {
 
@@ -1304,7 +1604,8 @@ function getLocalDateString() {
 
     const month =
         String(
-            now.getMonth() + 1
+            now.getMonth() +
+            1
         )
         .padStart(
             2,
