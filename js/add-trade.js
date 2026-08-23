@@ -136,10 +136,7 @@ function getContractMultiplier(
         .toUpperCase();
 
 
-    /* =====================================
-       GOLD
-       1 lot = 100 oz
-    ===================================== */
+    /* GOLD */
 
     if (
         symbol.includes(
@@ -152,10 +149,7 @@ function getContractMultiplier(
     }
 
 
-    /* =====================================
-       SILVER
-       1 lot = 5000 oz
-    ===================================== */
+    /* SILVER */
 
     if (
         symbol.includes(
@@ -168,20 +162,7 @@ function getContractMultiplier(
     }
 
 
-    /* =====================================
-       FOREX
-       
-       EURUSD
-       GBPUSD
-       AUDUSD
-       NZDUSD
-       USDJPY
-       EURJPY
-       GBPJPY
-       etc.
-
-       1 standard lot = 100,000 units
-    ===================================== */
+    /* FOREX */
 
     if (
         /^[A-Z]{6}$/.test(
@@ -194,11 +175,7 @@ function getContractMultiplier(
     }
 
 
-    /* =====================================
-       INDICES / CRYPTO / OTHER
-
-       Default = 1
-    ===================================== */
+    /* INDICES / CRYPTO / OTHER */
 
     return 1;
 
@@ -1014,6 +991,236 @@ function weightedAverage(
 
 
 /* =========================================
+   PRE-TRADE CHECKLIST
+========================================= */
+
+function getPreTradeChecklist() {
+
+    return {
+
+        htf_bias:
+            document
+                .getElementById(
+                    "checkHtfBias"
+                )
+                ?.checked ||
+            false,
+
+
+        news_checked:
+            document
+                .getElementById(
+                    "checkNews"
+                )
+                ?.checked ||
+            false,
+
+
+        asian_sweep:
+            document
+                .getElementById(
+                    "checkAsianSweep"
+                )
+                ?.checked ||
+            false,
+
+
+        choch_1m_close:
+            document
+                .getElementById(
+                    "checkChoch"
+                )
+                ?.checked ||
+            false,
+
+
+        bos_formed:
+            document
+                .getElementById(
+                    "checkBos"
+                )
+                ?.checked ||
+            false,
+
+
+        bos_ob_fvg_marked:
+            document
+                .getElementById(
+                    "checkBosObFvg"
+                )
+                ?.checked ||
+            false,
+
+
+        no_fomo:
+            document
+                .getElementById(
+                    "checkNoFomo"
+                )
+                ?.checked ||
+            false,
+
+
+        no_revenge:
+            document
+                .getElementById(
+                    "checkNoRevenge"
+                )
+                ?.checked ||
+            false,
+
+
+        plan_reviewed:
+            document
+                .getElementById(
+                    "checkPlanReviewed"
+                )
+                ?.checked ||
+            false
+
+    };
+
+}
+
+
+
+/* =========================================
+   CHECKLIST SCORE
+========================================= */
+
+function calculateChecklistScore() {
+
+    const checklist =
+        getPreTradeChecklist();
+
+
+    const items =
+        Object.values(
+            checklist
+        );
+
+
+    const checked =
+        items.filter(
+            value =>
+                value ===
+                true
+        )
+        .length;
+
+
+    const total =
+        items.length;
+
+
+    const score =
+        total >
+        0
+            ?
+            (
+                checked /
+                total
+            ) *
+            100
+            :
+            0;
+
+
+    return {
+
+        checklist:
+            checklist,
+
+        checked:
+            checked,
+
+        total:
+            total,
+
+        score:
+            score
+
+    };
+
+}
+
+
+
+/* =========================================
+   UPDATE CHECKLIST DISPLAY
+========================================= */
+
+function updateChecklistDisplay() {
+
+    const result =
+        calculateChecklistScore();
+
+
+    const scoreDisplay =
+        document.getElementById(
+            "checklistScore"
+        );
+
+
+    const progressBar =
+        document.getElementById(
+            "checklistProgressBar"
+        );
+
+
+    if (
+        scoreDisplay
+    ) {
+
+        scoreDisplay.textContent =
+            result.checked +
+            "/" +
+            result.total +
+            " — " +
+            result.score.toFixed(
+                0
+            ) +
+            "%";
+
+    }
+
+
+    if (
+        progressBar
+    ) {
+
+        progressBar.style.width =
+            result.score +
+            "%";
+
+    }
+
+}
+
+
+
+/* =========================================
+   CHECKLIST EVENTS
+========================================= */
+
+document
+    .querySelectorAll(
+        ".pretrade-check"
+    )
+    .forEach(
+        checkbox => {
+
+            checkbox.addEventListener(
+                "change",
+                updateChecklistDisplay
+            );
+
+        }
+    );
+
+
+
+/* =========================================
    CALCULATE TRADE
 ========================================= */
 
@@ -1323,44 +1530,37 @@ function calculateTrade() {
         "R";
 
 
-    /* =========================================
-   AVERAGE ENTRY
-========================================= */
-
-document
-    .getElementById(
-        "averageEntry"
-    )
-    .textContent =
-    averageEntry >
-    0
-        ?
-        formatTradePrice(
-            averageEntry,
-            symbol
+    document
+        .getElementById(
+            "averageEntry"
         )
-        :
-        "-";
+        .textContent =
+        averageEntry >
+        0
+            ?
+            formatTradePrice(
+                averageEntry,
+                symbol
+            )
+            :
+            "-";
 
 
-/* =========================================
-   AVERAGE EXIT
-========================================= */
-
-document
-    .getElementById(
-        "averageExit"
-    )
-    .textContent =
-    averageExit >
-    0
-        ?
-        formatTradePrice(
-            averageExit,
-            symbol
+    document
+        .getElementById(
+            "averageExit"
         )
-        :
-        "-";
+        .textContent =
+        averageExit >
+        0
+            ?
+            formatTradePrice(
+                averageExit,
+                symbol
+            )
+            :
+            "-";
+
 
     document
         .getElementById(
@@ -2020,6 +2220,14 @@ tradeForm.addEventListener(
                 calculateTrade();
 
 
+            /* =====================================
+               CHECKLIST
+            ===================================== */
+
+            const checklistResult =
+                calculateChecklistScore();
+
+
             const beforeFile =
                 document
                     .getElementById(
@@ -2172,18 +2380,10 @@ tradeForm.addEventListener(
                         .riskPercent,
 
 
-                /* =====================================
-                GROSS P&L BEFORE FEES
-                ===================================== */
-
                 gross_pnl:
                     calculations
                         .grossPnL,
 
-
-                /* =====================================
-                NET P&L AFTER FEES
-                ===================================== */
 
                 profit_loss:
                     calculations
@@ -2219,6 +2419,20 @@ tradeForm.addEventListener(
                             "setup"
                         )
                         .value,
+
+
+                /* =====================================
+                   PRE-TRADE CHECKLIST
+                ===================================== */
+
+                checklist_score:
+                    checklistResult
+                        .score,
+
+
+                pretrade_checklist:
+                    checklistResult
+                        .checklist,
 
 
                 result:
@@ -2481,6 +2695,8 @@ tradeForm.addEventListener(
     }
 );
 
+
+
 /* =========================================
    FORMAT TRADE PRICE
 ========================================= */
@@ -2516,16 +2732,7 @@ function formatTradePrice(
         .toUpperCase();
 
 
-    /*
-       JPY FOREX PAIRS
-
-       Examples:
-       USDJPY
-       GBPJPY
-       EURJPY
-
-       Show 3 decimal places.
-    */
+    /* JPY FOREX */
 
     if (
         pair.includes(
@@ -2540,19 +2747,7 @@ function formatTradePrice(
     }
 
 
-    /*
-       STANDARD FOREX PAIRS
-
-       Examples:
-       EURUSD
-       GBPUSD
-       AUDUSD
-       NZDUSD
-       USDCAD
-       USDCHF
-
-       Show 5 decimal places.
-    */
+    /* STANDARD FOREX */
 
     if (
         /^[A-Z]{6}$/.test(
@@ -2573,11 +2768,7 @@ function formatTradePrice(
     }
 
 
-    /*
-       GOLD / SILVER
-
-       Keep 3 decimal places.
-    */
+    /* GOLD / SILVER */
 
     if (
         pair.startsWith(
@@ -2595,15 +2786,13 @@ function formatTradePrice(
     }
 
 
-    /*
-       INDICES / CRYPTO / OTHER
-    */
-
     return String(
         price
     );
 
 }
+
+
 
 /* =========================================
    MONEY
@@ -2621,11 +2810,13 @@ function money(
         .toLocaleString(
             "en-AU",
             {
+
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
+
             }
         );
 
@@ -2658,11 +2849,13 @@ function signedMoney(
                 .toLocaleString(
                     "en-AU",
                     {
+
                         minimumFractionDigits:
                             2,
 
                         maximumFractionDigits:
                             2
+
                     }
                 );
 
@@ -2681,11 +2874,13 @@ function signedMoney(
             .toLocaleString(
                 "en-AU",
                 {
+
                     minimumFractionDigits:
                         2,
 
                     maximumFractionDigits:
                         2
+
                 }
             );
 
@@ -2725,3 +2920,5 @@ attachLayerEvents();
 loadAccounts();
 
 calculateTrade();
+
+updateChecklistDisplay();
