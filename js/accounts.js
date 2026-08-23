@@ -977,97 +977,228 @@ function resetAccountForm() {
 
 
 /* =========================================
-   DELETE ACCOUNT
+   DELETE ACCOUNT + ALL ACCOUNT DATA
 ========================================= */
 
-async function deleteAccount(
-    id
-) {
+async function deleteAccount(id) {
 
     const account =
         accounts.find(
             item =>
-                Number(
-                    item.id
-                ) ===
-                Number(
-                    id
-                )
+                Number(item.id) ===
+                Number(id)
         );
 
 
-    if (
-        !account
-    ) {
+    if (!account) {
+
+        accountMessage.textContent =
+            "ERROR: Account not found.";
 
         return;
-
     }
 
 
     const confirmed =
         confirm(
-            "Delete account \"" +
+            'Delete account "' +
             account.name +
-            "\"?\n\n" +
-            "Do not delete an account that already has trades unless you intend to remove it."
+            '"?\n\n' +
+            "WARNING:\n" +
+            "This will permanently delete:\n" +
+            "• The trading account\n" +
+            "• All trades\n" +
+            "• All trade entries\n" +
+            "• All trade exits\n" +
+            "• All trade screenshots\n\n" +
+            "This cannot be undone."
         );
 
 
-    if (
-        !confirmed
-    ) {
-
+    if (!confirmed) {
         return;
-
     }
 
 
     accountMessage.textContent =
-        "Deleting account...";
+        "Deleting account and all its data...";
 
 
-    const {
-        error
-    } =
-        await db
-            .from(
-                "accounts"
-            )
-            .delete()
-            .eq(
-                "id",
-                id
-            );
+    try {
+
+        /* =====================================
+           GET ALL TRADES FOR THIS ACCOUNT
+        ===================================== */
+
+        const {
+            data: trades,
+            error: tradesError
+        } =
+            await db
+                .from("trades")
+                .select(
+                    `
+                    id,
+                    before_screenshot_url,
+                    after_screenshot_url
+                    `
+                )
+                .eq(
+                    "account_id",
+                    id
+                );
 
 
-    if (
-        error
-    ) {
+        if (tradesError) {
+            throw tradesError;
+        }
+
+
+        const accountTrades =
+            trades || [];
+
+
+        /* =====================================
+           COLLECT SCREENSHOT PATHS
+        ===================================== */
+
+        const screenshotPaths = [];
+
+
+        accountTrades.forEach(
+            trade => {
+
+                if (
+                    trade.before_screenshot_url
+                ) {
+
+                    screenshotPaths.push(
+                        trade.before_screenshot_url
+                    );
+
+                }
+
+
+                if (
+                    trade.after_screenshot_url
+                ) {
+
+                    screenshotPaths.push(
+                        trade.after_screenshot_url
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =====================================
+           DELETE SCREENSHOTS FROM STORAGE
+        ===================================== */
+
+        if (
+            screenshotPaths.length >
+            0
+        ) {
+
+            const {
+                error: storageError
+            } =
+                await db.storage
+                    .from(
+                        "trade-screenshots"
+                    )
+                    .remove(
+                        screenshotPaths
+                    );
+
+
+            if (storageError) {
+
+                console.error(
+                    "Screenshot deletion error:",
+                    storageError
+                );
+
+                throw new Error(
+                    "Could not delete trade screenshots: " +
+                    storageError.message
+                );
+
+            }
+
+        }
+
+
+        /* =====================================
+           DELETE ACCOUNT
+
+           IMPORTANT:
+
+           Supabase ON DELETE CASCADE will
+           automatically delete:
+
+           accounts
+                ↓
+           trades
+                ↓
+           trade_entries
+           trade_exits
+        ===================================== */
+
+        const {
+            error: accountError
+        } =
+            await db
+                .from(
+                    "accounts"
+                )
+                .delete()
+                .eq(
+                    "id",
+                    id
+                );
+
+
+        if (accountError) {
+            throw accountError;
+        }
+
+
+        /* =====================================
+           SUCCESS
+        ===================================== */
+
+        accountMessage.textContent =
+            'Account "' +
+            account.name +
+            '" and all associated data were deleted.';
+
+
+        await loadAccounts();
+
+    }
+
+
+    catch (error) {
 
         console.error(
+            "Delete account error:",
             error
         );
 
 
         accountMessage.textContent =
             "ERROR: " +
-            error.message;
-
-
-        return;
+            (
+                error.message ||
+                "Unable to delete account."
+            );
 
     }
 
-
-    accountMessage.textContent =
-        "Account deleted.";
-
-
-    await loadAccounts();
-
 }
-
 
 /* =========================================
    HELPERS
