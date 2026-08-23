@@ -1,5 +1,7 @@
 let allTrades = [];
 
+let allAccounts = [];
+
 let editingTrade = null;
 
 
@@ -37,6 +39,12 @@ const saveEditTrade =
     );
 
 
+const accountFilter =
+    document.getElementById(
+        "accountFilter"
+    );
+
+
 
 /* =========================================
    MESSAGE SYSTEM
@@ -46,6 +54,15 @@ function showHistoryMessage(
     text,
     type = "error"
 ) {
+
+    if (
+        !historyMessage
+    ) {
+
+        return;
+
+    }
+
 
     historyMessage.textContent =
         text;
@@ -58,7 +75,17 @@ function showHistoryMessage(
 }
 
 
+
 function clearHistoryMessage() {
+
+    if (
+        !historyMessage
+    ) {
+
+        return;
+
+    }
+
 
     historyMessage.textContent =
         "";
@@ -68,6 +95,7 @@ function clearHistoryMessage() {
         "form-message";
 
 }
+
 
 
 function showEditMessage(
@@ -81,6 +109,15 @@ function showEditMessage(
         );
 
 
+    if (
+        !box
+    ) {
+
+        return;
+
+    }
+
+
     box.textContent =
         text;
 
@@ -92,6 +129,7 @@ function showEditMessage(
 }
 
 
+
 function clearEditMessage() {
 
     const box =
@@ -100,12 +138,143 @@ function clearEditMessage() {
         );
 
 
+    if (
+        !box
+    ) {
+
+        return;
+
+    }
+
+
     box.textContent =
         "";
 
 
     box.className =
         "form-message full";
+
+}
+
+
+
+/* =========================================
+   LOAD ACCOUNTS
+========================================= */
+
+async function loadAccounts() {
+
+    if (
+        !accountFilter
+    ) {
+
+        return;
+
+    }
+
+
+    accountFilter.innerHTML =
+        `
+        <option value="">
+            Loading accounts...
+        </option>
+        `;
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "accounts"
+                )
+                .select(
+                    "id, name"
+                )
+                .order(
+                    "id",
+                    {
+                        ascending: true
+                    }
+                );
+
+
+        if (
+            error
+        ) {
+
+            throw error;
+
+        }
+
+
+        allAccounts =
+            data || [];
+
+
+        accountFilter.innerHTML =
+            `
+            <option value="">
+                All Accounts
+            </option>
+            `;
+
+
+        allAccounts.forEach(
+            account => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    account.id;
+
+
+                option.textContent =
+                    account.name;
+
+
+                accountFilter.appendChild(
+                    option
+                );
+
+            }
+        );
+
+    }
+
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load accounts:",
+            error
+        );
+
+
+        accountFilter.innerHTML =
+            `
+            <option value="">
+                All Accounts
+            </option>
+            `;
+
+
+        showHistoryMessage(
+            "Unable to load account filter: " +
+            error.message,
+            "error"
+        );
+
+    }
 
 }
 
@@ -164,20 +333,17 @@ async function loadTrades() {
 
 
     allTrades =
-        data ||
-        [];
+        data || [];
 
 
-    displayTrades(
-        allTrades
-    );
+    applyFilters();
 
 }
 
 
 
 /* =========================================
-   DISPLAY
+   DISPLAY TRADES
 ========================================= */
 
 function displayTrades(
@@ -367,10 +533,18 @@ function displayTrades(
 
 
 /* =========================================
-   FILTER
+   FILTERS
 ========================================= */
 
 function applyFilters() {
+
+    const accountId =
+        accountFilter
+            ?
+            accountFilter.value
+            :
+            "";
+
 
     const session =
         document
@@ -402,6 +576,16 @@ function applyFilters() {
         allTrades.filter(
             trade => {
 
+                const accountMatch =
+                    !accountId ||
+                    Number(
+                        trade.account_id
+                    ) ===
+                    Number(
+                        accountId
+                    );
+
+
                 const sessionMatch =
                     !session ||
                     trade.session ===
@@ -427,6 +611,7 @@ function applyFilters() {
 
 
                 return (
+                    accountMatch &&
                     sessionMatch &&
                     resultMatch &&
                     symbolMatch
@@ -447,6 +632,18 @@ function applyFilters() {
 /* =========================================
    FILTER EVENTS
 ========================================= */
+
+if (
+    accountFilter
+) {
+
+    accountFilter.addEventListener(
+        "change",
+        applyFilters
+    );
+
+}
+
 
 document
     .getElementById(
@@ -534,11 +731,10 @@ function editTrade(
     /*
        OLD TRADES:
 
-       If gross_pnl did not exist when
-       the trade was saved, reconstruct it:
+       If gross_pnl is missing,
+       reconstruct it from:
 
-       gross =
-       old net + commission + swap
+       net P&L + commission + swap
     */
 
     let grossPnL =
@@ -1040,7 +1236,7 @@ async function showScreenshotPreview(
 
 
 /* =========================================
-   CLOSE PANEL
+   CLOSE EDIT PANEL
 ========================================= */
 
 function closeEditPanel() {
@@ -1650,7 +1846,7 @@ editTradeForm.addEventListener(
 
 
 /* =========================================
-   DELETE
+   DELETE TRADE
 ========================================= */
 
 async function deleteTrade(
@@ -1874,4 +2070,13 @@ function escapeHtml(
    START
 ========================================= */
 
-loadTrades();
+async function startHistoryPage() {
+
+    await loadAccounts();
+
+    await loadTrades();
+
+}
+
+
+startHistoryPage();
