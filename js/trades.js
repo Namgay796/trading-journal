@@ -45,6 +45,7 @@ const accountFilter =
     );
 
 
+
 /* =========================================
    MESSAGE SYSTEM
 ========================================= */
@@ -55,7 +56,9 @@ function showHistoryMessage(
 ) {
 
     if (!historyMessage) {
+
         return;
+
     }
 
 
@@ -73,7 +76,9 @@ function showHistoryMessage(
 function clearHistoryMessage() {
 
     if (!historyMessage) {
+
         return;
+
     }
 
 
@@ -99,7 +104,9 @@ function showEditMessage(
 
 
     if (!box) {
+
         return;
+
     }
 
 
@@ -123,7 +130,9 @@ function clearEditMessage() {
 
 
     if (!box) {
+
         return;
+
     }
 
 
@@ -135,6 +144,159 @@ function clearEditMessage() {
         "form-message full";
 
 }
+
+
+
+/* =========================================
+   SAFE VALUE SETTER
+========================================= */
+
+function setElementValue(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.value =
+            value;
+
+    }
+
+}
+
+
+
+/* =========================================
+   WAIT FOR LOGIN SESSION
+========================================= */
+
+async function waitForSession() {
+
+    const {
+        data: {
+            session
+        },
+        error
+    } =
+        await db.auth
+            .getSession();
+
+
+    if (error) {
+
+        throw error;
+
+    }
+
+
+    if (
+        session &&
+        session.user
+    ) {
+
+        return session;
+
+    }
+
+
+    return await new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            let finished =
+                false;
+
+
+            const timeout =
+                setTimeout(
+                    function() {
+
+                        if (
+                            finished
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        finished =
+                            true;
+
+
+                        reject(
+                            new Error(
+                                "Login session could not be loaded."
+                            )
+                        );
+
+                    },
+                    8000
+                );
+
+
+            const {
+                data:
+                    authData
+            } =
+                db.auth
+                    .onAuthStateChange(
+                        (
+                            event,
+                            newSession
+                        ) => {
+
+                            if (
+                                finished
+                            ) {
+
+                                return;
+
+                            }
+
+
+                            if (
+                                newSession &&
+                                newSession.user
+                            ) {
+
+                                finished =
+                                    true;
+
+
+                                clearTimeout(
+                                    timeout
+                                );
+
+
+                                authData
+                                    .subscription
+                                    .unsubscribe();
+
+
+                                resolve(
+                                    newSession
+                                );
+
+                            }
+
+                        }
+                    );
+
+        }
+    );
+
+}
+
 
 
 /* =========================================
@@ -152,10 +314,12 @@ async function loadAccounts() {
     if (!selector) {
 
         console.error(
-            "accountFilter not found in trades.html"
+            "accountFilter was not found in trades.html"
         );
 
+
         return;
+
     }
 
 
@@ -170,6 +334,53 @@ async function loadAccounts() {
     try {
 
         const {
+            data: {
+                user
+            },
+            error:
+                userError
+        } =
+            await db.auth
+                .getUser();
+
+
+        if (
+            userError
+        ) {
+
+            throw userError;
+
+        }
+
+
+        if (
+            !user
+        ) {
+
+            throw new Error(
+                "No logged-in user found."
+            );
+
+        }
+
+
+        console.log(
+            "History logged-in user:",
+            user.id
+        );
+
+
+        /*
+           IMPORTANT:
+
+           This uses the same simple query
+           as your working Add Trade page.
+
+           Your Supabase RLS should return
+           only the logged-in user's accounts.
+        */
+
+        const {
             data,
             error
         } =
@@ -181,12 +392,15 @@ async function loadAccounts() {
                 .order(
                     "id",
                     {
-                        ascending: true
+                        ascending:
+                            true
                     }
                 );
 
 
-        if (error) {
+        if (
+            error
+        ) {
 
             throw error;
 
@@ -194,7 +408,7 @@ async function loadAccounts() {
 
 
         console.log(
-            "Accounts loaded:",
+            "Accounts returned:",
             data
         );
 
@@ -212,13 +426,38 @@ async function loadAccounts() {
 
 
         if (
-            allAccounts.length === 0
+            allAccounts.length ===
+            0
         ) {
 
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                "";
+
+
+            option.disabled =
+                true;
+
+
+            option.textContent =
+                "No accounts found";
+
+
+            selector.appendChild(
+                option
+            );
+
+
             showHistoryMessage(
-                "No trading accounts found.",
+                "No trading accounts were found.",
                 "warning"
             );
+
 
             return;
 
@@ -235,7 +474,9 @@ async function loadAccounts() {
 
 
                 option.value =
-                    account.id;
+                    String(
+                        account.id
+                    );
 
 
                 option.textContent =
@@ -255,8 +496,8 @@ async function loadAccounts() {
 
 
         console.log(
-            allAccounts.length +
-            " accounts added to History filter"
+            "Account filter options:",
+            selector.options.length
         );
 
     }
@@ -267,7 +508,7 @@ async function loadAccounts() {
     ) {
 
         console.error(
-            "History account load error:",
+            "History account loading error:",
             error
         );
 
@@ -281,10 +522,10 @@ async function loadAccounts() {
 
 
         showHistoryMessage(
-            "Unable to load accounts: " +
+            "Unable to load trading accounts: " +
             (
                 error.message ||
-                "Unknown error"
+                "Unknown error."
             ),
             "error"
         );
@@ -292,6 +533,7 @@ async function loadAccounts() {
     }
 
 }
+
 
 
 /* =========================================
@@ -314,18 +556,22 @@ async function loadTrades() {
                 .order(
                     "trade_date",
                     {
-                        ascending: false
+                        ascending:
+                            false
                     }
                 )
                 .order(
                     "id",
                     {
-                        ascending: false
+                        ascending:
+                            false
                     }
                 );
 
 
-        if (error) {
+        if (
+            error
+        ) {
 
             throw error;
 
@@ -334,6 +580,12 @@ async function loadTrades() {
 
         allTrades =
             data || [];
+
+
+        console.log(
+            "Trades returned:",
+            allTrades
+        );
 
 
         applyFilters();
@@ -346,16 +598,16 @@ async function loadTrades() {
     ) {
 
         console.error(
-            "Trade load error:",
+            "Trade loading error:",
             error
         );
 
 
         showHistoryMessage(
-            "Unable to load trades: " +
+            "Unable to load trade history: " +
             (
                 error.message ||
-                "Unknown error"
+                "Unknown error."
             ),
             "error"
         );
@@ -363,6 +615,7 @@ async function loadTrades() {
     }
 
 }
+
 
 
 /* =========================================
@@ -374,12 +627,15 @@ function displayTrades(
 ) {
 
     if (!tradeTable) {
+
         return;
+
     }
 
 
     if (
-        trades.length === 0
+        trades.length ===
+        0
     ) {
 
         tradeTable.innerHTML =
@@ -428,7 +684,8 @@ function displayTrades(
 
 
                     const pnlClass =
-                        pnl >= 0
+                        pnl >=
+                        0
                             ?
                             "profit"
                             :
@@ -440,80 +697,100 @@ function displayTrades(
                     <tr>
 
                         <td>
+
                             ${escapeHtml(
                                 trade.trade_date ||
                                 ""
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${escapeHtml(
                                 trade.symbol ||
                                 ""
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${escapeHtml(
                                 trade.direction ||
                                 ""
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${escapeHtml(
                                 trade.session ||
                                 ""
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${escapeHtml(
                                 trade.setup ||
                                 ""
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${escapeHtml(
                                 trade.result ||
                                 ""
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${money(
                                 commission
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${money(
                                 swap
                             )}
+
                         </td>
 
 
                         <td class="${pnlClass}">
+
                             ${signedMoney(
                                 pnl
                             )}
+
                         </td>
 
 
                         <td>
+
                             ${Number(
                                 trade.actual_rr ??
                                 trade.r_multiple ??
                                 0
                             ).toFixed(2)}R
+
                         </td>
 
 
@@ -553,13 +830,14 @@ function displayTrades(
 }
 
 
+
 /* =========================================
    APPLY FILTERS
 ========================================= */
 
 function applyFilters() {
 
-    const accountId =
+    const selectedAccount =
         document
             .getElementById(
                 "accountFilter"
@@ -604,12 +882,12 @@ function applyFilters() {
             trade => {
 
                 const accountMatch =
-                    !accountId ||
-                    Number(
+                    !selectedAccount ||
+                    String(
                         trade.account_id
                     ) ===
-                    Number(
-                        accountId
+                    String(
+                        selectedAccount
                     );
 
 
@@ -653,6 +931,7 @@ function applyFilters() {
     );
 
 }
+
 
 
 /* =========================================
@@ -725,6 +1004,7 @@ if (
 }
 
 
+
 /* =========================================
    EDIT TRADE
 ========================================= */
@@ -757,6 +1037,7 @@ function editTrade(
             "error"
         );
 
+
         return;
 
     }
@@ -783,12 +1064,12 @@ function editTrade(
 
 
     /*
-       OLDER TRADES:
+       OLD TRADES
 
-       If gross P&L was not stored,
-       reconstruct it from:
+       If gross P&L is missing,
+       calculate:
 
-       net P&L + commission + swap
+       net + commission + swap
     */
 
     if (
@@ -796,11 +1077,13 @@ function editTrade(
             grossPnL
         ) ||
         (
-            grossPnL === 0 &&
+            grossPnL ===
+            0 &&
             Number(
                 editingTrade.profit_loss ||
                 0
-            ) !== 0
+            ) !==
+            0
         )
     ) {
 
@@ -1007,32 +1290,6 @@ function editTrade(
 }
 
 
-/* =========================================
-   SAFE FIELD VALUE SETTER
-========================================= */
-
-function setElementValue(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (
-        element
-    ) {
-
-        element.value =
-            value;
-
-    }
-
-}
-
 
 /* =========================================
    SETUP NORMALIZER
@@ -1066,8 +1323,9 @@ function normalizeSetup(
 }
 
 
+
 /* =========================================
-   AUTOMATIC NET P&L
+   RECALCULATE EDITED NET P&L
 ========================================= */
 
 function recalculateEditedPnL() {
@@ -1159,29 +1417,30 @@ function recalculateEditedPnL() {
 }
 
 
+
 /* =========================================
-   AUTOMATIC ACTUAL RR
+   RECALCULATE ACTUAL RR
 ========================================= */
 
 function recalculateEditedRR(
     netPnL
 ) {
 
-    const plannedField =
+    const plannedRiskField =
         document.getElementById(
             "editPlannedRisk"
         );
 
 
-    const rrField =
+    const actualRRField =
         document.getElementById(
             "editActualRR"
         );
 
 
     if (
-        !plannedField ||
-        !rrField
+        !plannedRiskField ||
+        !actualRRField
     ) {
 
         return;
@@ -1191,13 +1450,14 @@ function recalculateEditedRR(
 
     const plannedRisk =
         Number(
-            plannedField.value ||
+            plannedRiskField.value ||
             0
         );
 
 
     const actualRR =
-        plannedRisk > 0
+        plannedRisk >
+        0
             ?
             netPnL /
             plannedRisk
@@ -1205,7 +1465,7 @@ function recalculateEditedRR(
             0;
 
 
-    rrField.value =
+    actualRRField.value =
         actualRR.toFixed(
             2
         );
@@ -1213,8 +1473,9 @@ function recalculateEditedRR(
 }
 
 
+
 /* =========================================
-   LIVE FEE RECALCULATION
+   LIVE COMMISSION / SWAP EDITING
 ========================================= */
 
 const editCommissionFee =
@@ -1253,8 +1514,9 @@ if (
 }
 
 
+
 /* =========================================
-   SCREENSHOT PREVIEW
+   SCREENSHOTS
 ========================================= */
 
 async function showCurrentScreenshots(
@@ -1302,6 +1564,7 @@ async function showScreenshotPreview(
         box.innerHTML =
             "No screenshot";
 
+
         return;
 
     }
@@ -1335,6 +1598,7 @@ async function showScreenshotPreview(
         box.innerHTML =
             "Unable to load screenshot.";
 
+
         return;
 
     }
@@ -1361,8 +1625,9 @@ async function showScreenshotPreview(
 }
 
 
+
 /* =========================================
-   CLOSE EDIT PANEL
+   CLOSE EDIT
 ========================================= */
 
 function closeEditPanel() {
@@ -1420,6 +1685,7 @@ if (
     );
 
 }
+
 
 
 /* =========================================
@@ -1515,6 +1781,7 @@ async function uploadReplacementScreenshot(
 }
 
 
+
 /* =========================================
    SAVE EDIT
 ========================================= */
@@ -1543,6 +1810,7 @@ if (
                     "No trade selected.",
                     "error"
                 );
+
 
                 return;
 
@@ -1624,7 +1892,8 @@ if (
 
 
             const actualRR =
-                plannedRisk > 0
+                plannedRisk >
+                0
                     ?
                     netPnL /
                     plannedRisk
@@ -1641,6 +1910,7 @@ if (
                     "error"
                 );
 
+
                 return;
 
             }
@@ -1655,13 +1925,15 @@ if (
                     "error"
                 );
 
+
                 return;
 
             }
 
 
             if (
-                commission < 0
+                commission <
+                0
             ) {
 
                 showEditMessage(
@@ -1669,19 +1941,22 @@ if (
                     "error"
                 );
 
+
                 return;
 
             }
 
 
             if (
-                swap < 0
+                swap <
+                0
             ) {
 
                 showEditMessage(
                     "Swap Fee cannot be negative.",
                     "error"
                 );
+
 
                 return;
 
@@ -1792,7 +2067,8 @@ if (
 
 
                 if (
-                    netPnL > 0
+                    netPnL >
+                    0
                 ) {
 
                     result =
@@ -1802,7 +2078,8 @@ if (
 
 
                 if (
-                    netPnL < 0
+                    netPnL <
+                    0
                 ) {
 
                     result =
@@ -2018,6 +2295,7 @@ if (
 }
 
 
+
 /* =========================================
    DELETE TRADE
 ========================================= */
@@ -2102,6 +2380,7 @@ async function deleteTrade(
 }
 
 
+
 /* =========================================
    MONEY
 ========================================= */
@@ -2118,15 +2397,18 @@ function money(
         .toLocaleString(
             "en-AU",
             {
+
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
+
             }
         );
 
 }
+
 
 
 /* =========================================
@@ -2145,7 +2427,8 @@ function signedMoney(
 
 
     if (
-        value > 0
+        value >
+        0
     ) {
 
         return "+$" +
@@ -2153,11 +2436,13 @@ function signedMoney(
                 .toLocaleString(
                     "en-AU",
                     {
+
                         minimumFractionDigits:
                             2,
 
                         maximumFractionDigits:
                             2
+
                     }
                 );
 
@@ -2165,7 +2450,8 @@ function signedMoney(
 
 
     if (
-        value < 0
+        value <
+        0
     ) {
 
         return "-$" +
@@ -2175,11 +2461,13 @@ function signedMoney(
             .toLocaleString(
                 "en-AU",
                 {
+
                     minimumFractionDigits:
                         2,
 
                     maximumFractionDigits:
                         2
+
                 }
             );
 
@@ -2189,6 +2477,7 @@ function signedMoney(
     return "$0.00";
 
 }
+
 
 
 /* =========================================
@@ -2227,16 +2516,27 @@ function escapeHtml(
 }
 
 
+
 /* =========================================
    START HISTORY PAGE
 ========================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async function() {
+async function startHistoryPage() {
+
+    console.log(
+        "Starting History page..."
+    );
+
+
+    try {
+
+        const session =
+            await waitForSession();
+
 
         console.log(
-            "Starting History page..."
+            "History session ready:",
+            session.user.id
         );
 
 
@@ -2245,5 +2545,36 @@ document.addEventListener(
 
         await loadTrades();
 
+
+        console.log(
+            "History page finished loading."
+        );
+
     }
-);
+
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            "History startup error:",
+            error
+        );
+
+
+        showHistoryMessage(
+            "Unable to start History page: " +
+            (
+                error.message ||
+                "Unknown error."
+            ),
+            "error"
+        );
+
+    }
+
+}
+
+
+startHistoryPage();
