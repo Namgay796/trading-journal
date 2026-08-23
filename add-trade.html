@@ -351,123 +351,201 @@
 
 
 
-    <!-- =========================================
-         PRE-TRADE CHECKLIST
-    ========================================= -->
+   <!-- =========================================
+     PRE-TRADE CHECKLIST
+========================================= -->
 
-    <div class="full pretrade-checklist">
+<div class="full pretrade-checklist">
 
-        <div class="checklist-header">
+    <div class="checklist-header">
 
-            <div>
-                <h3>Pre-Trade Checklist</h3>
-                <small>Confirm your setup before entering the trade.</small>
-            </div>
+        <div>
 
-            <div class="checklist-score-box">
-                <span>Checklist Score</span>
-                <strong id="checklistScore">0/9 — 0%</strong>
-            </div>
+            <h3>
+                Pre-Trade Checklist
+            </h3>
+
+            <small>
+                Confirm your setup before entering the trade.
+            </small>
 
         </div>
 
-        <div class="checklist-progress">
-            <div
-                id="checklistProgressBar"
-                class="checklist-progress-bar"
-            ></div>
-        </div>
 
-        <div class="checklist-items">
+        <div class="checklist-score-box">
 
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkHtfBias"
-                >
-                <span>
-                    HTF bias confirmed
-                    <small>4H, 1H, 15M, 1M</small>
-                </span>
-            </label>
+            <span>
+                Checklist Score
+            </span>
 
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkNews"
-                >
-                <span>News Checked</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkAsianSweep"
-                >
-                <span>Sweep of Asian Session High or Low</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkChoch"
-                >
-                <span>CHOCH formed with candle close on 1M</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkBos"
-                >
-                <span>BOS formed</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkBosObFvg"
-                >
-                <span>Mark BOS OB and FVG</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkNoFomo"
-                >
-                <span>No FOMO</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkNoRevenge"
-                >
-                <span>No Revenge Trade</span>
-            </label>
-
-            <label class="checklist-item">
-                <input
-                    type="checkbox"
-                    class="pretrade-check"
-                    id="checkPlanReviewed"
-                >
-                <span>Plan Reviewed</span>
-            </label>
+            <strong id="checklistScore">
+                0/9 — 0%
+            </strong>
 
         </div>
 
     </div>
 
+
+    <div class="checklist-progress">
+
+        <div
+            id="checklistProgressBar"
+            class="checklist-progress-bar"
+        ></div>
+
+    </div>
+
+
+    <div class="checklist-items">
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkHtfBias"
+            >
+
+            <label for="checkHtfBias">
+
+                <span>
+                    HTF bias confirmed
+                </span>
+
+                <small>
+                    4H, 1H, 15M, 1M
+                </small>
+
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkNews"
+            >
+
+            <label for="checkNews">
+                News Checked
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkAsianSweep"
+            >
+
+            <label for="checkAsianSweep">
+                Sweep of Asian Session High or Low
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkChoch"
+            >
+
+            <label for="checkChoch">
+                CHOCH formed with candle close on 1M
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkBos"
+            >
+
+            <label for="checkBos">
+                BOS formed
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkBosObFvg"
+            >
+
+            <label for="checkBosObFvg">
+                Mark BOS OB and FVG
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkNoFomo"
+            >
+
+            <label for="checkNoFomo">
+                No FOMO
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkNoRevenge"
+            >
+
+            <label for="checkNoRevenge">
+                No Revenge Trade
+            </label>
+
+        </div>
+
+
+        <div class="checklist-row">
+
+            <input
+                type="checkbox"
+                class="pretrade-check"
+                id="checkPlanReviewed"
+            >
+
+            <label for="checkPlanReviewed">
+                Plan Reviewed
+            </label>
+
+        </div>
+
+
+    </div>
+
+</div>
 
 
     <!-- =========================================
