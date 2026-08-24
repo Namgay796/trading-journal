@@ -1986,7 +1986,7 @@ async function showScreenshotPreview(
 
 
 /* =========================================
-   UPLOAD REPLACEMENT SCREENSHOT
+   REPLACEMENT SCREENSHOT UPLOAD
 ========================================= */
 
 async function uploadReplacementScreenshot(
@@ -2004,43 +2004,83 @@ async function uploadReplacementScreenshot(
     }
 
 
-    if (
-        !file.type.startsWith(
-            "image/"
+    const extension =
+        String(
+            file.name ||
+            ""
         )
+        .split(".")
+        .pop()
+        .toLowerCase();
+
+
+    const allowedExtensions = [
+
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "heic",
+        "heif"
+
+    ];
+
+
+    const validMimeType =
+        file.type &&
+        file.type.startsWith(
+            "image/"
+        );
+
+
+    const validExtension =
+        allowedExtensions.includes(
+            extension
+        );
+
+
+    if (
+        !validMimeType &&
+        !validExtension
     ) {
 
         throw new Error(
-            "Screenshot must be an image file."
+            "Please select a valid image file."
         );
 
     }
+
+
+    const maxSize =
+        15 *
+        1024 *
+        1024;
 
 
     if (
         file.size >
-        10 *
-        1024 *
-        1024
+        maxSize
     ) {
 
         throw new Error(
-            "Screenshot is too large. Maximum size is 10 MB."
+            "Screenshot is too large. Maximum size is 15 MB."
         );
 
     }
 
 
-    const extension =
-        file.name
-            .split(".")
-            .pop();
+    const safeExtension =
+        validExtension
+            ?
+            extension
+            :
+            "jpg";
 
 
     const fileName =
         `${type}_${Date.now()}_${Math.random()
             .toString(36)
-            .substring(2, 8)}.${extension}`;
+            .substring(2, 8)}.${safeExtension}`;
 
 
     const path =
@@ -2048,6 +2088,7 @@ async function uploadReplacementScreenshot(
 
 
     const {
+        data,
         error
     } =
         await db
@@ -2057,13 +2098,28 @@ async function uploadReplacementScreenshot(
             )
             .upload(
                 path,
-                file
+                file,
+                {
+
+                    cacheControl:
+                        "3600",
+
+                    upsert:
+                        false
+
+                }
             );
 
 
     if (
         error
     ) {
+
+        console.error(
+            "Replacement screenshot error:",
+            error
+        );
+
 
         throw new Error(
             "Screenshot upload failed: " +
@@ -2073,10 +2129,15 @@ async function uploadReplacementScreenshot(
     }
 
 
+    console.log(
+        "Replacement screenshot uploaded:",
+        data
+    );
+
+
     return path;
 
 }
-
 
 
 /* =========================================

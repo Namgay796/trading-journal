@@ -2073,7 +2073,6 @@ function validateTradeForm() {
 }
 
 
-
 /* =========================================
    SCREENSHOT UPLOAD
 ========================================= */
@@ -2093,37 +2092,139 @@ async function uploadScreenshot(
     }
 
 
-    if (
-        !file.type.startsWith(
-            "image/"
+    /* =====================================
+       FILE EXTENSION
+    ===================================== */
+
+    const extension =
+        String(
+            file.name ||
+            ""
         )
+        .split(".")
+        .pop()
+        .toLowerCase();
+
+
+    const allowedExtensions = [
+
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "heic",
+        "heif"
+
+    ];
+
+
+    /* =====================================
+       MOBILE MIME TYPE SUPPORT
+
+       Some phones return an empty
+       file.type even for valid images.
+    ===================================== */
+
+    const validMimeType =
+        file.type &&
+        file.type.startsWith(
+            "image/"
+        );
+
+
+    const validExtension =
+        allowedExtensions.includes(
+            extension
+        );
+
+
+    if (
+        !validMimeType &&
+        !validExtension
     ) {
 
         throw new Error(
-            type +
-            " screenshot must be an image."
+            "Please select a valid image file."
         );
 
     }
 
 
-    const extension =
-        file.name
-            .split(".")
-            .pop();
+    /* =====================================
+       FILE SIZE
 
+       Phone photos can be much larger than
+       desktop screenshots.
+    ===================================== */
+
+    const maxSize =
+        15 *
+        1024 *
+        1024;
+
+
+    if (
+        file.size >
+        maxSize
+    ) {
+
+        throw new Error(
+            "Screenshot is too large. Maximum size is 15 MB."
+        );
+
+    }
+
+
+    /* =====================================
+       SAFE EXTENSION
+    ===================================== */
+
+    const safeExtension =
+        validExtension
+            ?
+            extension
+            :
+            "jpg";
+
+
+    /* =====================================
+       UNIQUE FILE NAME
+    ===================================== */
 
     const fileName =
         `${type}_${Date.now()}_${Math.random()
             .toString(36)
-            .substring(2, 8)}.${extension}`;
+            .substring(2, 8)}.${safeExtension}`;
 
 
     const filePath =
         `${userId}/trades/${fileName}`;
 
 
+    console.log(
+        "Uploading screenshot:",
+        {
+            name:
+                file.name,
+
+            type:
+                file.type,
+
+            size:
+                file.size,
+
+            path:
+                filePath
+        }
+    );
+
+
+    /* =====================================
+       UPLOAD TO SUPABASE
+    ===================================== */
+
     const {
+        data,
         error
     } =
         await db
@@ -2133,13 +2234,28 @@ async function uploadScreenshot(
             )
             .upload(
                 filePath,
-                file
+                file,
+                {
+
+                    cacheControl:
+                        "3600",
+
+                    upsert:
+                        false
+
+                }
             );
 
 
     if (
         error
     ) {
+
+        console.error(
+            "Screenshot upload error:",
+            error
+        );
+
 
         throw new Error(
             "Screenshot upload failed: " +
@@ -2149,10 +2265,15 @@ async function uploadScreenshot(
     }
 
 
+    console.log(
+        "Screenshot uploaded:",
+        data
+    );
+
+
     return filePath;
 
 }
-
 
 
 /* =========================================
