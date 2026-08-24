@@ -1,321 +1,10 @@
+/* =========================================
+   GLOBAL DATA
+========================================= */
+
 let allTrades = [];
-
 let allAccounts = [];
-
 let editingTrade = null;
-
-
-/* =========================================
-   ELEMENTS
-========================================= */
-
-const tradeTable =
-    document.getElementById(
-        "tradeTable"
-    );
-
-
-const historyMessage =
-    document.getElementById(
-        "historyMessage"
-    );
-
-
-const editTradePanel =
-    document.getElementById(
-        "editTradePanel"
-    );
-
-
-const editTradeForm =
-    document.getElementById(
-        "editTradeForm"
-    );
-
-
-const saveEditTrade =
-    document.getElementById(
-        "saveEditTrade"
-    );
-
-
-const accountFilter =
-    document.getElementById(
-        "accountFilter"
-    );
-
-
-
-/* =========================================
-   HISTORY MESSAGE
-========================================= */
-
-function showHistoryMessage(
-    text,
-    type = "error"
-) {
-
-    if (
-        !historyMessage
-    ) {
-
-        return;
-
-    }
-
-
-    historyMessage.textContent =
-        text;
-
-
-    historyMessage.className =
-        "form-message show " +
-        type;
-
-}
-
-
-
-function clearHistoryMessage() {
-
-    if (
-        !historyMessage
-    ) {
-
-        return;
-
-    }
-
-
-    historyMessage.textContent =
-        "";
-
-
-    historyMessage.className =
-        "form-message";
-
-}
-
-
-
-/* =========================================
-   EDIT MESSAGE
-========================================= */
-
-function showEditMessage(
-    text,
-    type = "error"
-) {
-
-    const box =
-        document.getElementById(
-            "editTradeMessage"
-        );
-
-
-    if (
-        !box
-    ) {
-
-        return;
-
-    }
-
-
-    box.textContent =
-        text;
-
-
-    box.className =
-        "form-message full show " +
-        type;
-
-}
-
-
-
-function clearEditMessage() {
-
-    const box =
-        document.getElementById(
-            "editTradeMessage"
-        );
-
-
-    if (
-        !box
-    ) {
-
-        return;
-
-    }
-
-
-    box.textContent =
-        "";
-
-
-    box.className =
-        "form-message full";
-
-}
-
-
-
-/* =========================================
-   SAFE FIELD SETTER
-========================================= */
-
-function setElementValue(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (
-        element
-    ) {
-
-        element.value =
-            value ?? "";
-
-    }
-
-}
-
-
-
-/* =========================================
-   WAIT FOR LOGIN
-========================================= */
-
-async function waitForSession() {
-
-    const {
-        data: {
-            session
-        },
-        error
-    } =
-        await db.auth
-            .getSession();
-
-
-    if (
-        error
-    ) {
-
-        throw error;
-
-    }
-
-
-    if (
-        session &&
-        session.user
-    ) {
-
-        return session;
-
-    }
-
-
-    return await new Promise(
-        (
-            resolve,
-            reject
-        ) => {
-
-            let finished =
-                false;
-
-
-            const timeout =
-                setTimeout(
-                    function() {
-
-                        if (
-                            finished
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        finished =
-                            true;
-
-
-                        reject(
-                            new Error(
-                                "Login session could not be loaded."
-                            )
-                        );
-
-                    },
-                    8000
-                );
-
-
-            const {
-                data:
-                    authData
-            } =
-                db.auth
-                    .onAuthStateChange(
-                        (
-                            event,
-                            newSession
-                        ) => {
-
-                            if (
-                                finished
-                            ) {
-
-                                return;
-
-                            }
-
-
-                            if (
-                                newSession &&
-                                newSession.user
-                            ) {
-
-                                finished =
-                                    true;
-
-
-                                clearTimeout(
-                                    timeout
-                                );
-
-
-                                authData
-                                    .subscription
-                                    .unsubscribe();
-
-
-                                resolve(
-                                    newSession
-                                );
-
-                            }
-
-                        }
-                    );
-
-        }
-    );
-
-}
-
 
 
 /* =========================================
@@ -324,27 +13,14 @@ async function waitForSession() {
 
 async function loadAccounts() {
 
-    if (
-        !accountFilter
-    ) {
-
-        console.error(
-            "accountFilter not found."
+    const accountFilter =
+        document.getElementById(
+            "accountFilter"
         );
 
-
+    if (!accountFilter) {
         return;
-
     }
-
-
-    accountFilter.innerHTML =
-        `
-        <option value="">
-            Loading accounts...
-        </option>
-        `;
-
 
     try {
 
@@ -353,31 +29,21 @@ async function loadAccounts() {
             error
         } =
             await db
-                .from(
-                    "accounts"
-                )
+                .from("accounts")
                 .select("*")
                 .order(
                     "id",
                     {
-                        ascending:
-                            true
+                        ascending: true
                     }
                 );
 
-
-        if (
-            error
-        ) {
-
+        if (error) {
             throw error;
-
         }
-
 
         allAccounts =
             data || [];
-
 
         accountFilter.innerHTML =
             `
@@ -385,7 +51,6 @@ async function loadAccounts() {
                 All Accounts
             </option>
             `;
-
 
         allAccounts.forEach(
             account => {
@@ -395,20 +60,11 @@ async function loadAccounts() {
                         "option"
                     );
 
-
                 option.value =
-                    String(
-                        account.id
-                    );
-
+                    account.id;
 
                 option.textContent =
-                    account.name ||
-                    (
-                        "Account " +
-                        account.id
-                    );
-
+                    account.name;
 
                 accountFilter.appendChild(
                     option
@@ -419,35 +75,16 @@ async function loadAccounts() {
 
     }
 
-
-    catch (
-        error
-    ) {
+    catch (error) {
 
         console.error(
             "Account load error:",
             error
         );
 
-
-        accountFilter.innerHTML =
-            `
-            <option value="">
-                Unable to load accounts
-            </option>
-            `;
-
-
-        showHistoryMessage(
-            "Unable to load accounts: " +
-            error.message,
-            "error"
-        );
-
     }
 
 }
-
 
 
 /* =========================================
@@ -463,187 +100,47 @@ async function loadTrades() {
             error
         } =
             await db
-                .from(
-                    "trades"
-                )
+                .from("trades")
                 .select("*")
                 .order(
                     "trade_date",
                     {
-                        ascending:
-                            false
+                        ascending: false
                     }
                 )
                 .order(
                     "id",
                     {
-                        ascending:
-                            false
+                        ascending: false
                     }
                 );
 
-
-        if (
-            error
-        ) {
-
+        if (error) {
             throw error;
-
         }
-
 
         allTrades =
             data || [];
-
 
         applyFilters();
 
     }
 
-
-    catch (
-        error
-    ) {
+    catch (error) {
 
         console.error(
             "Trade load error:",
             error
         );
 
-
-        showHistoryMessage(
-            "Unable to load trade history: " +
-            error.message,
-            "error"
+        alert(
+            "Unable to load trades: " +
+            error.message
         );
 
     }
 
 }
-
-
-
-/* =========================================
-   CHECKLIST KEYS
-========================================= */
-
-const checklistKeys = [
-
-    "htf_bias",
-
-    "news_checked",
-
-    "asian_sweep",
-
-    "choch_1m_close",
-
-    "bos_formed",
-
-    "bos_ob_fvg_marked",
-
-    "no_fomo",
-
-    "no_revenge",
-
-    "plan_reviewed"
-
-];
-
-
-
-/* =========================================
-   CHECKLIST STATS
-========================================= */
-
-function getChecklistStats(
-    checklist
-) {
-
-    checklist =
-        checklist ||
-        {};
-
-
-    const checked =
-        checklistKeys.filter(
-            key =>
-                checklist[key] ===
-                true
-        )
-        .length;
-
-
-    const total =
-        checklistKeys.length;
-
-
-    const score =
-        total > 0
-            ?
-            (
-                checked /
-                total
-            ) *
-            100
-            :
-            0;
-
-
-    return {
-
-        checked:
-            checked,
-
-        total:
-            total,
-
-        score:
-            score
-
-    };
-
-}
-
-
-
-/* =========================================
-   CHECKLIST TABLE DISPLAY
-========================================= */
-
-function checklistDisplay(
-    trade
-) {
-
-    const stats =
-        getChecklistStats(
-            trade.pretrade_checklist ||
-            {}
-        );
-
-
-    /*
-       Old trades created before the checklist
-       will display 0/9.
-    */
-
-    return `
-
-        <div class="checklist-history-score">
-
-            <strong>
-                ${stats.checked}/${stats.total}
-            </strong>
-
-            <small>
-                ${stats.score.toFixed(0)}%
-            </small>
-
-        </div>
-
-    `;
-
-}
-
 
 
 /* =========================================
@@ -654,41 +151,34 @@ function displayTrades(
     trades
 ) {
 
-    if (
-        !tradeTable
-    ) {
+    const table =
+        document.getElementById(
+            "tradeTable"
+        );
 
+    if (!table) {
         return;
-
     }
-
 
     if (
         !trades ||
-        trades.length ===
-        0
+        trades.length === 0
     ) {
 
-        tradeTable.innerHTML =
+        table.innerHTML =
             `
-
             <tr>
-
                 <td colspan="12">
                     No trades found.
                 </td>
-
             </tr>
-
             `;
 
-
         return;
-
     }
 
 
-    tradeTable.innerHTML =
+    table.innerHTML =
         trades
             .map(
                 trade => {
@@ -699,21 +189,6 @@ function displayTrades(
                             0
                         );
 
-
-                    const commission =
-                        Number(
-                            trade.commission_fee ||
-                            0
-                        );
-
-
-                    const swap =
-                        Number(
-                            trade.swap_fee ||
-                            0
-                        );
-
-
                     const pnlClass =
                         pnl >= 0
                             ?
@@ -721,144 +196,115 @@ function displayTrades(
                             :
                             "loss";
 
+                    const commission =
+                        Number(
+                            trade.commission_fee ||
+                            0
+                        );
+
+                    const swap =
+                        Number(
+                            trade.swap_fee ||
+                            0
+                        );
 
                     return `
 
-                    <tr>
+                        <tr>
 
-                        <td>
+                            <td>
+                                ${escapeHtml(
+                                    trade.trade_date || ""
+                                )}
+                            </td>
 
-                            ${escapeHtml(
-                                trade.trade_date ||
-                                ""
-                            )}
+                            <td>
+                                ${escapeHtml(
+                                    trade.symbol || ""
+                                )}
+                            </td>
 
-                        </td>
+                            <td>
+                                ${escapeHtml(
+                                    trade.direction || ""
+                                )}
+                            </td>
 
+                            <td>
+                                ${escapeHtml(
+                                    trade.session || ""
+                                )}
+                            </td>
 
-                        <td>
+                            <td>
+                                ${escapeHtml(
+                                    trade.setup || ""
+                                )}
+                            </td>
 
-                            ${escapeHtml(
-                                trade.symbol ||
-                                ""
-                            )}
+                            <td>
+                                ${escapeHtml(
+                                    trade.result || ""
+                                )}
+                            </td>
 
-                        </td>
+                            <td>
+                                ${money(
+                                    commission
+                                )}
+                            </td>
 
+                            <td>
+                                ${money(
+                                    swap
+                                )}
+                            </td>
 
-                        <td>
+                            <td class="${pnlClass}">
+                                ${signedMoney(
+                                    pnl
+                                )}
+                            </td>
 
-                            ${escapeHtml(
-                                trade.direction ||
-                                ""
-                            )}
+                            <td>
+                                ${Number(
+                                    trade.actual_rr ??
+                                    trade.r_multiple ??
+                                    0
+                                ).toFixed(2)}R
+                            </td>
 
-                        </td>
+                            <td>
+                                ${checklistDisplay(
+                                    trade
+                                )}
+                            </td>
 
+                            <td>
 
-                        <td>
+                                <button
+                                    type="button"
+                                    class="small-button"
+                                    onclick="editTrade(${Number(
+                                        trade.id
+                                    )})"
+                                >
+                                    Edit
+                                </button>
 
-                            ${escapeHtml(
-                                trade.session ||
-                                ""
-                            )}
+                                <button
+                                    type="button"
+                                    class="small-button danger-button"
+                                    onclick="deleteTrade(${Number(
+                                        trade.id
+                                    )})"
+                                >
+                                    Delete
+                                </button>
 
-                        </td>
+                            </td>
 
-
-                        <td>
-
-                            ${escapeHtml(
-                                trade.setup ||
-                                ""
-                            )}
-
-                        </td>
-
-
-                        <td>
-
-                            ${escapeHtml(
-                                trade.result ||
-                                ""
-                            )}
-
-                        </td>
-
-
-                        <td>
-
-                            ${money(
-                                commission
-                            )}
-
-                        </td>
-
-
-                        <td>
-
-                            ${money(
-                                swap
-                            )}
-
-                        </td>
-
-
-                        <td class="${pnlClass}">
-
-                            ${signedMoney(
-                                pnl
-                            )}
-
-                        </td>
-
-
-                        <td>
-
-                            ${Number(
-                                trade.actual_rr ??
-                                trade.r_multiple ??
-                                0
-                            ).toFixed(2)}R
-
-                        </td>
-
-
-                        <td>
-
-                            ${checklistDisplay(
-                                trade
-                            )}
-
-                        </td>
-
-
-                        <td>
-
-                            <button
-                                type="button"
-                                class="small-button"
-                                onclick="editTrade(${Number(
-                                    trade.id
-                                )})"
-                            >
-                                Edit
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="small-button danger-button"
-                                onclick="deleteTrade(${Number(
-                                    trade.id
-                                )})"
-                            >
-                                Delete
-                            </button>
-
-                        </td>
-
-                    </tr>
+                        </tr>
 
                     `;
 
@@ -869,21 +315,19 @@ function displayTrades(
 }
 
 
-
 /* =========================================
-   APPLY FILTERS
+   FILTERS
 ========================================= */
 
 function applyFilters() {
 
-    const selectedAccount =
+    const account =
         document
             .getElementById(
                 "accountFilter"
             )
             ?.value ||
         "";
-
 
     const session =
         document
@@ -893,7 +337,6 @@ function applyFilters() {
             ?.value ||
         "";
 
-
     const result =
         document
             .getElementById(
@@ -901,7 +344,6 @@ function applyFilters() {
             )
             ?.value ||
         "";
-
 
     const symbol =
         (
@@ -921,26 +363,23 @@ function applyFilters() {
             trade => {
 
                 const accountMatch =
-                    !selectedAccount ||
-                    String(
+                    !account ||
+                    Number(
                         trade.account_id
                     ) ===
-                    String(
-                        selectedAccount
+                    Number(
+                        account
                     );
-
 
                 const sessionMatch =
                     !session ||
                     trade.session ===
                     session;
 
-
                 const resultMatch =
                     !result ||
                     trade.result ===
                     result;
-
 
                 const symbolMatch =
                     !symbol ||
@@ -953,7 +392,6 @@ function applyFilters() {
                         symbol
                     );
 
-
                 return (
                     accountMatch &&
                     sessionMatch &&
@@ -964,7 +402,6 @@ function applyFilters() {
             }
         );
 
-
     displayTrades(
         filtered
     );
@@ -972,83 +409,493 @@ function applyFilters() {
 }
 
 
-
 /* =========================================
-   FILTER EVENTS
+   CHECKLIST DATA
 ========================================= */
 
-if (
-    accountFilter
+function getChecklistStats(
+    checklist
 ) {
 
-    accountFilter.addEventListener(
-        "change",
-        applyFilters
-    );
+    checklist =
+        checklist ||
+        {};
+
+    const values = [
+
+        checklist.htf_bias,
+        checklist.news_checked,
+        checklist.asian_sweep,
+        checklist.choch_1m_close,
+        checklist.bos_formed,
+        checklist.bos_ob_fvg_marked,
+        checklist.no_fomo,
+        checklist.no_revenge,
+        checklist.plan_reviewed
+
+    ];
+
+    const total =
+        values.length;
+
+    const checked =
+        values.filter(
+            value =>
+                value === true
+        ).length;
+
+    const score =
+        total > 0
+            ?
+            (
+                checked /
+                total
+            ) *
+            100
+            :
+            0;
+
+    return {
+        checked,
+        total,
+        score
+    };
 
 }
-
-
-const sessionFilter =
-    document.getElementById(
-        "sessionFilter"
-    );
-
-
-if (
-    sessionFilter
-) {
-
-    sessionFilter.addEventListener(
-        "change",
-        applyFilters
-    );
-
-}
-
-
-const resultFilter =
-    document.getElementById(
-        "resultFilter"
-    );
-
-
-if (
-    resultFilter
-) {
-
-    resultFilter.addEventListener(
-        "change",
-        applyFilters
-    );
-
-}
-
-
-const symbolFilter =
-    document.getElementById(
-        "symbolFilter"
-    );
-
-
-if (
-    symbolFilter
-) {
-
-    symbolFilter.addEventListener(
-        "input",
-        applyFilters
-    );
-
-}
-
 
 
 /* =========================================
-   SET CHECKLIST BOX
+   CHECKLIST DISPLAY
 ========================================= */
 
-function setChecklistCheckbox(
+function checklistDisplay(
+    trade
+) {
+
+    const stats =
+        getChecklistStats(
+            trade.pretrade_checklist ||
+            {}
+        );
+
+    return `
+        <span class="checklist-history-inline">
+            ${stats.checked}/${stats.total}
+
+            <small>
+                ${stats.score.toFixed(0)}%
+            </small>
+        </span>
+    `;
+
+}
+
+
+/* =========================================
+   DELETE TRADE
+========================================= */
+
+async function deleteTrade(
+    id
+) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this trade?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const trade =
+            allTrades.find(
+                item =>
+                    Number(
+                        item.id
+                    ) ===
+                    Number(
+                        id
+                    )
+            );
+
+        /*
+         * Delete screenshots first if they exist.
+         */
+
+        if (trade) {
+
+            const screenshotPaths =
+                [];
+
+            if (
+                trade.before_screenshot
+            ) {
+
+                screenshotPaths.push(
+                    trade.before_screenshot
+                );
+
+            }
+
+            if (
+                trade.after_screenshot
+            ) {
+
+                screenshotPaths.push(
+                    trade.after_screenshot
+                );
+
+            }
+
+            if (
+                screenshotPaths.length >
+                0
+            ) {
+
+                const {
+                    error:
+                        storageError
+                } =
+                    await db
+                        .storage
+                        .from(
+                            "trade-screenshots"
+                        )
+                        .remove(
+                            screenshotPaths
+                        );
+
+                if (
+                    storageError
+                ) {
+
+                    console.warn(
+                        "Screenshot cleanup warning:",
+                        storageError
+                    );
+
+                }
+
+            }
+
+        }
+
+
+        const {
+            error
+        } =
+            await db
+                .from("trades")
+                .delete()
+                .eq(
+                    "id",
+                    id
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        alert(
+            "Trade deleted."
+        );
+
+        await loadTrades();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Trade delete error:",
+            error
+        );
+
+        alert(
+            "Delete failed: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   OPEN EDIT TRADE
+========================================= */
+
+async function editTrade(
+    id
+) {
+
+    const trade =
+        allTrades.find(
+            item =>
+                Number(
+                    item.id
+                ) ===
+                Number(
+                    id
+                )
+        );
+
+    if (!trade) {
+
+        alert(
+            "Trade not found."
+        );
+
+        return;
+
+    }
+
+    editingTrade =
+        {
+            ...trade
+        };
+
+
+    /* DATE */
+
+    setValue(
+        "editTradeDate",
+        trade.trade_date
+    );
+
+
+    /* SYMBOL */
+
+    setValue(
+        "editSymbol",
+        trade.symbol
+    );
+
+
+    /* DIRECTION */
+
+    setValue(
+        "editDirection",
+        trade.direction
+    );
+
+
+    /* STOP LOSS */
+
+    setValue(
+        "editStopLoss",
+        trade.stop_loss
+    );
+
+
+    /* TAKE PROFIT */
+
+    setValue(
+        "editTakeProfit",
+        trade.take_profit
+    );
+
+
+    /* SESSION */
+
+    setValue(
+        "editSession",
+        trade.session
+    );
+
+
+    /* SETUP */
+
+    setValue(
+        "editSetup",
+        trade.setup
+    );
+
+
+    /* RULES */
+
+    setValue(
+        "editRulesFollowed",
+        String(
+            trade.rules_followed
+        )
+    );
+
+
+    /* COMMISSION */
+
+    setValue(
+        "editCommissionFee",
+        Number(
+            trade.commission_fee ||
+            0
+        )
+    );
+
+
+    /* SWAP */
+
+    setValue(
+        "editSwapFee",
+        Number(
+            trade.swap_fee ||
+            0
+        )
+    );
+
+
+    /* MISTAKES */
+
+    setValue(
+        "editMistakes",
+        trade.mistakes ||
+        ""
+    );
+
+
+    /* NOTES */
+
+    setValue(
+        "editNotes",
+        trade.notes ||
+        ""
+    );
+
+
+    /* CHECKLIST */
+
+    const checklist =
+        trade.pretrade_checklist ||
+        {};
+
+    setChecked(
+        "editCheckHtfBias",
+        checklist.htf_bias
+    );
+
+    setChecked(
+        "editCheckNews",
+        checklist.news_checked
+    );
+
+    setChecked(
+        "editCheckAsianSweep",
+        checklist.asian_sweep
+    );
+
+    setChecked(
+        "editCheckChoch",
+        checklist.choch_1m_close
+    );
+
+    setChecked(
+        "editCheckBos",
+        checklist.bos_formed
+    );
+
+    setChecked(
+        "editCheckBosObFvg",
+        checklist.bos_ob_fvg_marked
+    );
+
+    setChecked(
+        "editCheckNoFomo",
+        checklist.no_fomo
+    );
+
+    setChecked(
+        "editCheckNoRevenge",
+        checklist.no_revenge
+    );
+
+    setChecked(
+        "editCheckPlanReviewed",
+        checklist.plan_reviewed
+    );
+
+
+    updateEditChecklistDisplay();
+
+
+    /* CLEAR NEW SCREENSHOT INPUTS */
+
+    const beforeInput =
+        document.getElementById(
+            "editBeforeScreenshot"
+        );
+
+    const afterInput =
+        document.getElementById(
+            "editAfterScreenshot"
+        );
+
+    if (beforeInput) {
+        beforeInput.value = "";
+    }
+
+    if (afterInput) {
+        afterInput.value = "";
+    }
+
+
+    /* SHOW CURRENT SCREENSHOTS */
+
+    await showCurrentScreenshots(
+        editingTrade
+    );
+
+
+    updateScreenshotDeleteButtons();
+
+
+    /* OPEN EDIT PANEL */
+
+    const modal =
+        document.getElementById(
+            "editTradeModal"
+        );
+
+    const panel =
+        document.getElementById(
+            "editTradePanel"
+        );
+
+    if (modal) {
+
+        modal.classList.add(
+            "show"
+        );
+
+        modal.style.display =
+            "flex";
+
+    }
+
+    if (panel) {
+
+        panel.classList.add(
+            "show"
+        );
+
+        panel.style.display =
+            "block";
+
+    }
+
+
+    recalculateEditedPnL();
+
+}
+
+
+/* =========================================
+   SET INPUT VALUE
+========================================= */
+
+function setValue(
     id,
     value
 ) {
@@ -1058,10 +905,31 @@ function setChecklistCheckbox(
             id
         );
 
+    if (element) {
 
-    if (
-        element
-    ) {
+        element.value =
+            value ?? "";
+
+    }
+
+}
+
+
+/* =========================================
+   SET CHECKBOX
+========================================= */
+
+function setChecked(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+    if (element) {
 
         element.checked =
             value === true;
@@ -1071,12 +939,11 @@ function setChecklistCheckbox(
 }
 
 
-
 /* =========================================
-   GET EDIT CHECKLIST
+   EDIT CHECKLIST
 ========================================= */
 
-function getEditChecklist() {
+function getEditedChecklist() {
 
     return {
 
@@ -1088,7 +955,6 @@ function getEditChecklist() {
                 ?.checked ||
             false,
 
-
         news_checked:
             document
                 .getElementById(
@@ -1096,7 +962,6 @@ function getEditChecklist() {
                 )
                 ?.checked ||
             false,
-
 
         asian_sweep:
             document
@@ -1106,7 +971,6 @@ function getEditChecklist() {
                 ?.checked ||
             false,
 
-
         choch_1m_close:
             document
                 .getElementById(
@@ -1114,7 +978,6 @@ function getEditChecklist() {
                 )
                 ?.checked ||
             false,
-
 
         bos_formed:
             document
@@ -1124,7 +987,6 @@ function getEditChecklist() {
                 ?.checked ||
             false,
 
-
         bos_ob_fvg_marked:
             document
                 .getElementById(
@@ -1132,7 +994,6 @@ function getEditChecklist() {
                 )
                 ?.checked ||
             false,
-
 
         no_fomo:
             document
@@ -1142,7 +1003,6 @@ function getEditChecklist() {
                 ?.checked ||
             false,
 
-
         no_revenge:
             document
                 .getElementById(
@@ -1150,7 +1010,6 @@ function getEditChecklist() {
                 )
                 ?.checked ||
             false,
-
 
         plan_reviewed:
             document
@@ -1165,7 +1024,6 @@ function getEditChecklist() {
 }
 
 
-
 /* =========================================
    UPDATE EDIT CHECKLIST SCORE
 ========================================= */
@@ -1173,30 +1031,24 @@ function getEditChecklist() {
 function updateEditChecklistDisplay() {
 
     const checklist =
-        getEditChecklist();
-
+        getEditedChecklist();
 
     const stats =
         getChecklistStats(
             checklist
         );
 
-
     const score =
         document.getElementById(
             "editChecklistScore"
         );
 
-
-    const progressBar =
+    const bar =
         document.getElementById(
             "editChecklistProgressBar"
         );
 
-
-    if (
-        score
-    ) {
+    if (score) {
 
         score.textContent =
             stats.checked +
@@ -1210,12 +1062,9 @@ function updateEditChecklistDisplay() {
 
     }
 
+    if (bar) {
 
-    if (
-        progressBar
-    ) {
-
-        progressBar.style.width =
+        bar.style.width =
             stats.score +
             "%";
 
@@ -1224,9 +1073,8 @@ function updateEditChecklistDisplay() {
 }
 
 
-
 /* =========================================
-   CHECKLIST EVENTS
+   EDIT CHECKLIST EVENTS
 ========================================= */
 
 document
@@ -1245,611 +1093,8 @@ document
     );
 
 
-
 /* =========================================
-   NORMALIZE SETUP
-========================================= */
-
-function normalizeSetup(
-    setup
-) {
-
-    const allowed =
-        [
-            "A++",
-            "A+",
-            "A"
-        ];
-
-
-    if (
-        allowed.includes(
-            setup
-        )
-    ) {
-
-        return setup;
-
-    }
-
-
-    return "A";
-
-}
-
-
-
-/* =========================================
-   EDIT TRADE
-========================================= */
-
-function editTrade(
-    id
-) {
-
-    clearEditMessage();
-
-
-    editingTrade =
-        allTrades.find(
-            trade =>
-                Number(
-                    trade.id
-                ) ===
-                Number(
-                    id
-                )
-        );
-
-
-    if (
-        !editingTrade
-    ) {
-
-        showHistoryMessage(
-            "Trade not found.",
-            "error"
-        );
-
-
-        return;
-
-    }
-
-
-    const commission =
-        Number(
-            editingTrade.commission_fee ||
-            0
-        );
-
-
-    const swap =
-        Number(
-            editingTrade.swap_fee ||
-            0
-        );
-
-
-    let grossPnL =
-        Number(
-            editingTrade.gross_pnl
-        );
-
-
-    /*
-       Support older trades where gross_pnl
-       may not have been stored.
-    */
-
-    if (
-        !Number.isFinite(
-            grossPnL
-        ) ||
-        (
-            grossPnL === 0 &&
-            Number(
-                editingTrade.profit_loss ||
-                0
-            ) !== 0
-        )
-    ) {
-
-        grossPnL =
-            Number(
-                editingTrade.profit_loss ||
-                0
-            )
-            +
-            commission
-            +
-            swap;
-
-    }
-
-
-    /* =====================================
-       BASIC FIELDS
-    ===================================== */
-
-    setElementValue(
-        "editTradeId",
-        editingTrade.id
-    );
-
-
-    const title =
-        document.getElementById(
-            "editTradeTitle"
-        );
-
-
-    if (
-        title
-    ) {
-
-        title.textContent =
-            (
-                editingTrade.symbol ||
-                "Trade"
-            )
-            +
-            " • "
-            +
-            (
-                editingTrade.trade_date ||
-                ""
-            );
-
-    }
-
-
-    setElementValue(
-        "editTradeDate",
-        editingTrade.trade_date ||
-        ""
-    );
-
-
-    setElementValue(
-        "editSymbol",
-        editingTrade.symbol ||
-        ""
-    );
-
-
-    setElementValue(
-        "editDirection",
-        editingTrade.direction ||
-        "BUY"
-    );
-
-
-    setElementValue(
-        "editSession",
-        editingTrade.session ||
-        "Asian"
-    );
-
-
-    setElementValue(
-        "editSetup",
-        normalizeSetup(
-            editingTrade.setup
-        )
-    );
-
-
-    setElementValue(
-        "editRulesFollowed",
-        editingTrade.rules_followed
-            ?
-            "true"
-            :
-            "false"
-    );
-
-
-    /* =====================================
-       P&L / FEES
-    ===================================== */
-
-    setElementValue(
-        "editGrossPnL",
-        grossPnL.toFixed(
-            2
-        )
-    );
-
-
-    setElementValue(
-        "editCommissionFee",
-        commission.toFixed(
-            2
-        )
-    );
-
-
-    setElementValue(
-        "editSwapFee",
-        swap.toFixed(
-            2
-        )
-    );
-
-
-    setElementValue(
-        "editPlannedRisk",
-        Number(
-            editingTrade.planned_risk ||
-            0
-        ).toFixed(
-            2
-        )
-    );
-
-
-    /* =====================================
-       MISTAKES / NOTES
-    ===================================== */
-
-    setElementValue(
-        "editMistakes",
-        editingTrade.mistakes ||
-        ""
-    );
-
-
-    setElementValue(
-        "editNotes",
-        editingTrade.notes ||
-        ""
-    );
-
-
-    /* =====================================
-       LOAD CHECKLIST
-    ===================================== */
-
-    const checklist =
-        editingTrade.pretrade_checklist ||
-        {};
-
-
-    setChecklistCheckbox(
-        "editCheckHtfBias",
-        checklist.htf_bias
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckNews",
-        checklist.news_checked
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckAsianSweep",
-        checklist.asian_sweep
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckChoch",
-        checklist.choch_1m_close
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckBos",
-        checklist.bos_formed
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckBosObFvg",
-        checklist.bos_ob_fvg_marked
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckNoFomo",
-        checklist.no_fomo
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckNoRevenge",
-        checklist.no_revenge
-    );
-
-
-    setChecklistCheckbox(
-        "editCheckPlanReviewed",
-        checklist.plan_reviewed
-    );
-
-
-    updateEditChecklistDisplay();
-
-
-    /* =====================================
-       RESET NEW SCREENSHOT INPUTS
-    ===================================== */
-
-    const beforeInput =
-        document.getElementById(
-            "editBeforeScreenshot"
-        );
-
-
-    if (
-        beforeInput
-    ) {
-
-        beforeInput.value =
-            "";
-
-    }
-
-
-    const afterInput =
-        document.getElementById(
-            "editAfterScreenshot"
-        );
-
-
-    if (
-        afterInput
-    ) {
-
-        afterInput.value =
-            "";
-
-    }
-
-
-    /* =====================================
-       RECALCULATE NET P&L / RR
-    ===================================== */
-
-    recalculateEditedPnL();
-
-
-    /* =====================================
-       SCREENSHOT PREVIEW
-    ===================================== */
-
-    showCurrentScreenshots(
-        editingTrade
-    );
-
-
-    /* =====================================
-       OPEN CORRECT EDIT PANEL
-    ===================================== */
-
-    if (
-        editTradePanel
-    ) {
-
-        editTradePanel.hidden =
-            false;
-
-
-        editTradePanel.scrollIntoView(
-            {
-                behavior:
-                    "smooth",
-
-                block:
-                    "start"
-            }
-        );
-
-    }
-
-}
-
-
-
-/* =========================================
-   RECALCULATE EDITED P&L
-========================================= */
-
-function recalculateEditedPnL() {
-
-    if (
-        !editingTrade
-    ) {
-
-        return;
-
-    }
-
-
-    const grossField =
-        document.getElementById(
-            "editGrossPnL"
-        );
-
-
-    const commissionField =
-        document.getElementById(
-            "editCommissionFee"
-        );
-
-
-    const swapField =
-        document.getElementById(
-            "editSwapFee"
-        );
-
-
-    const netField =
-        document.getElementById(
-            "editProfitLoss"
-        );
-
-
-    if (
-        !grossField ||
-        !commissionField ||
-        !swapField ||
-        !netField
-    ) {
-
-        return;
-
-    }
-
-
-    const grossPnL =
-        Number(
-            grossField.value ||
-            0
-        );
-
-
-    const commission =
-        Number(
-            commissionField.value ||
-            0
-        );
-
-
-    const swap =
-        Number(
-            swapField.value ||
-            0
-        );
-
-
-    const netPnL =
-        grossPnL
-        -
-        commission
-        -
-        swap;
-
-
-    netField.value =
-        netPnL.toFixed(
-            2
-        );
-
-
-    recalculateEditedRR(
-        netPnL
-    );
-
-}
-
-
-
-/* =========================================
-   RECALCULATE EDITED RR
-========================================= */
-
-function recalculateEditedRR(
-    netPnL
-) {
-
-    const plannedRiskField =
-        document.getElementById(
-            "editPlannedRisk"
-        );
-
-
-    const actualRRField =
-        document.getElementById(
-            "editActualRR"
-        );
-
-
-    if (
-        !plannedRiskField ||
-        !actualRRField
-    ) {
-
-        return;
-
-    }
-
-
-    const plannedRisk =
-        Number(
-            plannedRiskField.value ||
-            0
-        );
-
-
-    const actualRR =
-        plannedRisk > 0
-            ?
-            netPnL /
-            plannedRisk
-            :
-            0;
-
-
-    actualRRField.value =
-        actualRR.toFixed(
-            2
-        );
-
-}
-
-
-
-/* =========================================
-   COMMISSION CHANGE
-========================================= */
-
-const editCommissionFee =
-    document.getElementById(
-        "editCommissionFee"
-    );
-
-
-if (
-    editCommissionFee
-) {
-
-    editCommissionFee.addEventListener(
-        "input",
-        recalculateEditedPnL
-    );
-
-}
-
-
-
-/* =========================================
-   SWAP CHANGE
-========================================= */
-
-const editSwapFee =
-    document.getElementById(
-        "editSwapFee"
-    );
-
-
-if (
-    editSwapFee
-) {
-
-    editSwapFee.addEventListener(
-        "input",
-        recalculateEditedPnL
-    );
-
-}
-
-
-
-/* =========================================
-   CURRENT SCREENSHOTS
+   SHOW CURRENT SCREENSHOTS
 ========================================= */
 
 async function showCurrentScreenshots(
@@ -1861,7 +1106,6 @@ async function showCurrentScreenshots(
         trade.before_screenshot
     );
 
-
     await showScreenshotPreview(
         "currentAfterScreenshot",
         trade.after_screenshot
@@ -1870,9 +1114,8 @@ async function showCurrentScreenshots(
 }
 
 
-
 /* =========================================
-   SCREENSHOT PREVIEW
+   SHOW SCREENSHOT PREVIEW
 ========================================= */
 
 async function showScreenshotPreview(
@@ -1880,33 +1123,22 @@ async function showScreenshotPreview(
     path
 ) {
 
-    const box =
+    const container =
         document.getElementById(
             elementId
         );
 
-
-    if (
-        !box
-    ) {
-
+    if (!container) {
         return;
-
     }
 
+    if (!path) {
 
-    if (
-        !path
-    ) {
-
-        box.innerHTML =
+        container.innerHTML =
             "No screenshot";
 
-
         return;
-
     }
-
 
     try {
 
@@ -1924,65 +1156,426 @@ async function showScreenshotPreview(
                     3600
                 );
 
-
         if (
-            error
-        ) {
-
-            throw error;
-
-        }
-
-
-        if (
+            error ||
             !data?.signedUrl
         ) {
 
-            throw new Error(
-                "Signed URL unavailable."
+            throw error ||
+            new Error(
+                "Unable to create screenshot URL."
             );
 
         }
 
-
-        box.innerHTML =
+        container.innerHTML =
             `
-
             <a
                 href="${data.signedUrl}"
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
             >
-
                 <img
                     src="${data.signedUrl}"
-                    alt="Trade Screenshot"
+                    alt="Trade screenshot"
+                    class="history-screenshot-image"
                 >
-
             </a>
-
             `;
 
     }
 
-
-    catch (
-        error
-    ) {
+    catch (error) {
 
         console.error(
             "Screenshot preview error:",
             error
         );
 
-
-        box.innerHTML =
-            "Unable to load screenshot.";
+        container.innerHTML =
+            "Unable to load screenshot";
 
     }
 
 }
 
+
+/* =========================================
+   UPDATE SCREENSHOT DELETE BUTTONS
+========================================= */
+
+function updateScreenshotDeleteButtons() {
+
+    const beforeButton =
+        document.getElementById(
+            "deleteBeforeScreenshot"
+        );
+
+    const afterButton =
+        document.getElementById(
+            "deleteAfterScreenshot"
+        );
+
+
+    if (beforeButton) {
+
+        beforeButton.disabled =
+            !editingTrade ||
+            !editingTrade.before_screenshot;
+
+    }
+
+
+    if (afterButton) {
+
+        afterButton.disabled =
+            !editingTrade ||
+            !editingTrade.after_screenshot;
+
+    }
+
+}
+
+
+/* =========================================
+   DELETE STORED SCREENSHOT
+========================================= */
+
+async function deleteStoredScreenshot(
+    type
+) {
+
+    if (!editingTrade) {
+
+        showEditMessage(
+            "No trade selected.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const isBefore =
+        type ===
+        "before";
+
+
+    const path =
+        isBefore
+            ?
+            editingTrade.before_screenshot
+            :
+            editingTrade.after_screenshot;
+
+
+    if (!path) {
+
+        showEditMessage(
+            "No " +
+            (
+                isBefore
+                    ?
+                    "before"
+                    :
+                    "after"
+            ) +
+            " screenshot to delete.",
+            "warning"
+        );
+
+        updateScreenshotDeleteButtons();
+
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            "Delete this " +
+            (
+                isBefore
+                    ?
+                    "before"
+                    :
+                    "after"
+            ) +
+            " screenshot permanently?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    const deleteButton =
+        document.getElementById(
+            isBefore
+                ?
+                "deleteBeforeScreenshot"
+                :
+                "deleteAfterScreenshot"
+        );
+
+
+    if (deleteButton) {
+
+        deleteButton.disabled =
+            true;
+
+        deleteButton.textContent =
+            "Deleting...";
+
+    }
+
+
+    try {
+
+        /* DELETE FILE FROM STORAGE */
+
+        const {
+            error:
+                storageError
+        } =
+            await db
+                .storage
+                .from(
+                    "trade-screenshots"
+                )
+                .remove(
+                    [
+                        path
+                    ]
+                );
+
+
+        if (storageError) {
+
+            throw new Error(
+                "Storage delete failed: " +
+                storageError.message
+            );
+
+        }
+
+
+        /* CLEAR DATABASE FIELD */
+
+        const updates =
+            isBefore
+                ?
+                {
+                    before_screenshot:
+                        null
+                }
+                :
+                {
+                    after_screenshot:
+                        null
+                };
+
+
+        const {
+            error:
+                updateError
+        } =
+            await db
+                .from(
+                    "trades"
+                )
+                .update(
+                    updates
+                )
+                .eq(
+                    "id",
+                    editingTrade.id
+                );
+
+
+        if (updateError) {
+            throw updateError;
+        }
+
+
+        /* UPDATE LOCAL EDITING TRADE */
+
+        if (isBefore) {
+
+            editingTrade.before_screenshot =
+                null;
+
+            const input =
+                document.getElementById(
+                    "editBeforeScreenshot"
+                );
+
+            if (input) {
+                input.value = "";
+            }
+
+        }
+
+        else {
+
+            editingTrade.after_screenshot =
+                null;
+
+            const input =
+                document.getElementById(
+                    "editAfterScreenshot"
+                );
+
+            if (input) {
+                input.value = "";
+            }
+
+        }
+
+
+        /* UPDATE CACHE */
+
+        const cachedTrade =
+            allTrades.find(
+                trade =>
+                    Number(
+                        trade.id
+                    ) ===
+                    Number(
+                        editingTrade.id
+                    )
+            );
+
+
+        if (cachedTrade) {
+
+            if (isBefore) {
+
+                cachedTrade.before_screenshot =
+                    null;
+
+            }
+
+            else {
+
+                cachedTrade.after_screenshot =
+                    null;
+
+            }
+
+        }
+
+
+        /* REFRESH SCREENSHOT DISPLAY */
+
+        await showCurrentScreenshots(
+            editingTrade
+        );
+
+
+        updateScreenshotDeleteButtons();
+
+
+        showEditMessage(
+            (
+                isBefore
+                    ?
+                    "Before"
+                    :
+                    "After"
+            ) +
+            " screenshot deleted.",
+            "success"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Screenshot delete error:",
+            error
+        );
+
+
+        showEditMessage(
+            "ERROR: " +
+            (
+                error.message ||
+                "Unable to delete screenshot."
+            ),
+            "error"
+        );
+
+
+        updateScreenshotDeleteButtons();
+
+    }
+
+    finally {
+
+        if (deleteButton) {
+
+            deleteButton.textContent =
+                "Delete Screenshot";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================
+   DELETE BEFORE SCREENSHOT BUTTON
+========================================= */
+
+const deleteBeforeScreenshot =
+    document.getElementById(
+        "deleteBeforeScreenshot"
+    );
+
+
+if (deleteBeforeScreenshot) {
+
+    deleteBeforeScreenshot.addEventListener(
+        "click",
+        function() {
+
+            deleteStoredScreenshot(
+                "before"
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   DELETE AFTER SCREENSHOT BUTTON
+========================================= */
+
+const deleteAfterScreenshot =
+    document.getElementById(
+        "deleteAfterScreenshot"
+    );
+
+
+if (deleteAfterScreenshot) {
+
+    deleteAfterScreenshot.addEventListener(
+        "click",
+        function() {
+
+            deleteStoredScreenshot(
+                "after"
+            );
+
+        }
+    );
+
+}
 
 
 /* =========================================
@@ -1995,16 +1588,24 @@ async function uploadReplacementScreenshot(
     userId
 ) {
 
+    if (!file) {
+        return null;
+    }
+
+
     if (
-        !file
+        !file.size ||
+        file.size <= 0
     ) {
 
-        return null;
+        throw new Error(
+            "Selected image contains no data."
+        );
 
     }
 
 
-    const extension =
+    let extension =
         String(
             file.name ||
             ""
@@ -2015,44 +1616,73 @@ async function uploadReplacementScreenshot(
 
 
     const allowedExtensions = [
-
         "jpg",
         "jpeg",
         "png",
         "webp",
         "heic",
         "heif"
-
     ];
 
 
-    const validMimeType =
-        file.type &&
-        file.type.startsWith(
-            "image/"
-        );
-
-
-    const validExtension =
-        allowedExtensions.includes(
-            extension
-        );
-
-
     if (
-        !validMimeType &&
-        !validExtension
+        !allowedExtensions.includes(
+            extension
+        )
     ) {
 
-        throw new Error(
-            "Please select a valid image file."
-        );
+        if (
+            file.type ===
+            "image/png"
+        ) {
+
+            extension =
+                "png";
+
+        }
+
+        else if (
+            file.type ===
+            "image/webp"
+        ) {
+
+            extension =
+                "webp";
+
+        }
+
+        else if (
+            file.type ===
+            "image/heic"
+        ) {
+
+            extension =
+                "heic";
+
+        }
+
+        else if (
+            file.type ===
+            "image/heif"
+        ) {
+
+            extension =
+                "heif";
+
+        }
+
+        else {
+
+            extension =
+                "jpg";
+
+        }
 
     }
 
 
     const maxSize =
-        15 *
+        20 *
         1024 *
         1024;
 
@@ -2063,27 +1693,90 @@ async function uploadReplacementScreenshot(
     ) {
 
         throw new Error(
-            "Screenshot is too large. Maximum size is 15 MB."
+            "Screenshot is too large. Maximum size is 20 MB."
         );
 
     }
 
 
-    const safeExtension =
-        validExtension
+    let arrayBuffer;
+
+
+    try {
+
+        arrayBuffer =
+            await file.arrayBuffer();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Screenshot read error:",
+            error
+        );
+
+        throw new Error(
+            "Unable to read the selected screenshot."
+        );
+
+    }
+
+
+    if (
+        !arrayBuffer ||
+        arrayBuffer.byteLength <= 0
+    ) {
+
+        throw new Error(
+            "The selected screenshot has no readable content."
+        );
+
+    }
+
+
+    const fileBytes =
+        new Uint8Array(
+            arrayBuffer
+        );
+
+
+    const contentType =
+        file.type &&
+        file.type.startsWith(
+            "image/"
+        )
             ?
-            extension
+            file.type
             :
-            "jpg";
+            (
+                extension === "png"
+                    ?
+                    "image/png"
+                    :
+                    extension === "webp"
+                        ?
+                        "image/webp"
+                        :
+                        extension === "heic"
+                            ?
+                            "image/heic"
+                            :
+                            extension === "heif"
+                                ?
+                                "image/heif"
+                                :
+                                "image/jpeg"
+            );
 
 
     const fileName =
         `${type}_${Date.now()}_${Math.random()
             .toString(36)
-            .substring(2, 8)}.${safeExtension}`;
+            .substring(2, 8)}.${extension}`;
 
 
-    const path =
+    const filePath =
         `${userId}/trades/${fileName}`;
 
 
@@ -2097,29 +1790,27 @@ async function uploadReplacementScreenshot(
                 "trade-screenshots"
             )
             .upload(
-                path,
-                file,
+                filePath,
+                fileBytes,
                 {
+                    contentType:
+                        contentType,
 
                     cacheControl:
                         "3600",
 
                     upsert:
                         false
-
                 }
             );
 
 
-    if (
-        error
-    ) {
+    if (error) {
 
         console.error(
-            "Replacement screenshot error:",
+            "Replacement screenshot upload error:",
             error
         );
-
 
         throw new Error(
             "Screenshot upload failed: " +
@@ -2135,90 +1826,216 @@ async function uploadReplacementScreenshot(
     );
 
 
-    return path;
+    return filePath;
 
 }
 
 
 /* =========================================
-   CLOSE EDIT PANEL
+   DELETE OLD SCREENSHOT FILE
 ========================================= */
 
-function closeEditPanel() {
+async function removeOldScreenshot(
+    path
+) {
 
-    if (
-        editTradePanel
-    ) {
+    if (!path) {
+        return;
+    }
 
-        editTradePanel.hidden =
-            true;
+
+    const {
+        error
+    } =
+        await db
+            .storage
+            .from(
+                "trade-screenshots"
+            )
+            .remove(
+                [
+                    path
+                ]
+            );
+
+
+    if (error) {
+
+        console.warn(
+            "Old screenshot cleanup failed:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   RECALCULATE EDITED P&L
+========================================= */
+
+function recalculateEditedPnL() {
+
+    if (!editingTrade) {
+        return;
+    }
+
+
+    const commission =
+        Number(
+            document
+                .getElementById(
+                    "editCommissionFee"
+                )
+                ?.value ||
+            0
+        );
+
+
+    const swap =
+        Number(
+            document
+                .getElementById(
+                    "editSwapFee"
+                )
+                ?.value ||
+            0
+        );
+
+
+    const grossPnL =
+        Number(
+            editingTrade.gross_pnl ??
+            (
+                Number(
+                    editingTrade.profit_loss ||
+                    0
+                )
+                +
+                Number(
+                    editingTrade.commission_fee ||
+                    0
+                )
+                +
+                Number(
+                    editingTrade.swap_fee ||
+                    0
+                )
+            )
+        );
+
+
+    const netPnL =
+        grossPnL -
+        commission -
+        swap;
+
+
+    const plannedRisk =
+        Number(
+            editingTrade.planned_risk ||
+            0
+        );
+
+
+    const actualRR =
+        plannedRisk > 0
+            ?
+            netPnL /
+            plannedRisk
+            :
+            Number(
+                editingTrade.actual_rr ??
+                editingTrade.r_multiple ??
+                0
+            );
+
+
+    const pnlDisplay =
+        document.getElementById(
+            "editCalculatedPnL"
+        );
+
+
+    const rrDisplay =
+        document.getElementById(
+            "editActualRR"
+        );
+
+
+    if (pnlDisplay) {
+
+        pnlDisplay.textContent =
+            signedMoney(
+                netPnL
+            );
 
     }
 
 
-    editingTrade =
-        null;
+    if (rrDisplay) {
+
+        rrDisplay.textContent =
+            actualRR.toFixed(
+                2
+            ) +
+            "R";
+
+    }
 
 
-    clearEditMessage();
+    return {
+        grossPnL,
+        commission,
+        swap,
+        netPnL,
+        actualRR
+    };
 
 }
-
 
 
 /* =========================================
-   CLOSE BUTTON
+   EDIT FEE EVENTS
 ========================================= */
 
-const closeEditTrade =
-    document.getElementById(
-        "closeEditTrade"
-    );
+[
+    "editCommissionFee",
+    "editSwapFee"
+]
+.forEach(
+    id => {
 
+        const input =
+            document.getElementById(
+                id
+            );
 
-if (
-    closeEditTrade
-) {
+        if (input) {
 
-    closeEditTrade.addEventListener(
-        "click",
-        closeEditPanel
-    );
+            input.addEventListener(
+                "input",
+                recalculateEditedPnL
+            );
 
-}
+        }
 
-
-
-/* =========================================
-   CANCEL BUTTON
-========================================= */
-
-const cancelEditTrade =
-    document.getElementById(
-        "cancelEditTrade"
-    );
-
-
-if (
-    cancelEditTrade
-) {
-
-    cancelEditTrade.addEventListener(
-        "click",
-        closeEditPanel
-    );
-
-}
-
+    }
+);
 
 
 /* =========================================
    SAVE EDITED TRADE
 ========================================= */
 
-if (
-    editTradeForm
-) {
+const editTradeForm =
+    document.getElementById(
+        "editTradeForm"
+    );
+
+
+if (editTradeForm) {
 
     editTradeForm.addEventListener(
         "submit",
@@ -2229,207 +2046,33 @@ if (
             event.preventDefault();
 
 
-            clearEditMessage();
-
-
-            if (
-                !editingTrade
-            ) {
+            if (!editingTrade) {
 
                 showEditMessage(
                     "No trade selected.",
                     "error"
                 );
 
-
                 return;
 
             }
 
 
-            const date =
-                document
-                    .getElementById(
-                        "editTradeDate"
-                    )
-                    ?.value ||
-                "";
-
-
-            const symbol =
-                (
-                    document
-                        .getElementById(
-                            "editSymbol"
-                        )
-                        ?.value ||
-                    ""
-                )
-                .trim()
-                .toUpperCase();
-
-
-            const grossPnL =
-                Number(
-                    document
-                        .getElementById(
-                            "editGrossPnL"
-                        )
-                        ?.value ||
-                    0
+            const saveButton =
+                document.getElementById(
+                    "saveEditTradeButton"
                 );
 
 
-            const commission =
-                Number(
-                    document
-                        .getElementById(
-                            "editCommissionFee"
-                        )
-                        ?.value ||
-                    0
-                );
+            if (saveButton) {
 
-
-            const swap =
-                Number(
-                    document
-                        .getElementById(
-                            "editSwapFee"
-                        )
-                        ?.value ||
-                    0
-                );
-
-
-            const plannedRisk =
-                Number(
-                    document
-                        .getElementById(
-                            "editPlannedRisk"
-                        )
-                        ?.value ||
-                    0
-                );
-
-
-            /* =====================================
-               VALIDATION
-            ===================================== */
-
-            if (
-                !date
-            ) {
-
-                showEditMessage(
-                    "Please select the trade date.",
-                    "error"
-                );
-
-
-                return;
-
-            }
-
-
-            if (
-                !symbol
-            ) {
-
-                showEditMessage(
-                    "Please enter a symbol.",
-                    "error"
-                );
-
-
-                return;
-
-            }
-
-
-            if (
-                commission < 0
-            ) {
-
-                showEditMessage(
-                    "Commission Fee cannot be negative.",
-                    "error"
-                );
-
-
-                return;
-
-            }
-
-
-            if (
-                swap < 0
-            ) {
-
-                showEditMessage(
-                    "Swap Fee cannot be negative.",
-                    "error"
-                );
-
-
-                return;
-
-            }
-
-
-            /* =====================================
-               CALCULATE NET
-            ===================================== */
-
-            const netPnL =
-                grossPnL
-                -
-                commission
-                -
-                swap;
-
-
-            const actualRR =
-                plannedRisk > 0
-                    ?
-                    netPnL /
-                    plannedRisk
-                    :
-                    0;
-
-
-            /* =====================================
-               CHECKLIST
-            ===================================== */
-
-            const editedChecklist =
-                getEditChecklist();
-
-
-            const checklistStats =
-                getChecklistStats(
-                    editedChecklist
-                );
-
-
-            if (
-                saveEditTrade
-            ) {
-
-                saveEditTrade.disabled =
+                saveButton.disabled =
                     true;
 
-
-                saveEditTrade.textContent =
+                saveButton.textContent =
                     "Saving...";
 
             }
-
-
-            showEditMessage(
-                "Saving changes...",
-                "warning"
-            );
 
 
             try {
@@ -2457,82 +2100,117 @@ if (
                 }
 
 
-                /* =================================
-                   EXISTING SCREENSHOT PATHS
-                ================================= */
-
-                let beforePath =
-                    editingTrade
-                        .before_screenshot;
-
-
-                let afterPath =
-                    editingTrade
-                        .after_screenshot;
-
-
-                const newBefore =
+                const beforeFile =
                     document
                         .getElementById(
                             "editBeforeScreenshot"
                         )
-                        ?.files[0];
+                        ?.files?.[0];
 
 
-                const newAfter =
+                const afterFile =
                     document
                         .getElementById(
                             "editAfterScreenshot"
                         )
-                        ?.files[0];
+                        ?.files?.[0];
 
 
-                /* =================================
-                   NEW BEFORE SCREENSHOT
-                ================================= */
+                let beforePath =
+                    editingTrade
+                        .before_screenshot ||
+                    null;
 
-                if (
-                    newBefore
-                ) {
 
-                    beforePath =
+                let afterPath =
+                    editingTrade
+                        .after_screenshot ||
+                    null;
+
+
+                /* REPLACE BEFORE SCREENSHOT */
+
+                if (beforeFile) {
+
+                    const newPath =
                         await uploadReplacementScreenshot(
-                            newBefore,
+                            beforeFile,
                             "before",
                             user.id
                         );
 
+
+                    if (
+                        editingTrade
+                            .before_screenshot
+                    ) {
+
+                        await removeOldScreenshot(
+                            editingTrade
+                                .before_screenshot
+                        );
+
+                    }
+
+
+                    beforePath =
+                        newPath;
+
                 }
 
 
-                /* =================================
-                   NEW AFTER SCREENSHOT
-                ================================= */
+                /* REPLACE AFTER SCREENSHOT */
 
-                if (
-                    newAfter
-                ) {
+                if (afterFile) {
 
-                    afterPath =
+                    const newPath =
                         await uploadReplacementScreenshot(
-                            newAfter,
+                            afterFile,
                             "after",
                             user.id
                         );
 
+
+                    if (
+                        editingTrade
+                            .after_screenshot
+                    ) {
+
+                        await removeOldScreenshot(
+                            editingTrade
+                                .after_screenshot
+                        );
+
+                    }
+
+
+                    afterPath =
+                        newPath;
+
                 }
 
 
-                /* =================================
-                   RESULT
-                ================================= */
+                const checklist =
+                    getEditedChecklist();
+
+
+                const checklistStats =
+                    getChecklistStats(
+                        checklist
+                    );
+
+
+                const calculation =
+                    recalculateEditedPnL();
+
 
                 let result =
                     "BE";
 
 
                 if (
-                    netPnL > 0
+                    calculation.netPnL >
+                    0
                 ) {
 
                     result =
@@ -2542,7 +2220,8 @@ if (
 
 
                 if (
-                    netPnL < 0
+                    calculation.netPnL <
+                    0
                 ) {
 
                     result =
@@ -2551,107 +2230,90 @@ if (
                 }
 
 
-                /* =================================
-                   UPDATE OBJECT
-                ================================= */
-
                 const updates = {
 
                     trade_date:
-                        date,
-
+                        document
+                            .getElementById(
+                                "editTradeDate"
+                            )
+                            ?.value,
 
                     symbol:
-                        symbol,
-
+                        document
+                            .getElementById(
+                                "editSymbol"
+                            )
+                            ?.value
+                            .trim()
+                            .toUpperCase(),
 
                     direction:
                         document
                             .getElementById(
                                 "editDirection"
                             )
-                            ?.value ||
-                        "BUY",
+                            ?.value,
 
+                    stop_loss:
+                        Number(
+                            document
+                                .getElementById(
+                                    "editStopLoss"
+                                )
+                                ?.value ||
+                            0
+                        ),
+
+                    take_profit:
+                        Number(
+                            document
+                                .getElementById(
+                                    "editTakeProfit"
+                                )
+                                ?.value ||
+                            0
+                        ),
 
                     session:
                         document
                             .getElementById(
                                 "editSession"
                             )
-                            ?.value ||
-                        "",
-
+                            ?.value,
 
                     setup:
                         document
                             .getElementById(
                                 "editSetup"
                             )
-                            ?.value ||
-                        "A",
-
+                            ?.value,
 
                     rules_followed:
-                        (
-                            document
-                                .getElementById(
-                                    "editRulesFollowed"
-                                )
-                                ?.value ||
-                            "false"
-                        ) ===
+                        document
+                            .getElementById(
+                                "editRulesFollowed"
+                            )
+                            ?.value ===
                         "true",
 
-
-                    /* =================================
-                       CHECKLIST
-                    ================================= */
-
-                    pretrade_checklist:
-                        editedChecklist,
-
-
-                    checklist_score:
-                        checklistStats
-                            .score,
-
-
-                    /* =================================
-                       MONEY
-                    ================================= */
-
-                    gross_pnl:
-                        grossPnL,
-
-
                     commission_fee:
-                        commission,
-
+                        calculation.commission,
 
                     swap_fee:
-                        swap,
-
+                        calculation.swap,
 
                     profit_loss:
-                        netPnL,
-
+                        calculation.netPnL,
 
                     actual_rr:
-                        actualRR,
-
+                        calculation.actualRR,
 
                     r_multiple:
-                        actualRR,
-
+                        calculation.actualRR,
 
                     result:
                         result,
-
-
-                    /* =================================
-                       NOTES
-                    ================================= */
 
                     mistakes:
                         document
@@ -2662,7 +2324,6 @@ if (
                             .trim() ||
                         "",
 
-
                     notes:
                         document
                             .getElementById(
@@ -2672,24 +2333,20 @@ if (
                             .trim() ||
                         "",
 
+                    pretrade_checklist:
+                        checklist,
 
-                    /* =================================
-                       SCREENSHOTS
-                    ================================= */
+                    checklist_score:
+                        checklistStats.score,
 
                     before_screenshot:
                         beforePath,
-
 
                     after_screenshot:
                         afterPath
 
                 };
 
-
-                /* =================================
-                   SAVE TO SUPABASE
-                ================================= */
 
                 const {
                     error
@@ -2707,13 +2364,16 @@ if (
                         );
 
 
-                if (
-                    error
-                ) {
-
+                if (error) {
                     throw error;
-
                 }
+
+
+                editingTrade =
+                    {
+                        ...editingTrade,
+                        ...updates
+                    };
 
 
                 showEditMessage(
@@ -2722,64 +2382,44 @@ if (
                 );
 
 
-                if (
-                    saveEditTrade
-                ) {
-
-                    saveEditTrade.textContent =
-                        "Saved ✓";
-
-                }
-
-
                 await loadTrades();
 
 
                 setTimeout(
                     function() {
 
-                        closeEditPanel();
+                        closeEditTrade();
 
                     },
-                    900
+                    600
                 );
 
             }
 
-
-            catch (
-                error
-            ) {
+            catch (error) {
 
                 console.error(
-                    "Update trade error:",
+                    "Trade update error:",
                     error
                 );
 
 
                 showEditMessage(
                     "ERROR: " +
-                    (
-                        error.message ||
-                        "Unable to update trade."
-                    ),
+                    error.message,
                     "error"
                 );
 
             }
 
-
             finally {
 
-                if (
-                    saveEditTrade
-                ) {
+                if (saveButton) {
 
-                    saveEditTrade.disabled =
+                    saveButton.disabled =
                         false;
 
-
-                    saveEditTrade.textContent =
+                    saveButton.textContent =
                         "Save Changes";
 
                 }
@@ -2792,101 +2432,142 @@ if (
 }
 
 
-
 /* =========================================
-   DELETE TRADE
+   CLOSE EDIT TRADE
 ========================================= */
 
-async function deleteTrade(
-    id
-) {
+function closeEditTrade() {
 
-    const confirmed =
-        confirm(
-            "Are you sure you want to delete this trade?"
+    const modal =
+        document.getElementById(
+            "editTradeModal"
+        );
+
+    const panel =
+        document.getElementById(
+            "editTradePanel"
         );
 
 
-    if (
-        !confirmed
-    ) {
+    if (modal) {
 
-        return;
+        modal.classList.remove(
+            "show"
+        );
+
+        modal.style.display =
+            "none";
 
     }
 
 
-    try {
+    if (panel) {
 
-        const {
-            error
-        } =
-            await db
-                .from(
-                    "trades"
-                )
-                .delete()
-                .eq(
-                    "id",
-                    id
-                );
-
-
-        if (
-            error
-        ) {
-
-            throw error;
-
-        }
-
-
-        showHistoryMessage(
-            "Trade deleted successfully.",
-            "success"
+        panel.classList.remove(
+            "show"
         );
 
-
-        if (
-            editingTrade &&
-            Number(
-                editingTrade.id
-            ) ===
-            Number(
-                id
-            )
-        ) {
-
-            closeEditPanel();
-
-        }
-
-
-        await loadTrades();
+        panel.style.display =
+            "none";
 
     }
 
 
-    catch (
-        error
-    ) {
+    editingTrade =
+        null;
 
-        console.error(
-            "Delete trade error:",
-            error
+
+    const beforeButton =
+        document.getElementById(
+            "deleteBeforeScreenshot"
+        );
+
+    const afterButton =
+        document.getElementById(
+            "deleteAfterScreenshot"
         );
 
 
-        showHistoryMessage(
-            "Delete failed: " +
-            error.message,
-            "error"
-        );
+    if (beforeButton) {
+        beforeButton.disabled = true;
+    }
 
+    if (afterButton) {
+        afterButton.disabled = true;
     }
 
 }
 
+
+/* =========================================
+   CLOSE BUTTON
+========================================= */
+
+const closeEditButton =
+    document.getElementById(
+        "closeEditTrade"
+    );
+
+
+if (closeEditButton) {
+
+    closeEditButton.addEventListener(
+        "click",
+        closeEditTrade
+    );
+
+}
+
+
+/* =========================================
+   CANCEL BUTTON
+========================================= */
+
+const cancelEditButton =
+    document.getElementById(
+        "cancelEditTrade"
+    );
+
+
+if (cancelEditButton) {
+
+    cancelEditButton.addEventListener(
+        "click",
+        closeEditTrade
+    );
+
+}
+
+
+/* =========================================
+   EDIT MESSAGE
+========================================= */
+
+function showEditMessage(
+    text,
+    type = "error"
+) {
+
+    const message =
+        document.getElementById(
+            "editMessage"
+        );
+
+
+    if (!message) {
+        return;
+    }
+
+
+    message.textContent =
+        text;
+
+
+    message.className =
+        "form-message full show " +
+        type;
+
+}
 
 
 /* =========================================
@@ -2905,18 +2586,15 @@ function money(
         .toLocaleString(
             "en-AU",
             {
-
                 minimumFractionDigits:
                     2,
 
                 maximumFractionDigits:
                     2
-
             }
         );
 
 }
-
 
 
 /* =========================================
@@ -2934,31 +2612,25 @@ function signedMoney(
         );
 
 
-    if (
-        value > 0
-    ) {
+    if (value > 0) {
 
         return "+$" +
             value
                 .toLocaleString(
                     "en-AU",
                     {
-
                         minimumFractionDigits:
                             2,
 
                         maximumFractionDigits:
                             2
-
                     }
                 );
 
     }
 
 
-    if (
-        value < 0
-    ) {
+    if (value < 0) {
 
         return "-$" +
             Math.abs(
@@ -2967,13 +2639,11 @@ function signedMoney(
             .toLocaleString(
                 "en-AU",
                 {
-
                     minimumFractionDigits:
                         2,
 
                     maximumFractionDigits:
                         2
-
                 }
             );
 
@@ -2985,7 +2655,6 @@ function signedMoney(
 }
 
 
-
 /* =========================================
    ESCAPE HTML
 ========================================= */
@@ -2995,90 +2664,106 @@ function escapeHtml(
 ) {
 
     return String(
-        value ??
-        ""
+        value ?? ""
     )
-    .replace(
-        /&/g,
+    .replaceAll(
+        "&",
         "&amp;"
     )
-    .replace(
-        /</g,
+    .replaceAll(
+        "<",
         "&lt;"
     )
-    .replace(
-        />/g,
+    .replaceAll(
+        ">",
         "&gt;"
     )
-    .replace(
-        /"/g,
+    .replaceAll(
+        '"',
         "&quot;"
     )
-    .replace(
-        /'/g,
+    .replaceAll(
+        "'",
         "&#039;"
     );
 
 }
 
 
+/* =========================================
+   FILTER EVENTS
+========================================= */
+
+const accountFilter =
+    document.getElementById(
+        "accountFilter"
+    );
+
+const sessionFilter =
+    document.getElementById(
+        "sessionFilter"
+    );
+
+const resultFilter =
+    document.getElementById(
+        "resultFilter"
+    );
+
+const symbolFilter =
+    document.getElementById(
+        "symbolFilter"
+    );
+
+
+if (accountFilter) {
+
+    accountFilter.addEventListener(
+        "change",
+        applyFilters
+    );
+
+}
+
+
+if (sessionFilter) {
+
+    sessionFilter.addEventListener(
+        "change",
+        applyFilters
+    );
+
+}
+
+
+if (resultFilter) {
+
+    resultFilter.addEventListener(
+        "change",
+        applyFilters
+    );
+
+}
+
+
+if (symbolFilter) {
+
+    symbolFilter.addEventListener(
+        "input",
+        applyFilters
+    );
+
+}
+
 
 /* =========================================
-   START HISTORY PAGE
+   START
 ========================================= */
 
 async function startHistoryPage() {
 
-    console.log(
-        "Starting History page..."
-    );
+    await loadAccounts();
 
-
-    try {
-
-        const session =
-            await waitForSession();
-
-
-        console.log(
-            "History session ready:",
-            session.user.id
-        );
-
-
-        await loadAccounts();
-
-
-        await loadTrades();
-
-
-        console.log(
-            "History page loaded."
-        );
-
-    }
-
-
-    catch (
-        error
-    ) {
-
-        console.error(
-            "History startup error:",
-            error
-        );
-
-
-        showHistoryMessage(
-            "Unable to start History page: " +
-            (
-                error.message ||
-                "Unknown error."
-            ),
-            "error"
-        );
-
-    }
+    await loadTrades();
 
 }
 

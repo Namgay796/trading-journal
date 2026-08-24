@@ -1313,10 +1313,6 @@ function calculateTrade() {
         );
 
 
-    /* =====================================
-       PLANNED RISK
-    ===================================== */
-
     let plannedRisk =
         0;
 
@@ -1347,10 +1343,6 @@ function calculateTrade() {
     }
 
 
-    /* =====================================
-       RISK %
-    ===================================== */
-
     const riskPercent =
         currentCapital >
         0
@@ -1363,10 +1355,6 @@ function calculateTrade() {
             :
             0;
 
-
-    /* =====================================
-       PLANNED REWARD
-    ===================================== */
 
     let plannedReward =
         0;
@@ -1398,10 +1386,6 @@ function calculateTrade() {
     }
 
 
-    /* =====================================
-       PLANNED RR
-    ===================================== */
-
     const plannedRR =
         plannedRisk >
         0
@@ -1411,10 +1395,6 @@ function calculateTrade() {
             :
             0;
 
-
-    /* =====================================
-       GROSS P&L
-    ===================================== */
 
     let grossPnL =
         0;
@@ -1469,18 +1449,10 @@ function calculateTrade() {
     );
 
 
-    /* =====================================
-       NET P&L AFTER FEES
-    ===================================== */
-
     const actualPnL =
         grossPnL -
         totalFees;
 
-
-    /* =====================================
-       ACTUAL RR
-    ===================================== */
 
     const actualRR =
         plannedRisk >
@@ -1491,10 +1463,6 @@ function calculateTrade() {
             :
             0;
 
-
-    /* =====================================
-       DISPLAY
-    ===================================== */
 
     document
         .getElementById(
@@ -2027,8 +1995,7 @@ function validateTradeForm() {
 
 
     if (
-        commission <
-        0
+        commission < 0
     ) {
 
         markError(
@@ -2048,8 +2015,7 @@ function validateTradeForm() {
 
 
     if (
-        swap <
-        0
+        swap < 0
     ) {
 
         markError(
@@ -2108,10 +2074,6 @@ async function uploadScreenshot(
     );
 
 
-    /* =====================================
-       MAKE SURE FILE HAS CONTENT
-    ===================================== */
-
     if (
         !file.size ||
         file.size <= 0
@@ -2123,10 +2085,6 @@ async function uploadScreenshot(
 
     }
 
-
-    /* =====================================
-       FILE EXTENSION
-    ===================================== */
 
     let extension =
         String(
@@ -2155,8 +2113,6 @@ async function uploadScreenshot(
             extension
         )
     ) {
-
-        /* Try to determine from MIME */
 
         if (
             file.type ===
@@ -2208,10 +2164,6 @@ async function uploadScreenshot(
     }
 
 
-    /* =====================================
-       MAXIMUM SIZE
-    ===================================== */
-
     const maxSize =
         20 *
         1024 *
@@ -2229,12 +2181,6 @@ async function uploadScreenshot(
 
     }
 
-
-    /* =====================================
-       READ ACTUAL FILE DATA
-
-       This is the important mobile fix.
-    ===================================== */
 
     let arrayBuffer;
 
@@ -2263,10 +2209,6 @@ async function uploadScreenshot(
     }
 
 
-    /* =====================================
-       CONFIRM DATA EXISTS
-    ===================================== */
-
     if (
         !arrayBuffer ||
         arrayBuffer.byteLength <= 0
@@ -2279,25 +2221,11 @@ async function uploadScreenshot(
     }
 
 
-    console.log(
-        "Image bytes:",
-        arrayBuffer.byteLength
-    );
-
-
-    /* =====================================
-       CONVERT TO UINT8ARRAY
-    ===================================== */
-
     const fileBytes =
         new Uint8Array(
             arrayBuffer
         );
 
-
-    /* =====================================
-       CONTENT TYPE
-    ===================================== */
 
     const contentType =
         file.type &&
@@ -2328,10 +2256,6 @@ async function uploadScreenshot(
             );
 
 
-    /* =====================================
-       UNIQUE FILE NAME
-    ===================================== */
-
     const fileName =
         `${type}_${Date.now()}_${Math.random()
             .toString(36)
@@ -2341,25 +2265,6 @@ async function uploadScreenshot(
     const filePath =
         `${userId}/trades/${fileName}`;
 
-
-    console.log(
-        "Uploading:",
-        {
-            path:
-                filePath,
-
-            bytes:
-                fileBytes.length,
-
-            contentType:
-                contentType
-        }
-    );
-
-
-    /* =====================================
-       UPLOAD ACTUAL BYTES
-    ===================================== */
 
     const {
         data,
@@ -2415,6 +2320,123 @@ async function uploadScreenshot(
     return filePath;
 
 }
+
+
+
+/* =========================================
+   CLEAR SELECTED SCREENSHOT
+========================================= */
+
+function clearSelectedScreenshot(
+    inputId,
+    label
+) {
+
+    const input =
+        document.getElementById(
+            inputId
+        );
+
+
+    if (
+        !input
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !input.files ||
+        input.files.length === 0
+    ) {
+
+        showTradeMessage(
+            "No " +
+            label +
+            " screenshot selected.",
+            "warning"
+        );
+
+
+        return;
+
+    }
+
+
+    input.value =
+        "";
+
+
+    showTradeMessage(
+        label +
+        " screenshot cleared.",
+        "success"
+    );
+
+}
+
+
+
+/* =========================================
+   DELETE BEFORE SELECTED SCREENSHOT
+========================================= */
+
+const deleteBeforeSelected =
+    document.getElementById(
+        "deleteBeforeSelected"
+    );
+
+
+if (
+    deleteBeforeSelected
+) {
+
+    deleteBeforeSelected.addEventListener(
+        "click",
+        function() {
+
+            clearSelectedScreenshot(
+                "beforeScreenshot",
+                "Before"
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================================
+   DELETE AFTER SELECTED SCREENSHOT
+========================================= */
+
+const deleteAfterSelected =
+    document.getElementById(
+        "deleteAfterSelected"
+    );
+
+
+if (
+    deleteAfterSelected
+) {
+
+    deleteAfterSelected.addEventListener(
+        "click",
+        function() {
+
+            clearSelectedScreenshot(
+                "afterScreenshot",
+                "After"
+            );
+
+        }
+    );
+
+}
+
 
 
 /* =========================================
@@ -2482,10 +2504,6 @@ tradeForm.addEventListener(
                 calculateTrade();
 
 
-            /* =====================================
-               CHECKLIST
-            ===================================== */
-
             const checklistResult =
                 calculateChecklistScore();
 
@@ -2521,10 +2539,6 @@ tradeForm.addEventListener(
                     user.id
                 );
 
-
-            /* =====================================
-               RESULT IS BASED ON NET P&L
-            ===================================== */
 
             let result =
                 "BE";
@@ -2683,10 +2697,6 @@ tradeForm.addEventListener(
                         .value,
 
 
-                /* =====================================
-                   PRE-TRADE CHECKLIST
-                ===================================== */
-
                 checklist_score:
                     checklistResult
                         .score,
@@ -2768,10 +2778,6 @@ tradeForm.addEventListener(
             };
 
 
-            /* =====================================
-               SAVE TRADE
-            ===================================== */
-
             const {
                 data:
                     insertedTrade,
@@ -2801,10 +2807,6 @@ tradeForm.addEventListener(
 
             }
 
-
-            /* =====================================
-               ENTRY LAYERS
-            ===================================== */
 
             const entryRows =
                 calculations.layers
@@ -2853,10 +2855,6 @@ tradeForm.addEventListener(
 
             }
 
-
-            /* =====================================
-               EXIT LAYERS
-            ===================================== */
 
             const exitRows =
                 calculations.layers
@@ -2994,8 +2992,6 @@ function formatTradePrice(
         .toUpperCase();
 
 
-    /* JPY FOREX */
-
     if (
         pair.includes(
             "JPY"
@@ -3008,8 +3004,6 @@ function formatTradePrice(
 
     }
 
-
-    /* STANDARD FOREX */
 
     if (
         /^[A-Z]{6}$/.test(
@@ -3029,8 +3023,6 @@ function formatTradePrice(
 
     }
 
-
-    /* GOLD / SILVER */
 
     if (
         pair.startsWith(
