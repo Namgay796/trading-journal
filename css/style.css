@@ -2874,3 +2874,41 @@ th {
     gap: 6px;
     white-space: nowrap;
 }
+
+.screenshot-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+
+.screenshot-input-row label {
+    flex: 1;
+}
+
+
+.screenshot-input-row .danger-button,
+.screenshot-box .danger-button {
+    width: auto;
+    flex-shrink: 0;
+}
+
+
+.screenshot-box .danger-button {
+    margin-top: 10px;
+}
+
+
+@media (max-width: 700px) {
+
+    .screenshot-input-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+
+    .screenshot-input-row .danger-button {
+        width: 100%;
+    }
+
+}
