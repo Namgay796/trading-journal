@@ -897,11 +897,11 @@
 
 
 
-    <!-- =========================================
-         BEFORE SCREENSHOT
-    ========================================= -->
+    <!-- BEFORE SCREENSHOT -->
 
-    <label class="full">
+<div class="full screenshot-input-row">
+
+    <label>
 
         Before Trade Screenshot
 
@@ -914,23 +914,43 @@
     </label>
 
 
-
-    <!-- =========================================
-         AFTER SCREENSHOT
-    ========================================= -->
-
-    <label class="full">
-
-    After Trade Screenshot
-
-    <input
-        id="afterScreenshot"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+    <button
+        type="button"
+        id="deleteBeforeSelected"
+        class="small-button danger-button"
     >
+        Delete
+    </button>
 
-</label>
+</div>
 
+
+<!-- AFTER SCREENSHOT -->
+
+<div class="full screenshot-input-row">
+
+    <label>
+
+        After Trade Screenshot
+
+        <input
+            id="afterScreenshot"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+        >
+
+    </label>
+
+
+    <button
+        type="button"
+        id="deleteAfterSelected"
+        class="small-button danger-button"
+    >
+        Delete
+    </button>
+
+</div>
 
 
     <!-- =========================================
@@ -982,7 +1002,7 @@
 
 <script src="js/navigation.js"></script>
 
-<script src="js/add-trade.js?v=10"></script>
+<script src="js/add-trade.js?v=12"></script>
 
 <script src="js/pwa.js"></script>
 
