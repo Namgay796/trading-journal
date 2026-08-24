@@ -2073,8 +2073,9 @@ function validateTradeForm() {
 }
 
 
+
 /* =========================================
-   SCREENSHOT UPLOAD
+   MOBILE-SAFE SCREENSHOT UPLOAD
 ========================================= */
 
 async function uploadScreenshot(
@@ -2092,11 +2093,42 @@ async function uploadScreenshot(
     }
 
 
+    console.log(
+        "Selected screenshot:",
+        {
+            name:
+                file.name,
+
+            type:
+                file.type,
+
+            size:
+                file.size
+        }
+    );
+
+
+    /* =====================================
+       MAKE SURE FILE HAS CONTENT
+    ===================================== */
+
+    if (
+        !file.size ||
+        file.size <= 0
+    ) {
+
+        throw new Error(
+            "Selected image contains no data. Please choose the image again."
+        );
+
+    }
+
+
     /* =====================================
        FILE EXTENSION
     ===================================== */
 
-    const extension =
+    let extension =
         String(
             file.name ||
             ""
@@ -2118,47 +2150,70 @@ async function uploadScreenshot(
     ];
 
 
-    /* =====================================
-       MOBILE MIME TYPE SUPPORT
-
-       Some phones return an empty
-       file.type even for valid images.
-    ===================================== */
-
-    const validMimeType =
-        file.type &&
-        file.type.startsWith(
-            "image/"
-        );
-
-
-    const validExtension =
-        allowedExtensions.includes(
-            extension
-        );
-
-
     if (
-        !validMimeType &&
-        !validExtension
+        !allowedExtensions.includes(
+            extension
+        )
     ) {
 
-        throw new Error(
-            "Please select a valid image file."
-        );
+        /* Try to determine from MIME */
+
+        if (
+            file.type ===
+            "image/png"
+        ) {
+
+            extension =
+                "png";
+
+        }
+
+        else if (
+            file.type ===
+            "image/webp"
+        ) {
+
+            extension =
+                "webp";
+
+        }
+
+        else if (
+            file.type ===
+            "image/heic"
+        ) {
+
+            extension =
+                "heic";
+
+        }
+
+        else if (
+            file.type ===
+            "image/heif"
+        ) {
+
+            extension =
+                "heif";
+
+        }
+
+        else {
+
+            extension =
+                "jpg";
+
+        }
 
     }
 
 
     /* =====================================
-       FILE SIZE
-
-       Phone photos can be much larger than
-       desktop screenshots.
+       MAXIMUM SIZE
     ===================================== */
 
     const maxSize =
-        15 *
+        20 *
         1024 *
         1024;
 
@@ -2169,22 +2224,108 @@ async function uploadScreenshot(
     ) {
 
         throw new Error(
-            "Screenshot is too large. Maximum size is 15 MB."
+            "Screenshot is too large. Maximum size is 20 MB."
         );
 
     }
 
 
     /* =====================================
-       SAFE EXTENSION
+       READ ACTUAL FILE DATA
+
+       This is the important mobile fix.
     ===================================== */
 
-    const safeExtension =
-        validExtension
+    let arrayBuffer;
+
+
+    try {
+
+        arrayBuffer =
+            await file.arrayBuffer();
+
+    }
+
+    catch (
+        error
+    ) {
+
+        console.error(
+            "File reading error:",
+            error
+        );
+
+
+        throw new Error(
+            "Unable to read the selected image. Please select it again."
+        );
+
+    }
+
+
+    /* =====================================
+       CONFIRM DATA EXISTS
+    ===================================== */
+
+    if (
+        !arrayBuffer ||
+        arrayBuffer.byteLength <= 0
+    ) {
+
+        throw new Error(
+            "The selected image has no readable content."
+        );
+
+    }
+
+
+    console.log(
+        "Image bytes:",
+        arrayBuffer.byteLength
+    );
+
+
+    /* =====================================
+       CONVERT TO UINT8ARRAY
+    ===================================== */
+
+    const fileBytes =
+        new Uint8Array(
+            arrayBuffer
+        );
+
+
+    /* =====================================
+       CONTENT TYPE
+    ===================================== */
+
+    const contentType =
+        file.type &&
+        file.type.startsWith(
+            "image/"
+        )
             ?
-            extension
+            file.type
             :
-            "jpg";
+            (
+                extension === "png"
+                    ?
+                    "image/png"
+                    :
+                    extension === "webp"
+                        ?
+                        "image/webp"
+                        :
+                        extension === "heic"
+                            ?
+                            "image/heic"
+                            :
+                            extension === "heif"
+                                ?
+                                "image/heif"
+                                :
+                                "image/jpeg"
+            );
 
 
     /* =====================================
@@ -2194,7 +2335,7 @@ async function uploadScreenshot(
     const fileName =
         `${type}_${Date.now()}_${Math.random()
             .toString(36)
-            .substring(2, 8)}.${safeExtension}`;
+            .substring(2, 8)}.${extension}`;
 
 
     const filePath =
@@ -2202,25 +2343,22 @@ async function uploadScreenshot(
 
 
     console.log(
-        "Uploading screenshot:",
+        "Uploading:",
         {
-            name:
-                file.name,
-
-            type:
-                file.type,
-
-            size:
-                file.size,
-
             path:
-                filePath
+                filePath,
+
+            bytes:
+                fileBytes.length,
+
+            contentType:
+                contentType
         }
     );
 
 
     /* =====================================
-       UPLOAD TO SUPABASE
+       UPLOAD ACTUAL BYTES
     ===================================== */
 
     const {
@@ -2234,8 +2372,11 @@ async function uploadScreenshot(
             )
             .upload(
                 filePath,
-                file,
+                fileBytes,
                 {
+
+                    contentType:
+                        contentType,
 
                     cacheControl:
                         "3600",
