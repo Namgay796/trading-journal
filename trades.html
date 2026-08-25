@@ -222,8 +222,7 @@
         <div class="table-wrapper">
 
             <table>
-
-                <thead>
+<thead>
 
     <tr>
 
@@ -232,6 +231,14 @@
         <th>Symbol</th>
 
         <th>Side</th>
+
+        <th>Average Entry</th>
+
+        <th>Average Exit</th>
+
+        <th>SL</th>
+
+        <th>TP</th>
 
         <th>Session</th>
 
@@ -430,7 +437,101 @@
 
                 </label>
 
+                    <!-- =====================================
+     STOP LOSS / TAKE PROFIT
+===================================== -->
 
+<label>
+
+    Stop Loss
+
+    <input
+        id="editStopLoss"
+        type="number"
+        step="any"
+    >
+
+</label>
+
+
+<label>
+
+    Take Profit
+
+    <input
+        id="editTakeProfit"
+        type="number"
+        step="any"
+    >
+
+</label>
+
+
+
+<!-- =====================================
+     EDITABLE TRADE LAYERS
+===================================== -->
+
+<div class="full layer-section">
+
+    <div class="layer-heading">
+
+        <div>
+
+            <h3>
+                Trade Layers
+            </h3>
+
+            <small>
+                Edit each lot size, entry and exit.
+                History will continue to show only the weighted average entry and exit.
+            </small>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="addEditLayer"
+            class="layer-add-button"
+        >
+            + Add Entry
+        </button>
+
+    </div>
+
+
+    <div id="editTradeLayers">
+    </div>
+
+</div>
+
+
+
+<label>
+
+    Average Entry
+
+    <input
+        id="editAverageEntry"
+        type="text"
+        readonly
+    >
+
+</label>
+
+
+<label>
+
+    Average Exit
+
+    <input
+        id="editAverageExit"
+        type="text"
+        readonly
+    >
+
+</label>
 
                 <!-- =====================================
                      P&L / FEES
@@ -885,7 +986,7 @@
     requireLogin();
 </script>
 
-<script src="js/trades.js?v=10"></script>
+<script src="js/trades.js?v=12"></script>
 
 <script src="js/navigation.js"></script>
 
